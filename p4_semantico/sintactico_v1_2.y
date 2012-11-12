@@ -1,4 +1,3 @@
-/* miint.y: evaluador de lista de expresiones */
 %{
 #include <stdio.h>
 extern FILE *yyin; /* declarado en lexico */
@@ -23,8 +22,6 @@ void yyerror(char* mens);
 %token WHILE 
 %token DO 
 %token CLASS 
-%token AND
-%token OR
 %token BEGIN_COMPLEX_STRING 
 %token END_COMPLEX_STRING 
 %token START_STRUCT 
@@ -47,6 +44,8 @@ void yyerror(char* mens);
 %left '-'
 %left '*'
 %left '/'
+%left AND
+%left OR
 
 %%
 
@@ -64,7 +63,7 @@ code :
    	| loop
    	| if_construction
 	| separator
-	| assignation
+	| assignment
 	;
 
 method_definition : 
@@ -75,8 +74,8 @@ method_definition :
 
 method_code : 
 	separator
-	| assignation
-	| assignation method_code
+	| assignment
+	| assignment method_code
 	| method_call
 	| method_call method_code
 	| separator method_code
@@ -84,7 +83,6 @@ method_code :
 	| loop method_code
 	| if_construction	
 	| if_construction method_code 
-	/*| */
 	;
 
 arguments_definition : 
@@ -124,15 +122,12 @@ method_call :
 	;		
 		
 arguments : 
-	'(' method_call_argument more_arguments ')'  
-	| method_call_argument more_arguments 
-	|'(' method_call_argument ')' 
+	 method_call_argument more_arguments 
 	| method_call_argument
 	;
-		
+	
 method_call_argument : 	
-	IDENTIF
-	| literal
+	expression
 	| string
 	;
 	
@@ -142,21 +137,17 @@ more_arguments :
 	;
 
 block_call : 
-	IDENTIF EACH DO '|' IDENTIF '|'
+	IDENTIF EACH DO '|' IDENTIF '|' separator
 		method_code
 	END separator
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
 	;			 
 
 loop : 
-	WHILE condition DO separator
+	WHILE expression DO separator
 		method_code 
 	END separator
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
-	;
-
-condition : 
-	relational_expression
 	;
 
 after_if : 
@@ -171,11 +162,11 @@ else_part :
 	;
 	
 if_construction : 
-	IF relational_expression after_if
+	IF expression after_if
 		method_code
 		else_part
 	END separator
-	| IF relational_expression after_if
+	| IF expression after_if
 		error
 		else_part
 	END separator {yyerror( "Sintax error on if code" ); yyerrok;}
@@ -188,45 +179,35 @@ if_construction :
 	END separator {yyerror( "Sintax error on if" ); yyerrok;}	
 	;
 
-assignation : 
-	ID_GLOBAL_VARIABLE '=' expression separator //Asignacion a variable global
-	| ID_GLOBAL_VARIABLE '=' string separator
-	| ID_GLOBAL_VARIABLE '[' expression ']' '=' expression separator 
-	| ID_GLOBAL_VARIABLE '.' IDENTIF '=' expression separator 
-	| ID_GLOBAL_VARIABLE '=' ID_CONSTANT NEW separator
-	| ID_GLOBAL_VARIABLE '=' ARRAY NEW INTEGER separator
-	| ID_GLOBAL_VARIABLE '=' '[' content_vector ']' separator
-	| IDENTIF '=' expression separator  // Asignacion a variable local
-	| IDENTIF '[' expression ']' '=' expression separator 
-	| IDENTIF '.' IDENTIF '=' expression separator   
-	| IDENTIF '=' ID_CONSTANT NEW separator
-	| IDENTIF '=' string separator
-	| IDENTIF '=' '[' content_vector ']' separator
-	| IDENTIF '=' ARRAY NEW INTEGER separator
-	| ID_CONSTANT '=' expression separator // Asignacion a constante.
-	| ID_CONSTANT '=' string separator
-	| ID_CONSTANT '=' '[' content_vector ']' separator 
-	| ID_CONSTANT '=' ARRAY NEW INTEGER separator// Manejo de errores
-	| ID_GLOBAL_VARIABLE '=' error separator {yyerror( "Sintax error on global variable assignation" ); yyerrok;}
-	| ID_GLOBAL_VARIABLE '[' error separator {yyerror( "Sintax error on global variable assignation" ); yyerrok;}
-	| ID_GLOBAL_VARIABLE '.' error separator {yyerror( "Sintax error on global variable assignation" ); yyerrok;}
-	| ID_GLOBAL_VARIABLE '=' '[' error separator {yyerror( "Sintax error on global variable assignation" ); yyerrok;}
-	| IDENTIF '=' error separator {yyerror( "Sintax error on local variable assignation" ); yyerrok;}
-	| IDENTIF '[' error separator {yyerror( "Sintax error on local variable assignation" ); yyerrok;}
-	| IDENTIF '.' error separator {yyerror( "Sintax error on local variable assignation" ); yyerrok;}
-	| IDENTIF '=' '[' error separator {yyerror( "Sintax error on local variable assignation" ); yyerrok;}
-	| ID_CONSTANT '=' error separator {yyerror( "Sintax error on constant variable assignation" ); yyerrok;}
-	| ID_CONSTANT '[' error separator {yyerror( "Sintax error on constant variable assignation" ); yyerrok;}
-	| ID_CONSTANT '.' error separator {yyerror( "Sintax error on constant variable assignation" ); yyerrok;}
-	| ID_CONSTANT '=' '[' error separator {yyerror( "Sintax error on constant variable assignation" ); yyerrok;}	
+assignment : 
+	left_side right_side separator
+	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;
-	
-content_vector :   literal
-                 | literal ',' content_vector
-	             ;	
-	             
-relational_expression :
-	expression relational_operator expression ;
+
+left_side :
+	ID_GLOBAL_VARIABLE atribute '='
+	| IDENTIF atribute '='
+	| ID_CONSTANT atribute '='
+	;
+
+atribute :
+	'.' IDENTIF
+	| '[' expression ']'
+	|
+	;	
+		
+right_side :
+	expression
+	| string
+	| ARRAY NEW INTEGER 	
+	| ID_CONSTANT NEW 
+	| '[' content_vector ']'
+	;
+		
+content_vector :   
+	literal
+	| literal ',' content_vector
+	;		      
 
 relational_operator :
 	EQUAL_EQUAL
@@ -238,28 +219,40 @@ relational_operator :
 	;
 
 expression :
+	logical_expression
+	| relational_expression OR expression
+	;
+	
+logical_expression :
+	relational_expression
+	| relational_expression AND logical_expression
+	;
+		
+relational_expression :
+	aritmetic_expression
+	| aritmetic_expression relational_operator relational_expression
+	;
+	
+aritmetic_expression :
 	term
-	| term '+' expression
-	| term '-' expression
-	| term OR expression
-	| '(' term '+' expression ')'
-	| '(' term '-' expression ')'
-	| '(' term OR expression ')'
+	| term '+' aritmetic_expression
+	| term '-' aritmetic_expression
 	;
 
 term :
 	factor
 	| factor '*' term
 	| factor '/' term
-	| factor AND term
-	| '(' term ')'
 	;
 
 factor :
-	| IDENTIF
-    | ID_CONSTANT
+	IDENTIF atribute
+    | ID_CONSTANT atribute
+    | ID_GLOBAL_VARIABLE atribute
 	| literal
 	| NOT factor
+	| '(' expression ')'
+	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
@@ -282,6 +275,8 @@ substring :
 		| string_struct substring 
 		;
 		
+//En vez de esto mejor poner expression entre los structs. 	
+//Pero hay que modificar el lexico, porque ahora solo permite una variable	
 string_struct :
 		START_STRUCT ID_GLOBAL_VARIABLE END_STRUCT
 		| START_STRUCT ID_CONSTANT END_STRUCT
@@ -290,7 +285,14 @@ string_struct :
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%
-
+//Lo que tenemos que hacer es dos bucles, en donde llamamos a yyparse
+//En el primero seria recorrer arbol e ir rellenandolo, hasta que no
+//haya cambios. El arbol esta compuesto de nodos con tablas de simbolos
+//y desde un punto se puede acceder a las variables de de su tabla, del
+//padre, el abuelo, etc. Se hacen un numero indeterminado de lecturas
+//del fichero.
+//En la segunda parte es la generacion de codigo, que seria volver a llamar
+//a yyparse pero esta vez ya tenemos en arbol lleno.  
 int main(int argc, char** argv) {
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
@@ -303,4 +305,25 @@ void yyerror(char* mens) {
 		printf("---------Error en linea %i: %s\n",numlin,mens);
 }
 
+/* Vano intento por reducir la parte de method code, lo pongo aqui 
+	para referencias futuras
+code : 
+	method_definition
+	| class_definition
+	| method_code
+	;
+
+method_code :
+	sentences
+	| sentences method_code
+	;
+	
+sentences : 
+	separator
+	| method_call
+   	| loop
+   	| if_construction
+	| assignment
+	;
+*/
 

@@ -1,5 +1,5 @@
 %{
-#include "sintactico_v1_1.tab.h"
+#include "sintactico_v1_2.tab.h"
 
 int numlin = 1;
 void error(char*);
@@ -35,8 +35,9 @@ Array						{return ARRAY;}
 $({letter}|_)({letdig}|_)*                     {return ID_GLOBAL_VARIABLE;}
 @({letter}|_)({letdig}|_)*                     {return ID_INSTANCE_VARIABLE;}
 {capital}({letdig}|_)*                               {return ID_CONSTANT;}
-("+"|"-")?{digit}+                                                {return INTEGER;}
-({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {return FLOAT;}
+("+"|"-")?{digit}+                            {yylval.integer=atoi(yytext); return INTEGER;}
+({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {yylval.real=atof(yytext);
+ return FLOAT;}
 "!="                                                     {return NOT_EQUAL;}
 "=="                                                      {return EQUAL_EQUAL;}
 ">="                                                    {return GREATER_EQUAL;}

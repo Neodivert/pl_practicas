@@ -8,10 +8,9 @@ int yydebug=1; /* modo debug si -t */
 void yyerror(char* mens);
 %}
 
-%union { float real; int integer; }
 
-%token <integer> INTEGER
-%token <real> FLOAT 
+%token INTEGER
+%token FLOAT 
 %token CHAR
 %token ID_GLOBAL_VARIABLE 
 %token ID_INSTANCE_VARIABLE 
@@ -42,11 +41,6 @@ void yyerror(char* mens);
 %token EACH
 %token NEW
 %token ARRAY
-
-%type <real> aritmetic_expression
-%type <real> numeric_literal
-%type <real> term
-%type <real> factor
 
 %left '+'
 %left '-'
@@ -321,24 +315,24 @@ inutil y habra que quitarlo*/
 /*En la segunda regla habria que comprobar que tanto artimetic_expresion como
 relational expresion son de tipo integer*/	
 relational_expression :
-	aritmetic_expression { printf( "\n\n\n\nAritmetic expression result: %f\n", $1 ); }
+	aritmetic_expression
 	| aritmetic_expression relational_operator relational_expression
 	;
 
 /*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
 integer integer o float float*/
 aritmetic_expression :
-	term { $$ = $1; }
-	| term '+' aritmetic_expression { $$ = $1 + $3; }
-	| term '-' aritmetic_expression { $$ = $1 - $3; }
+	term
+	| term '+' aritmetic_expression
+	| term '-' aritmetic_expression
 	;
 	
 /*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
 integer integer o float float*/
 term :
-	factor { $$ = $1; }
-	| factor '*' term { $$ = $1 * $3; }
-	| factor '/' term { $$ = $1 / $3; }
+	factor
+	| factor '*' term
+	| factor '/' term
 	;
 
 /*Comprobar que los identificadores existen y es una variable,
@@ -357,15 +351,9 @@ factor :
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
-// Separé literales numéricos y el resto para hacer pruebas.
-//Pues vuelve a juntarlo xD
-numeric_literal :
-	INTEGER { $$ = $1; printf( "\n\n\n\nValor entero %i\n", $1 ); } 
-	| FLOAT { $$ = $1; }
-	;
-
 literal : 
-	numeric_literal
+	INTEGER
+	| FLOAT
 	| CHAR
 	| BOOL 
 	;

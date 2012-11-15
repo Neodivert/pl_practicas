@@ -35,9 +35,8 @@ Array						{return ARRAY;}
 $({letter}|_)({letdig}|_)*                     {return ID_GLOBAL_VARIABLE;}
 @({letter}|_)({letdig}|_)*                     {return ID_INSTANCE_VARIABLE;}
 {capital}({letdig}|_)*                               {return ID_CONSTANT;}
-("+"|"-")?{digit}+                            {yylval.integer=atoi(yytext); return INTEGER;}
-({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {yylval.real=atof(yytext);
- return FLOAT;}
+("+"|"-")?{digit}+                            {return INTEGER;}
+({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {return FLOAT;}
 "!="                                                     {return NOT_EQUAL;}
 "=="                                                      {return EQUAL_EQUAL;}
 ">="                                                    {return GREATER_EQUAL;}

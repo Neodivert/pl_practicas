@@ -57,20 +57,6 @@ void yyerror(char* mens);
 
 %%
 
-/* 
-Idea del tío Moi - Guardar un puntero del tipo:
-
-Symbol *currentScope;
-
-Donde guardamos la direccion del registro para la clase / método o bloque
-en la que nos encontramos actualmente. Esto nos servirá para:
-  - Saber que las variables que nos encontramos son locales a ese 
-    método/bloque/clase.
-  - Lanzar error cuando el programador intente definir un método dentro de 
-    otro. O una clase dentro de un método, etc. -> Esto ahora que lo pienso
-    es cosa del sintactico, asi que nada. xD
-*/
-
 program : 
 	code
 	| code program
@@ -91,9 +77,10 @@ code :
 /*
 Despues de cada IDENTIF: incluir método en la tabla de símbolos. Si ya existía,
 dar error (¿o permitimos sobrecarga de funciones?).
-Actualizar el puntero "currentScope" que apunte al registro del método.
 
 Al final de cada regla: poner puntero currentScope a NULL.
+
+No vamos a permitir sobrecarga de metodos.
 */
 method_definition : 
 	DEF IDENTIF arguments_definition separator method_code END separator
@@ -116,7 +103,7 @@ method_code :
 
 /*
 Despues de cada IDENTIF:
-Añadir argumento de nombre IDENTIF en el metodo apuntado por "currentScope".
+Añadir argumento de nombre IDENTIF en el metodo actual.
 */
 arguments_definition : 
 	'(' IDENTIF more_arguments_definition ')' 
@@ -125,7 +112,7 @@ arguments_definition :
 
 /*
 Despues de cada IDENTIF:
-Añadir argumento de nombre IDENTIF en el método apuntado por "currentScope".
+Añadir argumento de nombre IDENTIF en el método actual.
 */
 more_arguments_definition : 
 	',' IDENTIF more_arguments_definition
@@ -140,9 +127,6 @@ separator :
 
 /*
 Después de ID_CONSTANT: incluir registro de clase con nombre ID_CONSTANT.
-Actualizar "currentScope".
-
-Después del END: poner currentScope a NULL.
 */ 
 class_definition : 
 	CLASS ID_CONSTANT separator
@@ -153,7 +137,7 @@ class_definition :
 
 /*
 Después de cada ID_INSTANCE_VARIABLE: añadir campo de nombre 
-ID_INSTANCE_VARIABLE en la clase apuntada por "currentScope".
+ID_INSTANCE_VARIABLE en la clase actual.
 */
 class_content : 
 	ID_INSTANCE_VARIABLE '=' literal 
@@ -165,9 +149,11 @@ class_content :
 /*
 Buscar método llamado IDENTIF en el árbol.
 - Si existe: "comprobar" el numero de argumentos con el de la definición (no 
-  sé como se haría).
-- Si no existe: crear un nodo para el método IDENTIF y que esté parcialmente
-  definido.
+  sé como se haría) O tenemos un campo en el struct que sea numero de argumentos o
+  los contamos cada vez que se hace una llamada yendo a la tabla de simbolos.
+- Si no existe: no se hace nada, a la espera de encontrar la definicion mas adelante
+ y en una pasada posterio ya lo leeremos. Si fuera un error ya se detectara despues
+   al no estar el metodo en la tabla de simbolos.
 */
 method_call : 
 	IDENTIF  arguments separator
@@ -177,8 +163,8 @@ method_call :
 	;		
 
 /* 1
-¿Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de 
-argumentos esperado?
+Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de 
+argumentos esperado
 */
 arguments : 
 	 method_call_argument more_arguments 
@@ -186,8 +172,8 @@ arguments :
 	;
 
 /* 2
-¿Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de 
-argumentos esperado?
+Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de 
+argumentos esperado
 */
 method_call_argument : 	
 	expression
@@ -195,8 +181,8 @@ method_call_argument :
 	;
 	
 /* 3
-¿Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de 
-argumentos esperado?
+Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de 
+argumentos esperado
 */
 more_arguments : 
 	',' method_call_argument
@@ -204,8 +190,8 @@ more_arguments :
 	;
 
 /*
-Después del primer IDENTIF: incluir en árbol y actualizar currentScope.
-Después del segundo IDENTIF: incluir como argumento en currentScope.
+Después del primer IDENTIF: incluir en árbol.
+Después del segundo IDENTIF: incluir como argumento.
 */
 block_call : 
 	IDENTIF EACH DO '|' IDENTIF '|' separator
@@ -219,17 +205,6 @@ loop :
 		method_code 
 	END separator
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
-	;
-
-after_if : 
-	THEN
-	| separator
-	;
-	
-else_part : 
-	ELSE separator method_code
-	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
-	|
 	;
 	
 if_construction : 
@@ -249,33 +224,52 @@ if_construction :
 		error 
 	END separator {yyerror( "Sintax error on if" ); yyerrok;}	
 	;
+	
+after_if : 
+	THEN
+	| separator
+	;
+	
+else_part : 
+	ELSE separator method_code
+	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
+	|
+	;	
 
 /*
-Buscar texto left_side en tabla de símbolos. Aqui me pierdo porque no se como
-se procede con las estructuras y los arrays. ¿Se hace algo cuando se lee el 
-identificador de la estructura y luego esperas a leer el identificador del
-campo? ¿Se busca la variable al final cuando ya se tiene todo el nombre?
+Buscar texto left_side en tabla de símbolos. 
+Si la variable no existe y tiene un tipo definido, entonces se crea una nueva 
+entrada con nombre sacado de left_side y tipo sacado de right side.
+Si ya existe entonces se debe comprobar que los tipos de la variable
+y del right side coincidan.
 */
 assignment : 
 	left_side right_side separator
 	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;
 
+/*Aqui comprobamos si la variable existe o no
+si no existe se añade a menos que atribute no sea
+epsilon. En cuyo caso se debe dar un error.*/
 left_side :
 	ID_GLOBAL_VARIABLE atribute '='
 	| IDENTIF atribute '='
 	| ID_CONSTANT atribute '='
 	;
-
+	
+/*Aqui se comprueba si la variable es de tipo struct y efectivamente
+tiene el campo identif, o es de tipo vector y expresion es de tipo integer*/
 atribute :
 	'.' IDENTIF
 	| '[' expression ']'
 	|
 	;	
 
-/*
-¿Algo con ID_CONSTANT?
-*/		
+/*Si es un array new, nueva variable de tipo array, aunque no sabemos de que tipo es el contenido
+del array, si es id_constant new hay que comprobar si la clase esta definida y ya sabemos que es una
+nueva variable de esa clase. Con [ content ] sabemos que es de tipo array y ademas el tipo de los
+datos del array.
+En resumen hay que devolver el tipo: integer, boolean, clase, etc*/	
 right_side :
 	expression
 	| string
@@ -283,7 +277,8 @@ right_side :
 	| ID_CONSTANT NEW 
 	| '[' content_vector ']'
 	;
-		
+	
+/*Comprobar que todos los literales son del mismo tipo*/		
 content_vector :   
 	literal
 	| literal ',' content_vector
@@ -298,11 +293,19 @@ relational_operator :
 	| NOT_EQUAL
 	;
 
+/*En todas las expresiones si se usa el operador, OR
+en este caso, tenemos una expresion logica, pero si no
+entonces es del tipo que sea la expresion del nivel
+inferior, es decir las de nivel inferior son subconjuntos
+de las de nivel superior.
+En la segunda regla habria que comprobar que tanto relational_expresion como
+expresion son de tipo boolean*/
 expression :
 	logical_expression
 	| relational_expression OR expression
 	;
-	
+/*En la segunda regla habria que comprobar que tanto relational_expresion como
+expresion son de tipo boolean*/	
 logical_expression :
 	relational_expression
 	| relational_expression AND logical_expression
@@ -311,24 +314,39 @@ logical_expression :
 /* Me dio por implementar la resolucion de expresiones aritmeticas y que
 mostrara el resultado :D. Aunque esto no se si hacia falta en esta entrega xD
 Bueno, para indexar un vector si haria falta, pero solo expresiones enteras,
-y aqui las trato todas como reales */
+y aqui las trato todas como reales 
+FIXME Toda esto de calcular el valor seria para hacer un interprete, x tanto es 
+inutil y habra que quitarlo*/
+
+/*En la segunda regla habria que comprobar que tanto artimetic_expresion como
+relational expresion son de tipo integer*/	
 relational_expression :
 	aritmetic_expression { printf( "\n\n\n\nAritmetic expression result: %f\n", $1 ); }
 	| aritmetic_expression relational_operator relational_expression
 	;
 
+/*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
+integer integer o float float*/
 aritmetic_expression :
 	term { $$ = $1; }
 	| term '+' aritmetic_expression { $$ = $1 + $3; }
 	| term '-' aritmetic_expression { $$ = $1 - $3; }
 	;
-
+	
+/*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
+integer integer o float float*/
 term :
 	factor { $$ = $1; }
 	| factor '*' term { $$ = $1 * $3; }
 	| factor '/' term { $$ = $1 / $3; }
 	;
 
+/*Comprobar que los identificadores existen y es una variable,
+Si existen comprobar los atribute.
+Si no existen entonces la variable no esta definida y es un error
+Si es con not entonces factor tiene que ser de tipo logico
+En todos los casos hay que devolver el tipo del literal/variable
+*/
 factor :
 	IDENTIF atribute
     | ID_CONSTANT atribute
@@ -340,6 +358,7 @@ factor :
 	;
 
 // Separé literales numéricos y el resto para hacer pruebas.
+//Pues vuelve a juntarlo xD
 numeric_literal :
 	INTEGER { $$ = $1; printf( "\n\n\n\nValor entero %i\n", $1 ); } 
 	| FLOAT { $$ = $1; }
@@ -352,25 +371,27 @@ literal :
 	;
 	
 string :
-	BEGIN_COMPLEX_STRING END_COMPLEX_STRING
+	BEGIN_COMPLEX_STRING END_COMPLEX_STRING 
 	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING 
 	| BEGIN_COMPLEX_STRING error END_COMPLEX_STRING {yyerror( "Sintax error on string" ); yyerrok;}
 	;
 	
 substring :
-		SUBSTRING
-		| string_struct
-		| SUBSTRING substring
-		| string_struct substring 
-		;
-		
-// En vez de esto mejor poner expression entre los structs. 	
-// Pero hay que modificar el lexico, porque ahora solo permite una variable	
+	substring_part
+	| substring_part substring
+	;
+	
+substring_part :
+	SUBSTRING
+	| string_struct
+	| SEC_SCAPE
+	;
+	
+// Hay que modificar el lexico, porque por ahora solo permite una variable	
+// Como aqui esta expresion, ni hay que comprobar k la variable existe ni na,
+// todo eso ya se hizo en expresion
 string_struct :
-		START_STRUCT ID_GLOBAL_VARIABLE END_STRUCT
-		| START_STRUCT ID_CONSTANT END_STRUCT
-		| START_STRUCT IDENTIF END_STRUCT
-		| START_STRUCT IDENTIF '.' IDENTIF END_STRUCT
+		START_STRUCT expression END_STRUCT
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%

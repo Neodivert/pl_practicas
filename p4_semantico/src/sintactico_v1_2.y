@@ -8,14 +8,15 @@ int yydebug=1; /* modo debug si -t */
 void yyerror(char* mens);
 %}
 
+%union { char string[30];}
 
 %token INTEGER
 %token FLOAT 
 %token CHAR
-%token ID_GLOBAL_VARIABLE 
-%token ID_INSTANCE_VARIABLE 
-%token ID_CONSTANT 
-%token IDENTIF 
+%token <string> ID_GLOBAL_VARIABLE 
+%token <string> ID_INSTANCE_VARIABLE 
+%token <string> ID_CONSTANT 
+%token <string> IDENTIF 
 %token DEF 
 %token END 
 %token IF 
@@ -28,7 +29,7 @@ void yyerror(char* mens);
 %token END_COMPLEX_STRING 
 %token START_STRUCT 
 %token END_STRUCT 
-%token SUBSTRING 
+%token <string> SUBSTRING 
 %token END_LINE 
 %token NOT_EQUAL 
 %token EQUAL_EQUAL 
@@ -36,7 +37,7 @@ void yyerror(char* mens);
 %token GREATER_EQUAL 
 %token NIL 
 %token BOOL 
-%token SEC_SCAPE 
+%token <string> SEC_SCAPE 
 %token NOT
 %token EACH
 %token NEW
@@ -77,8 +78,8 @@ Al final de cada regla: poner puntero currentScope a NULL.
 No vamos a permitir sobrecarga de metodos.
 */
 method_definition : 
-	DEF IDENTIF arguments_definition separator method_code END separator
-	| DEF IDENTIF separator method_code END separator
+	DEF IDENTIF arguments_definition separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2);}
+	| DEF IDENTIF separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2);}
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
 	;
 
@@ -100,8 +101,8 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el metodo actual.
 */
 arguments_definition : 
-	'(' IDENTIF more_arguments_definition ')' 
-	| IDENTIF more_arguments_definition
+	'(' IDENTIF more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2);}
+	| IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $1);}
 	;
 
 /*
@@ -109,7 +110,7 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el método actual.
 */
 more_arguments_definition : 
-	',' IDENTIF more_arguments_definition
+	',' IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2);}
 	|
 	;
 
@@ -125,7 +126,7 @@ Después de ID_CONSTANT: incluir registro de clase con nombre ID_CONSTANT.
 class_definition : 
 	CLASS ID_CONSTANT separator
 		class_content
-	END separator
+	END separator {printf("--------> En class def el identif vale %s\n", $2);}
 	|	CLASS error	END separator {yyerror( "Sintax error on class definition" ); yyerrok;}
 	;
 
@@ -134,8 +135,8 @@ Después de cada ID_INSTANCE_VARIABLE: añadir campo de nombre
 ID_INSTANCE_VARIABLE en la clase actual.
 */
 class_content : 
-	ID_INSTANCE_VARIABLE '=' literal 
-	| ID_INSTANCE_VARIABLE '=' literal separator class_content	
+	ID_INSTANCE_VARIABLE '=' literal {printf("--------> En class content el identif vale %s\n", $1);}
+	| ID_INSTANCE_VARIABLE '=' literal separator class_content {printf("--------> En class content el identif vale %s\n", $1);}
 	| separator class_content	
 	|		
 	;
@@ -150,8 +151,8 @@ Buscar método llamado IDENTIF en el árbol.
    al no estar el metodo en la tabla de simbolos.
 */
 method_call : 
-	IDENTIF  arguments separator
-	| IDENTIF separator
+	IDENTIF  arguments separator {printf("--------> En method call el identif vale %s\n", $1);}
+	| IDENTIF separator {printf("--------> En method call el identif vale %s\n", $1);}
 	| block_call  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
 	;		
@@ -190,7 +191,7 @@ Después del segundo IDENTIF: incluir como argumento.
 block_call : 
 	IDENTIF EACH DO '|' IDENTIF '|' separator
 		method_code
-	END separator
+	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5);}
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
 	;			 
 
@@ -246,15 +247,15 @@ assignment :
 si no existe se añade a menos que atribute no sea
 epsilon. En cuyo caso se debe dar un error.*/
 left_side :
-	ID_GLOBAL_VARIABLE atribute '='
-	| IDENTIF atribute '='
-	| ID_CONSTANT atribute '='
+	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);}
+	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);}
+	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);}
 	;
 	
 /*Aqui se comprueba si la variable es de tipo struct y efectivamente
 tiene el campo identif, o es de tipo vector y expresion es de tipo integer*/
 atribute :
-	'.' IDENTIF
+	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2);}
 	| '[' expression ']'
 	|
 	;	
@@ -268,7 +269,7 @@ right_side :
 	expression
 	| string
 	| ARRAY NEW INTEGER 	
-	| ID_CONSTANT NEW 
+	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);}
 	| '[' content_vector ']'
 	;
 	
@@ -296,7 +297,7 @@ En la segunda regla habria que comprobar que tanto relational_expresion como
 expresion son de tipo boolean*/
 expression :
 	logical_expression
-	| relational_expression OR expression
+	| logical_expression OR expression
 	;
 /*En la segunda regla habria que comprobar que tanto relational_expresion como
 expresion son de tipo boolean*/	
@@ -342,9 +343,9 @@ Si es con not entonces factor tiene que ser de tipo logico
 En todos los casos hay que devolver el tipo del literal/variable
 */
 factor :
-	IDENTIF atribute
-    | ID_CONSTANT atribute
-    | ID_GLOBAL_VARIABLE atribute
+	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1);}
+    | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);}
+    | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);}
 	| literal
 	| NOT factor
 	| '(' expression ')'
@@ -370,9 +371,9 @@ substring :
 	;
 	
 substring_part :
-	SUBSTRING
+	SUBSTRING {printf("--------> En substring el identif vale %s\n", $1);}
 	| string_struct
-	| SEC_SCAPE
+	| SEC_SCAPE {printf("--------> En sec scape el identif vale %s\n", $1);}
 	;
 	
 // Hay que modificar el lexico, porque por ahora solo permite una variable	

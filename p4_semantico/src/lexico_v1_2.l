@@ -32,9 +32,9 @@ false|true                    {return BOOL;}
 Array						{return ARRAY;}
 
 
-$({letter}|_)({letdig}|_)*                     {return ID_GLOBAL_VARIABLE;}
-@({letter}|_)({letdig}|_)*                     {return ID_INSTANCE_VARIABLE;}
-{capital}({letdig}|_)*                               {return ID_CONSTANT;}
+$({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); return ID_GLOBAL_VARIABLE;}
+@({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); return ID_INSTANCE_VARIABLE;}
+{capital}({letdig}|_)*                               {strcpy(yylval.string, yytext); return ID_CONSTANT;}
 ("+"|"-")?{digit}+                            {return INTEGER;}
 ({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {return FLOAT;}
 "!="                                                     {return NOT_EQUAL;}
@@ -49,12 +49,12 @@ $({letter}|_)({letdig}|_)*                     {return ID_GLOBAL_VARIABLE;}
 <COMPLEX_STRING>"#{"         {BEGIN(IDENT); return START_STRUCT;}
 <COMPLEX_STRING>\n         {numlin++; BEGIN(INITIAL); error("Unfinished_string");}
 <COMPLEX_STRING>"#"|"{"         {return SUBSTRING;}
-<COMPLEX_STRING>[^"\n#{\\]*         {return SUBSTRING;}
+<COMPLEX_STRING>[^"\n#{\\]*         {strcpy(yylval.string, yytext); return SUBSTRING;}
 <COMPLEX_STRING>. {BEGIN(COMPLEX_STRING); error("Weird_character_on_string");}
 
-<IDENT>$({letter}|_)({letdig}|_)*         {return ID_GLOBAL_VARIABLE;}
-<IDENT>{capital}({capital}|_)*            {return ID_CONSTANT;}
-<IDENT>({letter}|_)({letdig}|_)*              {return IDENTIF;}
+<IDENT>$({letter}|_)({letdig}|_)*         {strcpy(yylval.string, yytext); return ID_GLOBAL_VARIABLE;}
+<IDENT>{capital}({capital}|_)*            {strcpy(yylval.string, yytext); return ID_CONSTANT;}
+<IDENT>({letter}|_)({letdig}|_)*              {strcpy(yylval.string, yytext); return IDENTIF;}
 <IDENT>"}"         {BEGIN(COMPLEX_STRING); return END_STRUCT;}
 <IDENT>"."         			{return yytext[0];}
 <IDENT>\" 			{BEGIN(INITIAL); error("Unfinished_interpolation_in_string");}
@@ -68,7 +68,7 @@ $({letter}|_)({letdig}|_)*                     {return ID_GLOBAL_VARIABLE;}
 '.'            		{return CHAR;}
 '..+'				{error("Characters_should_follow_the_pattern_'c'_or_'\\c'");}
 
-({letter}|_)({letdig}|_)*                      {return IDENTIF;}
+({letter}|_)({letdig}|_)*                      {strcpy(yylval.string, yytext); return IDENTIF;}
 
 [\r\t ] |      
 #.*            {/* ignores de line */}

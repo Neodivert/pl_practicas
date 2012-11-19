@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include "symbolsTable.h"
+
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
 //extern int yylex();
@@ -8,21 +10,17 @@ int yydebug=1; /* modo debug si -t */
 
 void yyerror(char* mens);
 
-struct Symbol{
-char name [30];
-} symbolTable;
-
 %}
 
-%union { char string[30]; struct Symbol *symbol;}
+%union { char string[30]; struct Symbol *symbol; }
 
-%name <symbol> expression
-%name <symbol> logical_expression
-%name <symbol> relational_expression
-%name <symbol> aritmetic_expression
-%name <symbol> term
-%name <symbol> factor
-%name <symbol> literal
+%type <symbol> expression
+%type <symbol> logical_expression
+%type <symbol> relational_expression
+%type <symbol> aritmetic_expression
+%type <symbol> term
+%type <symbol> factor
+%type <symbol> literal
 
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
@@ -340,14 +338,14 @@ integer integer o float float*/
 term :
 	factor
 	| factor '*' term {int t1, t2;
-						t1 = (Type *)($1->info)->id;
-						t2 = (Type *)($1->info)->id);
+						t1 = ((struct Type *)($1->info))->id;
+						t2 = ((struct Type *)($3->info))->id;
 						//Factor and term are both integer or float.
-						if(t1 == t2 && t1 <= FLOAT){
+						if((t1 == t2) && (t1 <= TYPE_FLOAT)){
+						printf(    "Son del mismo tipo float o integer\n"); 
 							$$ = $1;
 						}else{
-							yyerror("Type error %s and %s do not match or is not\ 
-							integer or float");
+							yyerror("Type error and do not match or is not integer or float\n");
 						} }
 	| factor '/' term
 	;
@@ -363,24 +361,24 @@ factor :
 				struct Symbol S; 
 				struct Type t; 
 				strcpy( S.name, "integer" );
-				t.id = INTEGER; 
+				t.id = TYPE_INTEGER; 
 				S.info = (void *)&t; 
 				$$ = &S;}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
 				struct Symbol S; 
 				struct Type t; 
 				strcpy( S.name, "integer" );
-				t.id = INTEGER; 
+				t.id = TYPE_INTEGER; 
 				S.info = (void *)&t; 
-				$$ = &S;
+				$$ = &S;}
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
 				struct Symbol S; 
 				struct Type t; 
 				strcpy( S.name, "integer" );
-				t.id = INTEGER; 
+				t.id = TYPE_INTEGER; 
 				S.info = (void *)&t; 
-				$$ = &S;
-	| literal {printf("--------> En factor el typo del literal vale %s\n", $1->name); $$ = $1;}
+				$$ = &S;}
+	| literal {printf("--------> En factor el tipo del literal vale %s\n", $1->name); $$ = $1;}
 	| NOT factor {$$ = $2;}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
@@ -390,25 +388,25 @@ literal :
 	INTEGER { 	struct Symbol S; 
 				struct Type t; 
 				strcpy( S.name, "integer" );
-				t.id = INTEGER; 
+				t.id = TYPE_INTEGER; 
 				S.info = (void *)&t; 
 				$$ = &S; }
 	| FLOAT{ 	struct Symbol S; 
 				struct Type t; 
 				strcpy( S.name, "float" );
-				t.id = FLOAT; 
+				t.id = TYPE_FLOAT; 
 				S.info = (void *)&t; 
 				$$ = &S; }
 	| CHAR{ 	struct Symbol S; 
 				struct Type t; 
 				strcpy( S.name, "char" );
-				t.id = CHAR; 
+				t.id = TYPE_CHAR; 
 				S.info = (void *)&t; 
 				$$ = &S; }
 	| BOOL { 	struct Symbol S; 
 				struct Type t; 
 				strcpy( S.name, "boolean" );
-				t.id = BOOLEAN; 
+				t.id = TYPE_BOOLEAN; 
 				S.info = (void *)&t; 
 				$$ = &S; }
 	;

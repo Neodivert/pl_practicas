@@ -1,18 +1,32 @@
 %{
 #include <stdio.h>
+#include <string.h>
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
 //extern int yylex();
 int yydebug=1; /* modo debug si -t */
 
 void yyerror(char* mens);
+
+struct Symbol{
+char type [30];
+} symbolTable;
+
 %}
 
-%union { char string[30];}
+%union { char string[30]; struct Symbol *symbol;}
 
-%token INTEGER
-%token FLOAT 
-%token CHAR
+%type <symbol> expression
+%type <symbol> logical_expression
+%type <symbol> relational_expression
+%type <symbol> aritmetic_expression
+%type <symbol> term
+%type <symbol> factor
+%type <symbol> literal
+
+%token <symbol> INTEGER
+%token <symbol> FLOAT 
+%token <symbol> CHAR
 %token <string> ID_GLOBAL_VARIABLE 
 %token <string> ID_INSTANCE_VARIABLE 
 %token <string> ID_CONSTANT 
@@ -36,7 +50,7 @@ void yyerror(char* mens);
 %token LESS_EQUAL
 %token GREATER_EQUAL 
 %token NIL 
-%token BOOL 
+%token <Symbol *> BOOL 
 %token <string> SEC_SCAPE 
 %token NOT
 %token EACH
@@ -296,7 +310,7 @@ de las de nivel superior.
 En la segunda regla habria que comprobar que tanto relational_expresion como
 expresion son de tipo boolean*/
 expression :
-	logical_expression
+	logical_expression {printf("--------> En expresion el tipo vale %s\n", $1->type);}
 	| logical_expression OR expression
 	;
 /*En la segunda regla habria que comprobar que tanto relational_expresion como
@@ -305,13 +319,6 @@ logical_expression :
 	relational_expression
 	| relational_expression AND logical_expression
 	;
-
-/* Me dio por implementar la resolucion de expresiones aritmeticas y que
-mostrara el resultado :D. Aunque esto no se si hacia falta en esta entrega xD
-Bueno, para indexar un vector si haria falta, pero solo expresiones enteras,
-y aqui las trato todas como reales 
-FIXME Toda esto de calcular el valor seria para hacer un interprete, x tanto es 
-inutil y habra que quitarlo*/
 
 /*En la segunda regla habria que comprobar que tanto artimetic_expresion como
 relational expresion son de tipo integer*/	
@@ -343,20 +350,37 @@ Si es con not entonces factor tiene que ser de tipo logico
 En todos los casos hay que devolver el tipo del literal/variable
 */
 factor :
-	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1);}
-    | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);}
-    | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);}
-	| literal
-	| NOT factor
-	| '(' expression ')'
+	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1); 
+				struct Symbol S; 
+				strcpy( S.type, "integer" ); 
+				$$ = &S;}
+    | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
+    			struct Symbol S; 
+				strcpy( S.type, "integer" ); 
+				$$ = &S;}
+    | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
+    			struct Symbol S; 
+				strcpy( S.type, "integer" ); 
+				$$ = &S;}
+	| literal {printf("--------> En factor el typo del literal vale %s\n", $1->type); $$ = $1;}
+	| NOT factor {$$ = $2;}
+	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
-	INTEGER
-	| FLOAT
-	| CHAR
-	| BOOL 
+	INTEGER { struct Symbol S; 
+				strcpy( S.type, "integer" ); 
+				$$ = &S; }
+	| FLOAT{ struct Symbol S; 
+				strcpy( S.type, "float" ); 
+				$$ = &S; }
+	| CHAR{ struct Symbol S; 
+				strcpy( S.type, "char" ); 
+				$$ = &S; }
+	| BOOL { struct Symbol S; 
+				strcpy( S.type, "bool" ); 
+				$$ = &S; }
 	;
 	
 string :

@@ -20,7 +20,7 @@
 		
 }*/
 
-void insertSimbol(struct Symbol *symb){
+void insertSymbol(struct Symbol *symb){
 	if(symTable == NULL){ 
 		symTable = symb;
 		symTable->prev = NULL;	

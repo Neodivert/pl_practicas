@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "symbolsTable.h"
+#include "semanticUtilities.h"
 
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
@@ -22,6 +23,8 @@ void yyerror(char* mens);
 %type <symbol> term
 %type <symbol> factor
 %type <symbol> literal
+%type <string> relational_operator
+%type <symbol> array_content
 
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
@@ -49,7 +52,7 @@ void yyerror(char* mens);
 %token LESS_EQUAL
 %token GREATER_EQUAL 
 %token NIL 
-%token <Symbol *> BOOL 
+%token <symbol> BOOL 
 %token <string> SEC_SCAPE 
 %token NOT
 %token EACH
@@ -211,15 +214,16 @@ block_call :
 loop : 
 	WHILE expression DO separator
 		method_code 
-	END separator
+	END separator {checkIsBoolean($2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 	
 if_construction : 
 	IF expression after_if
 		method_code
-		else_part
+		else_part	
 	END separator
+				{checkIsBoolean($2);}
 	| IF expression after_if
 		error
 		else_part
@@ -283,22 +287,22 @@ right_side :
 	| string
 	| ARRAY NEW INTEGER 	
 	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);}
-	| '[' content_vector ']'
+	| '[' array_content ']'
 	;
 	
 /*Comprobar que todos los literales son del mismo tipo*/		
-content_vector :   
+array_content :   
 	literal
-	| literal ',' content_vector
+	| literal ',' array_content {$$ = checkArrayContent($1, $3);}
 	;		      
 
 relational_operator :
-	EQUAL_EQUAL
-	| LESS_EQUAL
-	| GREATER_EQUAL
-	| '<'
-	| '>'
-	| NOT_EQUAL
+	EQUAL_EQUAL {strcpy($$, "==");}
+	| LESS_EQUAL {strcpy($$,"<=");}
+	| GREATER_EQUAL {strcpy($$, ">=");}
+	| '<' {strcpy($$, "<");}
+	| '>' {strcpy($$,">");}
+	| NOT_EQUAL {strcpy($$,"!=");}
 	;
 
 /*En todas las expresiones si se usa el operador, OR
@@ -306,49 +310,31 @@ en este caso, tenemos una expresion logica, pero si no
 entonces es del tipo que sea la expresion del nivel
 inferior, es decir las de nivel inferior son subconjuntos
 de las de nivel superior.
-En la segunda regla habria que comprobar que tanto relational_expresion como
-expresion son de tipo boolean*/
+*/
 expression :
-	logical_expression {printf("--------> En expresion el tipo vale %s\n", $1->name);}
-	| logical_expression OR expression
+	logical_expression //{printf("--------> En expresion el tipo vale %s\n", $1->name);}
+	| logical_expression OR expression {$$ = checkLogicalExpression($1, $3, "or");}
 	;
-/*En la segunda regla habria que comprobar que tanto relational_expresion como
-expresion son de tipo boolean*/	
 logical_expression :
 	relational_expression
-	| relational_expression AND logical_expression
-	;
-
-/*En la segunda regla habria que comprobar que tanto artimetic_expresion como
-relational expresion son de tipo integer*/	
-relational_expression :
-	aritmetic_expression
-	| aritmetic_expression relational_operator relational_expression {strcpy($1->name, "bool");}
-	;
-
-/*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
-integer integer o float float*/
-aritmetic_expression :
-	term
-	| term '+' aritmetic_expression
-	| term '-' aritmetic_expression
+	| relational_expression AND logical_expression {$$ = checkLogicalExpression($1, $3, "and");}
 	;
 	
-/*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
-integer integer o float float*/
+relational_expression :
+	aritmetic_expression
+	| aritmetic_expression relational_operator relational_expression {$$ = checkRelationalExpression($1, $3, $2);}
+	;
+
+aritmetic_expression :
+	term
+	| term '+' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "+");}
+	| term '-' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "-");}
+	;
+	
 term :
-	factor {printf("De factor a term tipo = %s %d \n",$1->name, ((struct Type *)($1->info))->id);}
-	| factor '*' term {int t1, t2;
-						t1 = ((struct Type *)($1->info))->id;
-						t2 = ((struct Type *)($3->info))->id;
-						//Factor and term are both integer or float.
-						if((t1 == t2) && (t1 <= TYPE_FLOAT)){
-						printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
-							$$ = $1;
-						}else{
-							yyerror("Type error and do not match or is not integer or float\n");
-						} }
-	| factor '/' term
+	factor //{printf("De factor a term tipo = %s %d \n",$1->name, ((struct Type *)($1->info))->id);}
+	| factor '*' term {$$ = checkAritmeticExpression($1, $3, "*");}
+	| factor '/' term {$$ = checkAritmeticExpression($1, $3, "/");}
 	;
 
 /*Comprobar que los identificadores existen y es una variable,
@@ -357,80 +343,27 @@ Si no existen entonces la variable no esta definida y es un error
 Si es con not entonces factor tiene que ser de tipo logico
 En todos los casos hay que devolver el tipo del literal/variable
 */
+//TODO En realidad aqui y en literal no se deberian de crear los simbolos
+//sino buscarlos en la tabla. Ademas los de variables habria que acceder a 
+//la tabla a ver si existe, etc.
 factor :
 	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1); 
-				struct Symbol *S; 
-				struct Type *t; 
-				S = malloc(sizeof(struct Symbol));
-				t = malloc(sizeof(struct Type));
-				strcpy( S->name, "integer" );
-				t->id = TYPE_INTEGER; 
-				S->info = (void *)t;
-				insertSymbol(S); 
-				$$ = S;}
+				$$ = createSymbol("integer", TYPE_INTEGER);}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol *S; 
-				struct Type *t; 
-				S = malloc(sizeof(struct Symbol));
-				t = malloc(sizeof(struct Type));
-				strcpy( S->name, "integer" );
-				t->id = TYPE_INTEGER; 
-				S->info = (void *)t;
-				insertSymbol(S); 
-				$$ = S;}
+				$$ = createSymbol("integer", TYPE_INTEGER);}
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol *S; 
-				struct Type *t; 
-				S = malloc(sizeof(struct Symbol));
-				t = malloc(sizeof(struct Type));
-				strcpy( S->name, "integer" );
-				t->id = TYPE_INTEGER; 
-				S->info = (void *)t;
-				insertSymbol(S); 
-				$$ = S;}
+				$$ = createSymbol("integer", TYPE_INTEGER);}
 	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
-	| NOT factor {$$ = $2;}
+	| NOT factor {$$ = checkNotExpression($2);}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
-	INTEGER { 	struct Symbol *S; 
-				struct Type *t; 
-				S = malloc(sizeof(struct Symbol));
-				t = malloc(sizeof(struct Type));
-				strcpy( S->name, "integer" );
-				t->id = TYPE_INTEGER; 
-				S->info = (void *)t;
-				insertSymbol(S); 
-				$$ = S;}
-	| FLOAT{ 	struct Symbol *S; 
-				struct Type *t; 
-				S = malloc(sizeof(struct Symbol));
-				t = malloc(sizeof(struct Type));
-				strcpy( S->name, "float" );
-				t->id = TYPE_FLOAT; 
-				S->info = (void *)t;
-				insertSymbol(S); 
-				$$ = S;}
-	| CHAR{ 	struct Symbol *S; 
-				struct Type *t; 
-				S = malloc(sizeof(struct Symbol));
-				t = malloc(sizeof(struct Type));
-				strcpy( S->name, "char" );
-				t->id = TYPE_CHAR; 
-				S->info = (void *)t;
-				insertSymbol(S); 
-				$$ = S;}
-	| BOOL{ 	struct Symbol *S; 
-				struct Type *t; 
-				S = malloc(sizeof(struct Symbol));
-				t = malloc(sizeof(struct Type));
-				strcpy( S->name, "boolean" );
-				t->id = TYPE_BOOLEAN; 
-				S->info = (void *)t;
-				insertSymbol(S); 
-				$$ = S;}
+	INTEGER		{$$ = createSymbol("integer", TYPE_INTEGER);}
+	| FLOAT		{$$ = createSymbol("float", TYPE_FLOAT);}
+	| CHAR		{$$ = createSymbol("char", TYPE_CHAR);}
+	| BOOL		{$$ = createSymbol("boolean", TYPE_BOOLEAN);}
 	;
 	
 string :

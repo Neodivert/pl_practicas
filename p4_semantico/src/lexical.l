@@ -1,5 +1,5 @@
 %{
-#include "sintactico_v1_2.tab.h"
+#include "sintax.tab.h"
 
 int numlin = 1;
 void error(char*);

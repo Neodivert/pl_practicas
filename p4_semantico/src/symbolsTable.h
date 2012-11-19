@@ -1,18 +1,17 @@
-#include <stdlib.h>
-
 #ifndef SYMBOLS_TABLE_H
 #define SYMBOLS_TABLE_H
 
-const int MAX_SIZE = 30;
+#include <stdlib.h>
+static const int MAX_SIZE = 30;
 
 /*                          Super Estructura "Symbol"                         */
 /******************************************************************************/
 // Valores posibles para el campo "symType" de Symbol.
-const int TYPE = 1;
-const int VARIABLE = 2;
-const int CONSTANT = 3;
-const int FUNCTION = 4;
-const int BLOCK = 5;
+static const int TYPE = 1;
+static const int VARIABLE = 2;
+static const int CONSTANT = 3;
+static const int FUNCTION = 4;
+static const int BLOCK = 5;
 
 struct Symbol
 {
@@ -28,13 +27,16 @@ struct Symbol
 /******************************************************************************/
 
 // Valores posibles para el campo "id" de Type.
-const int TYPE_INTEGER = 1;
-const int TYPE_FLOAT = 2;
-const int TYPE_STRING = 3;
-const int TYPE_CHAR = 4;
-const int TYPE_BOOLEAN = 5;
-const int TYPE_CLASS = 6;
+static const int TYPE_INTEGER = 1;
+static const int TYPE_FLOAT = 2;
+static const int TYPE_STRING = 3;
+static const int TYPE_CHAR = 4;
+static const int TYPE_BOOLEAN = 5;
+static const int TYPE_CLASS = 6;
 
+//TODO Que hacemos con los arrays? Incluirlos dentro de type
+//entonces, habria que añadir dos campos mas, kizas un void*
+//extra_info? con un struct k tenga tamaño y tipo del array
 struct Type {
    int id;
    struct Symbol *fields;   // Si id = CLASS, esto apuntaria a los campos.
@@ -59,7 +61,7 @@ struct Method {
 
 
 typedef struct Symbol Symbol; 
-Symbol* symTable = NULL;
+static Symbol* symTable = NULL;
 
 //Asumo que ahora hay que crear el árbol
 

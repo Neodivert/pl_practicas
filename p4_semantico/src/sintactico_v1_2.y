@@ -10,6 +10,7 @@ int yydebug=1; /* modo debug si -t */
 
 void yyerror(char* mens);
 
+
 %}
 
 %union { char string[30]; struct Symbol *symbol; }
@@ -336,13 +337,13 @@ aritmetic_expression :
 /*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
 integer integer o float float*/
 term :
-	factor
+	factor {printf("De factor a term tipo = %s %d \n",$1->name, ((struct Type *)($1->info))->id);}
 	| factor '*' term {int t1, t2;
 						t1 = ((struct Type *)($1->info))->id;
 						t2 = ((struct Type *)($3->info))->id;
 						//Factor and term are both integer or float.
 						if((t1 == t2) && (t1 <= TYPE_FLOAT)){
-						printf(    "Son del mismo tipo float o integer\n"); 
+						printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
 							$$ = $1;
 						}else{
 							yyerror("Type error and do not match or is not integer or float\n");
@@ -358,57 +359,78 @@ En todos los casos hay que devolver el tipo del literal/variable
 */
 factor :
 	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1); 
-				struct Symbol S; 
-				struct Type t; 
-				strcpy( S.name, "integer" );
-				t.id = TYPE_INTEGER; 
-				S.info = (void *)&t; 
-				$$ = &S;}
+				struct Symbol *S; 
+				struct Type *t; 
+				S = malloc(sizeof(struct Symbol));
+				t = malloc(sizeof(struct Type));
+				strcpy( S->name, "integer" );
+				t->id = TYPE_INTEGER; 
+				S->info = (void *)t;
+				insertSymbol(S); 
+				$$ = S;}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol S; 
-				struct Type t; 
-				strcpy( S.name, "integer" );
-				t.id = TYPE_INTEGER; 
-				S.info = (void *)&t; 
-				$$ = &S;}
+				struct Symbol *S; 
+				struct Type *t; 
+				S = malloc(sizeof(struct Symbol));
+				t = malloc(sizeof(struct Type));
+				strcpy( S->name, "integer" );
+				t->id = TYPE_INTEGER; 
+				S->info = (void *)t;
+				insertSymbol(S); 
+				$$ = S;}
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol S; 
-				struct Type t; 
-				strcpy( S.name, "integer" );
-				t.id = TYPE_INTEGER; 
-				S.info = (void *)&t; 
-				$$ = &S;}
-	| literal {printf("--------> En factor el tipo del literal vale %s\n", $1->name); $$ = $1;}
+				struct Symbol *S; 
+				struct Type *t; 
+				S = malloc(sizeof(struct Symbol));
+				t = malloc(sizeof(struct Type));
+				strcpy( S->name, "integer" );
+				t->id = TYPE_INTEGER; 
+				S->info = (void *)t;
+				insertSymbol(S); 
+				$$ = S;}
+	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
 	| NOT factor {$$ = $2;}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
-	INTEGER { 	struct Symbol S; 
-				struct Type t; 
-				strcpy( S.name, "integer" );
-				t.id = TYPE_INTEGER; 
-				S.info = (void *)&t; 
-				$$ = &S; }
-	| FLOAT{ 	struct Symbol S; 
-				struct Type t; 
-				strcpy( S.name, "float" );
-				t.id = TYPE_FLOAT; 
-				S.info = (void *)&t; 
-				$$ = &S; }
-	| CHAR{ 	struct Symbol S; 
-				struct Type t; 
-				strcpy( S.name, "char" );
-				t.id = TYPE_CHAR; 
-				S.info = (void *)&t; 
-				$$ = &S; }
-	| BOOL { 	struct Symbol S; 
-				struct Type t; 
-				strcpy( S.name, "boolean" );
-				t.id = TYPE_BOOLEAN; 
-				S.info = (void *)&t; 
-				$$ = &S; }
+	INTEGER { 	struct Symbol *S; 
+				struct Type *t; 
+				S = malloc(sizeof(struct Symbol));
+				t = malloc(sizeof(struct Type));
+				strcpy( S->name, "integer" );
+				t->id = TYPE_INTEGER; 
+				S->info = (void *)t;
+				insertSymbol(S); 
+				$$ = S;}
+	| FLOAT{ 	struct Symbol *S; 
+				struct Type *t; 
+				S = malloc(sizeof(struct Symbol));
+				t = malloc(sizeof(struct Type));
+				strcpy( S->name, "float" );
+				t->id = TYPE_FLOAT; 
+				S->info = (void *)t;
+				insertSymbol(S); 
+				$$ = S;}
+	| CHAR{ 	struct Symbol *S; 
+				struct Type *t; 
+				S = malloc(sizeof(struct Symbol));
+				t = malloc(sizeof(struct Type));
+				strcpy( S->name, "char" );
+				t->id = TYPE_CHAR; 
+				S->info = (void *)t;
+				insertSymbol(S); 
+				$$ = S;}
+	| BOOL{ 	struct Symbol *S; 
+				struct Type *t; 
+				S = malloc(sizeof(struct Symbol));
+				t = malloc(sizeof(struct Type));
+				strcpy( S->name, "boolean" );
+				t->id = TYPE_BOOLEAN; 
+				S->info = (void *)t;
+				insertSymbol(S); 
+				$$ = S;}
 	;
 	
 string :
@@ -447,6 +469,7 @@ string_struct :
 int main(int argc, char** argv) {
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
+	printf("Termine");
 }
 
 void yyerror(char* mens) {

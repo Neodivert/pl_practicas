@@ -1,3 +1,4 @@
+#include <stdlib.h>
 
 #ifndef SYMBOLS_TABLE_H
 #define SYMBOLS_TABLE_H
@@ -58,7 +59,7 @@ struct Method {
 
 
 typedef struct Symbol Symbol; 
-extern Symbol* symTable;
+Symbol* symTable = NULL;
 
 //Asumo que ahora hay que crear el árbol
 
@@ -76,8 +77,9 @@ extern Symbol* symTable;
 
 
 //Método para insertar un nodo que contiene un símbolo
-struct Symbol* insert( struct Symbol* actual, struct Symbol *Symb, int type ); // He cambiado el & por * en el segundo argumento por que daba error (en C no habian referencias).
+//struct Symbol* insert( struct Symbol* actual, struct Symbol *Symb, int type ); // He cambiado el & por * en el segundo argumento por que daba error (en C no habian referencias).
 
+void insertSymbol(struct Symbol *symb);
 // Cuando te encuentras una variable global en una definicion no haces nada, simplemente la almacenas
 // en la tabla local al método. Una vez encuentras la llamada a dicho método coges y haces un recorrido
 // del código en busca de las variables globales. Una vez hecho esto se cogen las variables globales
@@ -87,6 +89,8 @@ struct Symbol* insert( struct Symbol* actual, struct Symbol *Symb, int type ); /
 //
 //
 
+//Free all memory
+void freeSymbTable();
 
 #endif
 // SYMBOLS_TABLE_H

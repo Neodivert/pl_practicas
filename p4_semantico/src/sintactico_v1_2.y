@@ -9,20 +9,20 @@ int yydebug=1; /* modo debug si -t */
 void yyerror(char* mens);
 
 struct Symbol{
-char type [30];
+char name [30];
 } symbolTable;
 
 %}
 
 %union { char string[30]; struct Symbol *symbol;}
 
-%type <symbol> expression
-%type <symbol> logical_expression
-%type <symbol> relational_expression
-%type <symbol> aritmetic_expression
-%type <symbol> term
-%type <symbol> factor
-%type <symbol> literal
+%name <symbol> expression
+%name <symbol> logical_expression
+%name <symbol> relational_expression
+%name <symbol> aritmetic_expression
+%name <symbol> term
+%name <symbol> factor
+%name <symbol> literal
 
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
@@ -310,7 +310,7 @@ de las de nivel superior.
 En la segunda regla habria que comprobar que tanto relational_expresion como
 expresion son de tipo boolean*/
 expression :
-	logical_expression {printf("--------> En expresion el tipo vale %s\n", $1->type);}
+	logical_expression {printf("--------> En expresion el tipo vale %s\n", $1->name);}
 	| logical_expression OR expression
 	;
 /*En la segunda regla habria que comprobar que tanto relational_expresion como
@@ -324,7 +324,7 @@ logical_expression :
 relational expresion son de tipo integer*/	
 relational_expression :
 	aritmetic_expression
-	| aritmetic_expression relational_operator relational_expression
+	| aritmetic_expression relational_operator relational_expression {strcpy($1->name, "bool");}
 	;
 
 /*Comprobar que el tipo de term y de aritmetic expresion son compatibles:
@@ -339,7 +339,16 @@ aritmetic_expression :
 integer integer o float float*/
 term :
 	factor
-	| factor '*' term
+	| factor '*' term {int t1, t2;
+						t1 = (Type *)($1->info)->id;
+						t2 = (Type *)($1->info)->id);
+						//Factor and term are both integer or float.
+						if(t1 == t2 && t1 <= FLOAT){
+							$$ = $1;
+						}else{
+							yyerror("Type error %s and %s do not match or is not\ 
+							integer or float");
+						} }
 	| factor '/' term
 	;
 
@@ -352,34 +361,55 @@ En todos los casos hay que devolver el tipo del literal/variable
 factor :
 	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1); 
 				struct Symbol S; 
-				strcpy( S.type, "integer" ); 
+				struct Type t; 
+				strcpy( S.name, "integer" );
+				t.id = INTEGER; 
+				S.info = (void *)&t; 
 				$$ = &S;}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
-    			struct Symbol S; 
-				strcpy( S.type, "integer" ); 
-				$$ = &S;}
+				struct Symbol S; 
+				struct Type t; 
+				strcpy( S.name, "integer" );
+				t.id = INTEGER; 
+				S.info = (void *)&t; 
+				$$ = &S;
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
-    			struct Symbol S; 
-				strcpy( S.type, "integer" ); 
-				$$ = &S;}
-	| literal {printf("--------> En factor el typo del literal vale %s\n", $1->type); $$ = $1;}
+				struct Symbol S; 
+				struct Type t; 
+				strcpy( S.name, "integer" );
+				t.id = INTEGER; 
+				S.info = (void *)&t; 
+				$$ = &S;
+	| literal {printf("--------> En factor el typo del literal vale %s\n", $1->name); $$ = $1;}
 	| NOT factor {$$ = $2;}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
-	INTEGER { struct Symbol S; 
-				strcpy( S.type, "integer" ); 
+	INTEGER { 	struct Symbol S; 
+				struct Type t; 
+				strcpy( S.name, "integer" );
+				t.id = INTEGER; 
+				S.info = (void *)&t; 
 				$$ = &S; }
-	| FLOAT{ struct Symbol S; 
-				strcpy( S.type, "float" ); 
+	| FLOAT{ 	struct Symbol S; 
+				struct Type t; 
+				strcpy( S.name, "float" );
+				t.id = FLOAT; 
+				S.info = (void *)&t; 
 				$$ = &S; }
-	| CHAR{ struct Symbol S; 
-				strcpy( S.type, "char" ); 
+	| CHAR{ 	struct Symbol S; 
+				struct Type t; 
+				strcpy( S.name, "char" );
+				t.id = CHAR; 
+				S.info = (void *)&t; 
 				$$ = &S; }
-	| BOOL { struct Symbol S; 
-				strcpy( S.type, "bool" ); 
+	| BOOL { 	struct Symbol S; 
+				struct Type t; 
+				strcpy( S.name, "boolean" );
+				t.id = BOOLEAN; 
+				S.info = (void *)&t; 
 				$$ = &S; }
 	;
 	
@@ -425,7 +455,7 @@ void yyerror(char* mens) {
 	// Este if es un apaño cutre porque si no muestra muchos mensajes de error
 	// que no dicen nada y de los que luego se recupera
 	if(strcmp(mens,"syntax error") != 0 ) 
-		printf("---------Error en linea %i: %s\n",numlin,mens);
+		printf("---------Error on line %i: %s\n",numlin,mens);
 }
 
 /* Vano intento por reducir la parte de method code, lo pongo aqui 

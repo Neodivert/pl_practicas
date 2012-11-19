@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include "symbolsTable.h"
+
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
 //extern int yylex();
@@ -8,13 +10,11 @@ int yydebug=1; /* modo debug si -t */
 
 void yyerror(char* mens);
 
-struct Symbol{
-char type [30];
-} symbolTable;
+//extern struct Symbol;
 
 %}
 
-%union { char string[30]; struct Symbol *symbol;}
+%union { char string[30]; struct Symbol *symbol; }
 
 %type <symbol> expression
 %type <symbol> logical_expression
@@ -310,7 +310,7 @@ de las de nivel superior.
 En la segunda regla habria que comprobar que tanto relational_expresion como
 expresion son de tipo boolean*/
 expression :
-	logical_expression {printf("--------> En expresion el tipo vale %s\n", $1->type);}
+	logical_expression {printf("--------> En expresion el tipo vale %s\n", $1->name);}
 	| logical_expression OR expression
 	;
 /*En la segunda regla habria que comprobar que tanto relational_expresion como
@@ -352,17 +352,17 @@ En todos los casos hay que devolver el tipo del literal/variable
 factor :
 	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1); 
 				struct Symbol S; 
-				strcpy( S.type, "integer" ); 
+				strcpy( S.name, "integer" ); 
 				$$ = &S;}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
     			struct Symbol S; 
-				strcpy( S.type, "integer" ); 
+				strcpy( S.name, "integer" ); 
 				$$ = &S;}
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
     			struct Symbol S; 
-				strcpy( S.type, "integer" ); 
+				strcpy( S.name, "integer" ); 
 				$$ = &S;}
-	| literal {printf("--------> En factor el typo del literal vale %s\n", $1->type); $$ = $1;}
+	| literal {printf("--------> En factor el typo del literal vale %s\n", $1->name); $$ = $1;}
 	| NOT factor {$$ = $2;}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
@@ -370,16 +370,16 @@ factor :
 
 literal : 
 	INTEGER { struct Symbol S; 
-				strcpy( S.type, "integer" ); 
+				strcpy( S.name, "integer" ); 
 				$$ = &S; }
 	| FLOAT{ struct Symbol S; 
-				strcpy( S.type, "float" ); 
+				strcpy( S.name, "float" ); 
 				$$ = &S; }
 	| CHAR{ struct Symbol S; 
-				strcpy( S.type, "char" ); 
+				strcpy( S.name, "char" ); 
 				$$ = &S; }
 	| BOOL { struct Symbol S; 
-				strcpy( S.type, "bool" ); 
+				strcpy( S.name, "bool" ); 
 				$$ = &S; }
 	;
 	

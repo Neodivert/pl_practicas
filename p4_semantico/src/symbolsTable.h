@@ -78,42 +78,50 @@ static Symbol* symTable = NULL;
 /*                                  Functions                                 */
 /******************************************************************************/
 
-/*
-Create a "empty" symbol defining only its symType and name (*)
+/*                       1. Generic Symbols insertion                         */
 
-(*) La idea es que todas las funciones de "insertMethodDefinition", 
-"insertClassDefinition", llamen primero a esta funcion para reservar
-la memoria dinamica y rellenar los campos comunes a todos los simbolos.
-*/
+// Create a "empty generic" symbol defining only its symType and name
 struct Symbol* createSymbol ( int symType, const char* const name );
 
+void insertSymbol( struct Symbol *symb );
 
-/*                        Specific symbols insertion                          */
+
+/*                       2. Specific symbols insertion                        */
 
 void insertMethodDefinition( const char* const name  );
 
 void insertTypeDefinition( const char* const name, int typeId );
 
-void showSymTable();
-
 void insertVariable( struct Symbol *symbol, struct Symbol *type );
 
-void insertSymbol( struct Symbol *symb );
+
+/*                             3. Symbol search                               */
 
 struct Symbol* searchType( int id );
 
 struct Symbol* searchVariable( int symType, const char* const name );
 
-//Free all memory
-void freeSymbol(struct Symbol*);
 
+/*                       4. Symbols table management                          */
+
+// Insert a "main method" and the basic types (integer, float, etc).
+void initializeSymTable();
+
+// Show the entire symbol tree.
+void showSymTable( struct Symbol* sym, int level );
+
+// Free the entire symbol tree.
 void freeSymbTable();
 
-void initializeSymTable();
+// Free the allocate memory for a symbol.
+void freeSymbol(struct Symbol*);
+
+
+/*                                  5. Others                                 */
 
 void GoOutOfScope();
 
-void showSymTable( struct Symbol* sym, int level );
+
 
 //Asumo que ahora hay que crear el árbol
 

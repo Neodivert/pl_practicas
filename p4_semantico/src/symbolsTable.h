@@ -2,37 +2,42 @@
 #define SYMBOLS_TABLE_H
 
 #include <stdlib.h>
+#include <string.h>
+
 static const int MAX_SIZE = 30;
 
-/*                          Super Estructura "Symbol"                         */
+/*                                   Constants                                */
 /******************************************************************************/
+
 // Valores posibles para el campo "symType" de Symbol.
-static const int TYPE = 1;
-static const int VARIABLE = 2;
-static const int CONSTANT = 3;
-static const int FUNCTION = 4;
-static const int BLOCK = 5;
+#define SYM_TYPE 1
+#define SYM_VARIABLE 2
+#define SYM_CONSTANT 3
+#define SYM_METHOD 4
+#define SYM_BLOCK 5
+
+
+// Valores posibles para el campo "id" de Type.
+#define TYPE_INTEGER 1
+#define TYPE_FLOAT 2
+#define TYPE_STRING 3
+#define TYPE_CHAR 4
+#define TYPE_BOOLEAN 5
+#define TYPE_CLASS 6
+
+
+/*                                Data structs                                */
+/******************************************************************************/
 
 struct Symbol
 {
-   int symType; // symType = TYPE, VARIABLE, etc.
-	char name[30];
+   	int symType; // symType = TYPE, VARIABLE, etc.
+	char *name;
 	
 	void *info;
 	struct Symbol* prev;//, pos;	// Posición en el padre
 }; 								// *symbols;  
 
-
-/*                Estructura para los diferentes tipos de simbolos            */
-/******************************************************************************/
-
-// Valores posibles para el campo "id" de Type.
-static const int TYPE_INTEGER = 1;
-static const int TYPE_FLOAT = 2;
-static const int TYPE_STRING = 3;
-static const int TYPE_CHAR = 4;
-static const int TYPE_BOOLEAN = 5;
-static const int TYPE_CLASS = 6;
 
 //TODO Que hacemos con los arrays? Incluirlos dentro de type
 //entonces, habria que añadir dos campos mas, kizas un void*
@@ -43,7 +48,7 @@ struct Type {
 };
 
 struct Variable {
-   struct Symbol* type;
+   	struct Symbol* type;
 	//void *value; 				// int, float, char*, bool
 	// La linea anterior esta comentada porque en principio no nos interesa saber
 	// el valor de una variable (como compilador).
@@ -59,9 +64,42 @@ struct Method {
 	struct Method* block;
 } function;
 
-
 typedef struct Symbol Symbol; 
 static Symbol* symTable = NULL;
+
+
+/*                                  Functions                                 */
+/******************************************************************************/
+
+/*
+Create a "empty" symbol defining only its symType and name (*)
+
+(*) La idea es que todas las funciones de "insertMethodDefinition", 
+"insertClassDefinition", llamen primero a esta funcion para reservar
+la memoria dinamica y rellenar los campos comunes a todos los simbolos.
+*/
+struct Symbol* createSymbol ( int symType, const char* const name );
+
+
+/*                        Specific symbols insertion                          */
+
+void insertMethodDefinition( const char* const name  );
+
+void insertTypeDefinition( const char* const name, int typeId );
+
+void showSymTable();
+
+
+void insertSymbol( struct Symbol *symb );
+
+struct Symbol* searchType( int id );
+
+//Free all memory
+void freeSymbTable();
+
+
+
+
 
 //Asumo que ahora hay que crear el árbol
 
@@ -81,7 +119,9 @@ static Symbol* symTable = NULL;
 //Método para insertar un nodo que contiene un símbolo
 //struct Symbol* insert( struct Symbol* actual, struct Symbol *Symb, int type ); // He cambiado el & por * en el segundo argumento por que daba error (en C no habian referencias).
 
-void insertSymbol(struct Symbol *symb);
+
+
+
 // Cuando te encuentras una variable global en una definicion no haces nada, simplemente la almacenas
 // en la tabla local al método. Una vez encuentras la llamada a dicho método coges y haces un recorrido
 // del código en busca de las variables globales. Una vez hecho esto se cogen las variables globales
@@ -90,9 +130,6 @@ void insertSymbol(struct Symbol *symb);
 //
 //
 //
-
-//Free all memory
-void freeSymbTable();
 
 #endif
 // SYMBOLS_TABLE_H

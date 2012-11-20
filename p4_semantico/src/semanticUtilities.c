@@ -19,6 +19,7 @@ struct Symbol* checkAritmeticExpression(struct Symbol* s1, struct Symbol* s2, ch
 		strcat(message, " is not permitted");
 		yyerror((char *)message);
 	}
+
 	return s1;
 }	
 
@@ -43,8 +44,10 @@ struct Symbol* checkRelationalExpression(struct Symbol* s1, struct Symbol* s2, c
 	}
 	//TODO Esto esta mal, deberia devolver simplemente el puntero al
 	//registro boolean, pero de momento cuela asi
-	((struct Type *)(s1->info))->id = TYPE_BOOLEAN;
-	strcpy(s1->name, "boolean");
+	
+	//((struct Type *)(s1->info))->id = TYPE_BOOLEAN;
+	//strcpy(s1->name, "boolean");
+
 	return s1;
 }
 
@@ -117,7 +120,7 @@ struct Symbol* checkArrayContent(struct Symbol* s1, struct Symbol* s2){
 	return s1;
 }	
 
-struct Symbol* createSymbol(char *name, int type){
+struct Symbol* createSymbol_(char *name, int type){
 	struct Symbol *s; 
 	struct Type *t; 
 	s = malloc(sizeof(struct Symbol));

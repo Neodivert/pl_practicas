@@ -20,7 +20,7 @@ struct Symbol* checkIsBoolean(struct Symbol* s);
 
 struct Symbol* checkArrayContent(struct Symbol* s1, struct Symbol* s2);
 
-struct Symbol* createSymbol(char *name, int type);
+struct Symbol* createSymbol_(char *name, int type);
 
 #endif
 // SEMANTIC_UTILITIES_H

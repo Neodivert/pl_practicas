@@ -348,11 +348,11 @@ En todos los casos hay que devolver el tipo del literal/variable
 //la tabla a ver si existe, etc.
 factor :
 	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1); 
-				$$ = createSymbol("integer", TYPE_INTEGER);}
+				$$ = searchType( TYPE_INTEGER ); }
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
-				$$ = createSymbol("integer", TYPE_INTEGER);}
+				$$ = searchType( TYPE_INTEGER ); }
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
-				$$ = createSymbol("integer", TYPE_INTEGER);}
+				$$ = searchType( TYPE_INTEGER ); }
 	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
 	| NOT factor {$$ = checkNotExpression($2);}
 	| '(' expression ')' {$$ = $2;}
@@ -360,10 +360,10 @@ factor :
 	;
 
 literal : 
-	INTEGER		{$$ = createSymbol("integer", TYPE_INTEGER);}
-	| FLOAT		{$$ = createSymbol("float", TYPE_FLOAT);}
-	| CHAR		{$$ = createSymbol("char", TYPE_CHAR);}
-	| BOOL		{$$ = createSymbol("boolean", TYPE_BOOLEAN);}
+	INTEGER		{$$ = searchType( TYPE_INTEGER ); }
+	| FLOAT		{$$ = searchType( TYPE_FLOAT ); }
+	| CHAR		{$$ = searchType( TYPE_CHAR ); }
+	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}
 	;
 	
 string :
@@ -400,9 +400,22 @@ string_struct :
 //En la segunda parte es la generacion de codigo, que seria volver a llamar
 //a yyparse pero esta vez ya tenemos en arbol lleno.  
 int main(int argc, char** argv) {
+	// Inicializa la tabla de simbolos con los tipos basicos.
+	insertTypeDefinition( "integer", TYPE_INTEGER );
+	insertTypeDefinition( "float", TYPE_FLOAT );
+	insertTypeDefinition( "string", TYPE_STRING );
+	insertTypeDefinition( "char", TYPE_CHAR );
+	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
+
+	showSymTable();
+	//return;
+
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
 	printf("Termine");
+
+	// Libera la tabla de simbolos
+	freeSymbTable();
 }
 
 void yyerror(char* mens) {

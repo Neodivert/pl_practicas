@@ -42,13 +42,8 @@ struct Symbol* checkRelationalExpression(struct Symbol* s1, struct Symbol* s2, c
 		strcat(message, " is not permitted");
 		yyerror((char *)message);
 	}
-	//TODO Esto esta mal, deberia devolver simplemente el puntero al
-	//registro boolean, pero de momento cuela asi
-	
-	//((struct Type *)(s1->info))->id = TYPE_BOOLEAN;
-	//strcpy(s1->name, "boolean");
-
-	return s1;
+	//Relational expression returns a boolean value
+	return searchType( TYPE_BOOLEAN );
 }
 
 struct Symbol* checkLogicalExpression(struct Symbol* s1, struct Symbol* s2, char *op){

@@ -18,9 +18,7 @@ struct Symbol* checkNotExpression(struct Symbol* s);
 
 struct Symbol* checkIsBoolean(struct Symbol* s);
 
-struct Symbol* checkArrayContent(struct Symbol* s1, struct Symbol* s2);
-
-struct Symbol* createSymbol_(char *name, int type);
+struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
 #endif
 // SEMANTIC_UTILITIES_H

@@ -89,12 +89,17 @@ void insertTypeDefinition( const char* const name, int typeId );
 
 void showSymTable();
 
+void insertVariable( struct Symbol *symbol, struct Symbol *type );
 
 void insertSymbol( struct Symbol *symb );
 
 struct Symbol* searchType( int id );
 
+struct Symbol* searchVariable( const char* const name );
+
 //Free all memory
+void freeSymbol(struct Symbol*);
+
 void freeSymbTable();
 
 

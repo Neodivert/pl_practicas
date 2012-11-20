@@ -25,6 +25,8 @@ void yyerror(char* mens);
 %type <symbol> literal
 %type <string> relational_operator
 %type <symbol> array_content
+%type <symbol> right_side
+%type <symbol> left_side
 
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
@@ -256,7 +258,40 @@ Si ya existe entonces se debe comprobar que los tipos de la variable
 y del right side coincidan.
 */
 assignment : 
-	left_side right_side separator
+	left_side right_side separator {
+									if($1 != NULL)
+									{
+										if($1->info == NULL) //Variable has not been inserted on symbTable
+										{
+											if($2 != NULL) //Right side has a known/valid type 
+											{
+												insertVariable( $1, $2 );
+											}else
+											{	//Since we do not know the type yet, we do not store
+												//the variable on the symbol table
+												freeSymbol($1);
+											}
+										}else //Variable already exists
+										{
+											//Left side and right side are the same type
+											if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
+											{
+												//Generar codigo
+											}else
+											{
+												char message[50];
+												message[0] = '\0';
+												strcat(message, "Type error: with variable ");
+												strcat(message, $1->name);
+												yyerror((char *)message);
+											}	
+										}
+									}
+									else
+									{
+										yyerror("Left side of expression is invalid\n");
+									}
+								}
 	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;
 
@@ -264,9 +299,21 @@ assignment :
 si no existe se añade a menos que atribute no sea
 epsilon. En cuyo caso se debe dar un error.*/
 left_side :
-	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);}
-	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);}
-	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);}
+	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
+									$$ = NULL;}
+	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
+							struct Symbol* variableStruct = searchVariable($1);
+							if( variableStruct == NULL)
+							{
+								variableStruct = createSymbol(SYM_VARIABLE, $1);
+								variableStruct->info = NULL;
+								$$ = variableStruct;
+							}else
+							{
+								$$ = variableStruct;
+							} }
+	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
+								$$ = NULL;}
 	;
 	
 /*Aqui se comprueba si la variable es de tipo struct y efectivamente
@@ -284,16 +331,23 @@ datos del array.
 En resumen hay que devolver el tipo: integer, boolean, clase, etc*/	
 right_side :
 	expression
-	| string
-	| ARRAY NEW INTEGER 	
-	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);}
-	| '[' array_content ']'
+	| string {$$ = searchType( TYPE_STRING );}
+	//TODO En array se deberia devolver el tipo array y en constant new el tipo de la clase
+	| ARRAY NEW INTEGER {$$ = searchType( TYPE_INTEGER );} 	 
+	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);
+						$$ = searchType( TYPE_INTEGER );}
+	| '[' array_content ']' {$$ = searchType( TYPE_INTEGER );}  
 	;
-	
-/*Comprobar que todos los literales son del mismo tipo*/		
+			
 array_content :   
 	literal
-	| literal ',' array_content {$$ = checkArrayContent($1, $3);}
+	| literal ',' array_content {
+						struct Symbol* type = checkSameType($1, $3);
+						if(type == NULL)
+						{
+							yyerror("All elements in array must be the same type");							
+						}
+						$$ = $1;}
 	;		      
 
 relational_operator :

@@ -43,6 +43,14 @@ void insertTypeDefinition( const char* const name, int typeId )
 	insertSymbol( symbol );
 }
 
+void insertVariable( struct Symbol *symbol, struct Symbol *type )
+{	
+	symbol->info = (void *)malloc( sizeof( struct Variable ) );
+	((struct Variable *)(symbol->info))->type = (void *)type;
+
+	insertSymbol( symbol );
+}
+
 struct Symbol* searchType( int typeId )
 {
 	struct Symbol* s = symTable;
@@ -63,6 +71,22 @@ struct Symbol* searchType( int typeId )
 }
 
 
+struct Symbol* searchVariable( const char* const name )
+{
+	struct Symbol* s = symTable;
+	while( s != NULL ){
+		if( s->symType == SYM_VARIABLE && (strcmp(s->name, name) == 0)  ){
+			return s;
+		}
+
+		s = s->prev;
+	}
+
+	showSymTable();
+
+	printf( "Variable %s no encontrada \n", name );
+	return NULL;
+}
 
 void showSymTable()
 {
@@ -118,12 +142,18 @@ void insertSymbol(struct Symbol *symb){
 	}		
 }
 
+void freeSymbol(struct Symbol* symbol)
+{
+	free(symbol->info);
+	free(symbol);
+}
+
 void freeSymbTable(){
 	struct Symbol *aux;
 	aux = symTable;
 	while(aux != NULL){
 		symTable = aux->prev;
-		free((struct Type*)aux->info);
+		free(aux->info);
 		free(aux);
 		aux = symTable;
 	} 

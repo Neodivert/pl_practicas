@@ -6,6 +6,8 @@
 
 static const int MAX_SIZE = 30;
 
+
+
 /*                                   Constants                                */
 /******************************************************************************/
 
@@ -35,7 +37,11 @@ struct Symbol
 	char *name;
 	
 	void *info;
-	struct Symbol* prev;//, pos;	// Posición en el padre
+
+	// If firstChild = 0, prev points to the previous Symbol.
+	// If firstChild = 1, prev points to the parent.
+	char firstChild;
+	struct Symbol* prev, next;//, pos;	// Posición en el padre
 }; 								// *symbols;  
 
 
@@ -61,8 +67,8 @@ struct Method {
 	//que contiene toda su información en el árbol.
 	//asumo que esto es un puntero al nodo
 	
-	struct Method* block;
-} function;
+	//struct Method* block;
+}; //function;
 
 typedef struct Symbol Symbol; 
 static Symbol* symTable = NULL;
@@ -102,9 +108,11 @@ void freeSymbol(struct Symbol*);
 
 void freeSymbTable();
 
+void initializeSymTable();
 
+void GoOutOfScope();
 
-
+void showSymTable( struct Symbol* sym, int level );
 
 //Asumo que ahora hay que crear el árbol
 

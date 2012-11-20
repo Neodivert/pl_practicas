@@ -1,5 +1,13 @@
 #include "symbolsTable.h"
 #include <stdio.h>
+#include <assert.h>
+
+// If firstChild is 1, next time insertSymbol is invoked, the new symbol is
+// inserted as the child of top symbol.
+// This variable is set to 1 after inserting a Method in symTable, and it's
+// set to 0 when a new symbol is inserted (local data) or "GoOutOfScope()" is 
+// invoked (we go out of method scope).
+static char firstChild = 0;
 
 // Definiciones de funciones para tratar la tabla de simbolos.
 
@@ -21,12 +29,19 @@
 		
 }*/
 
-
 void insertMethodDefinition( const char* const name  )
 {
 	struct Symbol* symbol = createSymbol( SYM_METHOD, name );
 
+	symbol->info = (void *)malloc( sizeof( struct Method ) );
+
+	((struct Method *)(symbol->info))->nArguments = 0;
+	((struct Method *)(symbol->info))->localSymbols = NULL;
+	
 	insertSymbol( symbol );
+
+	// If we don't go out of scope, next symbol will be a "child".
+	firstChild = 1;
 
 	//symbol->info = (void *)malloc( sizeof( struct Method ) );
 }
@@ -64,7 +79,7 @@ struct Symbol* searchType( int typeId )
 		s = s->prev;
 	}
 
-	showSymTable();
+	showSymTable( symTable, 0 );
 
 	printf( "\n\n\n\n\n NULLAZO AL CANTO (%d)\n\n\n\n\n", typeId );
 	return NULL;
@@ -82,18 +97,25 @@ struct Symbol* searchVariable( const char* const name )
 		s = s->prev;
 	}
 
-	showSymTable();
+	showSymTable( symTable, 0 );
 
 	printf( "Variable %s no encontrada \n", name );
 	return NULL;
 }
 
-void showSymTable()
+void showSymTable( struct Symbol* sym, int level )
 {
-	printf( "Symbols table -------------------------------\n" );
-	struct Symbol* s = symTable;
-	while( s != NULL ){
-		switch( s->symType ){
+	int i = 0;
+	if( level == 0 ){
+		printf( "Symbols table -------------------------------\n" );
+	}
+
+	for( ; i<level*3; i++ ){
+		printf( "\t" );
+	}
+
+	while( sym != NULL && !sym->firstChild ){
+		switch( sym->symType ){
 			case SYM_TYPE:
 				printf( "TYPE" );
 			break;
@@ -113,33 +135,49 @@ void showSymTable()
 				printf( "UKNOWN TYPE" );
 			break;
 		}
-		printf( " - name: [%s]\n", s->name );
+		printf( " - name: [%s]\n", sym->name );
+
+		if( ( sym->symType == SYM_METHOD ) && ((struct Method*)(sym->info))->localSymbols ){
+			showSymTable( ((struct Method*)(sym->info))->localSymbols, level+1 );
+		}
 	
-		s = s->prev;
+		sym = sym->prev;
 	}
-	printf( "---------------------------------------------\n" );
+	
+	if( level == 0 ){
+		printf( "---------------------------------------------\n" );
+	}
 }
 
 struct Symbol* createSymbol ( int symType, const char* const  name )
 {
 	struct Symbol *symbol = (Symbol *)malloc( sizeof( struct Symbol ) );
 	int n = strlen( name );
-	
+
 	symbol->symType = symType;
 	symbol->name = (char *)malloc( n+1 );
 	strcpy( symbol->name, name );
+
+	symbol->firstChild = 0;
 
 	return symbol;
 }
 
 void insertSymbol(struct Symbol *symb){
+	if( firstChild ){
+		symb->firstChild = 1;
+		// CAMBIAR ASSERT CUANDO SE INCLUYAN CLASES Y BLOQUES.
+		assert( symTable->symType == SYM_METHOD );
+		((struct Method *)(symTable->info))->localSymbols = symb;
+	}
 	if(symTable == NULL){ 
 		symTable = symb;
 		symTable->prev = NULL;	
 	}else{
 		symb->prev = symTable;
 		symTable = symb;	
-	}		
+	}
+	firstChild = 0;
 }
 
 void freeSymbol(struct Symbol* symbol)
@@ -156,14 +194,32 @@ void freeSymbTable(){
 		free(aux->info);
 		free(aux);
 		aux = symTable;
-	} 
+	}
 }
 
+void GoOutOfScope(){
+	while( symTable != NULL && !symTable->firstChild ){
+		symTable = symTable->prev;
+	}
 
-/*
+	if( symTable ){
+		symTable = symTable->prev;
+	}
+}
+
+void initializeSymTable()
+{
+	insertMethodDefinition( "_MAIN" );
+	insertTypeDefinition( "integer", TYPE_INTEGER );
+	insertTypeDefinition( "float", TYPE_FLOAT );
+	insertTypeDefinition( "string", TYPE_STRING );
+	insertTypeDefinition( "char", TYPE_CHAR );
+	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
+}
+
 int main( int argc, char *argv[] )
 {
-	
+	//insertMethodDefinition( "_main" );
 	insertTypeDefinition( "integer", TYPE_INTEGER );
 	insertTypeDefinition( "float", TYPE_FLOAT );
 	insertTypeDefinition( "string", TYPE_STRING );
@@ -174,11 +230,11 @@ int main( int argc, char *argv[] )
 	struct Symbol* s = searchType( TYPE_INTEGER );
 	printf( "%s\n", s->name );
 
-	insertMethodDefinition( "abc" );
-	insertMethodDefinition( "abc2" );
-	insertMethodDefinition( "xyz" );
-	showSymTable();
+	//insertMethodDefinition( "abc" );
+	//insertMethodDefinition( "abc2" );
+	//insertMethodDefinition( "xyz" );
+	showSymTable( symTable, 0 );
 	return 0;
 	
 }
-*/
+

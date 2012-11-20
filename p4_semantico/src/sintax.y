@@ -273,17 +273,21 @@ assignment :
 											}
 										}else //Variable already exists
 										{
-											//Left side and right side are the same type
 											if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
 											{
+												//Left side and right side are the same type
 												//Generar codigo
 											}else
 											{
-												char message[50];
-												message[0] = '\0';
-												strcat(message, "Type error: with variable ");
-												strcat(message, $1->name);
-												yyerror((char *)message);
+												//If $2 = NULL right side was wrong and that was already warned
+												if($2 != NULL) 
+												{
+													char message[50];
+													message[0] = '\0';
+													strcat(message, "Type error: with variable ");
+													strcat(message, $1->name);
+													yyerror((char *)message);
+												}
 											}	
 										}
 									}
@@ -300,20 +304,11 @@ si no existe se añade a menos que atribute no sea
 epsilon. En cuyo caso se debe dar un error.*/
 left_side :
 	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-									$$ = NULL;}
+									$$ = getCreateVariable(SYM_GLOBAL, $1);}
 	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-							struct Symbol* variableStruct = searchVariable($1);
-							if( variableStruct == NULL)
-							{
-								variableStruct = createSymbol(SYM_VARIABLE, $1);
-								variableStruct->info = NULL;
-								$$ = variableStruct;
-							}else
-							{
-								$$ = variableStruct;
-							} }
+							$$ = getCreateVariable(SYM_VARIABLE, $1);}
 	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-								$$ = NULL;}
+								$$ = getCreateVariable(SYM_CONSTANT, $1);}
 	;
 	
 /*Aqui se comprueba si la variable es de tipo struct y efectivamente
@@ -401,12 +396,27 @@ En todos los casos hay que devolver el tipo del literal/variable
 //sino buscarlos en la tabla. Ademas los de variables habria que acceder a 
 //la tabla a ver si existe, etc.
 factor :
-	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1); 
-				$$ = searchType( TYPE_INTEGER ); }
+	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1);
+				struct Symbol* variable = searchVariable( SYM_VARIABLE, $1 ); 
+				if(variable == NULL)
+					$$ = NULL;
+				else
+					$$ = ((struct Variable*)(variable->info))->type;
+				}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
-				$$ = searchType( TYPE_INTEGER ); }
+				struct Symbol* variable = searchVariable( SYM_CONSTANT, $1 ); 
+				if(variable == NULL)
+					$$ = NULL;
+				else
+					$$ = ((struct Variable*)(variable->info))->type;
+				}
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
-				$$ = searchType( TYPE_INTEGER ); }
+				struct Symbol* variable = searchVariable( SYM_GLOBAL, $1 ); 
+				if(variable == NULL)
+					$$ = NULL;
+				else
+					$$ = ((struct Variable*)(variable->info))->type;
+				}
 	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
 	| NOT factor {$$ = checkNotExpression($2);}
 	| '(' expression ')' {$$ = $2;}

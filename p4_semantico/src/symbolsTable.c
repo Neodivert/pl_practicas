@@ -71,11 +71,11 @@ struct Symbol* searchType( int typeId )
 }
 
 
-struct Symbol* searchVariable( const char* const name )
+struct Symbol* searchVariable(  int symType, const char* const name )
 {
 	struct Symbol* s = symTable;
 	while( s != NULL ){
-		if( s->symType == SYM_VARIABLE && (strcmp(s->name, name) == 0)  ){
+		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
 			return s;
 		}
 

@@ -143,3 +143,13 @@ struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2){
 	}
 }	
 
+struct Symbol* getCreateVariable( int symType, const char* const name)
+{
+	struct Symbol* variableStruct = searchVariable( symType, name );
+	if( variableStruct == NULL)
+	{
+		variableStruct = createSymbol( symType, name );
+		variableStruct->info = NULL;
+	}
+	return variableStruct;
+}	

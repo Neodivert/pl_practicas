@@ -20,5 +20,7 @@ struct Symbol* checkIsBoolean(struct Symbol* s);
 
 struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
+struct Symbol* getCreateVariable( int symType, const char* const name);
+
 #endif
 // SEMANTIC_UTILITIES_H

@@ -15,8 +15,9 @@ static const int MAX_SIZE = 30;
 #define SYM_TYPE 1
 #define SYM_VARIABLE 2
 #define SYM_CONSTANT 3
-#define SYM_METHOD 4
-#define SYM_BLOCK 5
+#define SYM_GLOBAL 4
+#define SYM_METHOD 5
+#define SYM_BLOCK 6
 
 
 // Valores posibles para el campo "id" de Type.
@@ -101,7 +102,7 @@ void insertSymbol( struct Symbol *symb );
 
 struct Symbol* searchType( int id );
 
-struct Symbol* searchVariable( const char* const name );
+struct Symbol* searchVariable( int symType, const char* const name );
 
 //Free all memory
 void freeSymbol(struct Symbol*);

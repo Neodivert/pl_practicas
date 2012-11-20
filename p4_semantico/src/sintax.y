@@ -169,12 +169,15 @@ Buscar método llamado IDENTIF en el árbol.
    al no estar el metodo en la tabla de simbolos.
 */
 method_call : 
-	IDENTIF  arguments separator {printf("--------> En method call el identif vale %s\n", $1);}
-	| IDENTIF separator {printf("--------> En method call el identif vale %s\n", $1);}
+	simple_method_call separator
 	| block_call  
-	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
 	;		
 
+simple_method_call:
+	IDENTIF '(' arguments ')' {printf("--------> En method call el identif vale %s\n", $1);}
+	| IDENTIF '(' ')' {printf("--------> En method call el identif vale %s\n", $1);}  
+	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
+	;
 /* 1
 Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de 
 argumentos esperado
@@ -419,6 +422,7 @@ factor :
 				}
 	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
 	| NOT factor {$$ = checkNotExpression($2);}
+	| simple_method_call {$$ = NULL;}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;

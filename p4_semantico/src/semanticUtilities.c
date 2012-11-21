@@ -164,3 +164,4 @@ int isVariable(struct Symbol *s)
 		return 2;
 	}
 }
+

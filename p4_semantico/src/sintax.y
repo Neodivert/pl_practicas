@@ -14,7 +14,7 @@ void yyerror(char* mens);
 
 %}
 
-%union { char string[30]; struct Symbol *symbol; }
+%union { int integer; char string[30]; struct Symbol *symbol; }
 
 %type <symbol> expression
 %type <symbol> logical_expression
@@ -27,6 +27,9 @@ void yyerror(char* mens);
 %type <symbol> array_content
 %type <symbol> right_side
 %type <symbol> left_side
+
+%type <integer> arguments_definition
+%type <integer> more_arguments_definition
 
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
@@ -96,8 +99,8 @@ Al final de cada regla: poner puntero currentScope a NULL.
 No vamos a permitir sobrecarga de metodos.
 */
 method_definition : 
-	DEF IDENTIF { insertMethodDefinition( $2 ); } arguments_definition separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); goOutOfScope();}
-	| DEF IDENTIF { insertMethodDefinition( $2 ); } separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); goOutOfScope(); }
+	DEF IDENTIF { insertMethodDefinition( $2 ); } arguments_definition separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); setNArguments( $4 ); goOutOfScope();}
+	| DEF IDENTIF { insertMethodDefinition( $2 ); } separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); setNArguments( 0 ); goOutOfScope(); }
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
 	;
 
@@ -119,7 +122,7 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el metodo actual.
 */
 arguments_definition : 
-	'(' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2);}
+	'(' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
 	//| IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $1);}
 	;
 /*
@@ -127,14 +130,14 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el método actual.
 */
 more_arguments_definition : 
-	',' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2);}
-	|
+	',' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
+	| { $$ = 0; }//{ countArguments(); }
 	;
 
 separator : 
 	END_LINE 
 	| ';'
-	; 
+	;
 
 
 /*

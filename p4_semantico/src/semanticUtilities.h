@@ -20,8 +20,6 @@ struct Symbol* checkIsBoolean(struct Symbol* s);
 
 struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
-
-
 int isVariable(struct Symbol *s);
 
 #endif

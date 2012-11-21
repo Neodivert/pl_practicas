@@ -120,7 +120,7 @@ void freeSymbol(struct Symbol*);
 
 void goOutOfScope();
 
-
+void setNArguments( int n );
 
 //Asumo que ahora hay que crear el árbol
 

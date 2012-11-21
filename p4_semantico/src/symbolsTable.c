@@ -13,6 +13,7 @@ This variable is set to 1 after inserting a Method in symTable, and it's set to
 */
 static char nextSymIsFirstChild = 0;
 
+struct Method* lastDefinedMethod = NULL;
 static Symbol* symTable = NULL;
 
 // Definiciones de funciones para tratar la tabla de simbolos.
@@ -100,19 +101,23 @@ struct Symbol* getCreateVariable( int symType, const char* const name)
 
 void insertMethodDefinition( const char* const name  )
 {
+	// Create and fill the method's symbol.
 	struct Symbol* symbol = createSymbol( SYM_METHOD, name );
 
 	symbol->info = (void *)malloc( sizeof( struct Method ) );
 
 	((struct Method *)(symbol->info))->nArguments = 0;
 	((struct Method *)(symbol->info))->localSymbols = NULL;
+
+	// When the final argument is declared, we'll use this pointer to access
+	// this method and fill its nArgument field.
+	lastDefinedMethod = ((struct Method *)(symbol->info));
 	
+	// Insert method's symbol in table.
 	insertSymbol( symbol );
 
 	// If we don't go out of scope, next symbol will be a "child".
 	nextSymIsFirstChild = 1;
-
-	//symbol->info = (void *)malloc( sizeof( struct Method ) );
 }
 
 void insertTypeDefinition( const char* const name, int typeId )
@@ -267,6 +272,8 @@ void showSymTable_( struct Symbol* sym, int level )
 			break;
 			case SYM_METHOD:
 				aux = ((struct Method*)(sym->info))->localSymbols;
+
+				printf( " - nArguments: [%i]", ((struct Method*)(sym->info))->nArguments );
 				if( aux ){
 					printf( " - hijo: [%s]\n", aux->name );
 					showSymTable_( aux, level+1 );
@@ -366,6 +373,11 @@ void goOutOfScope(){
 			symTable = symTable->prev;
 		}
 	}
+}
+
+void setNArguments( int n ){
+	assert( lastDefinedMethod );
+	lastDefinedMethod->nArguments = n;
 }
 
 /*

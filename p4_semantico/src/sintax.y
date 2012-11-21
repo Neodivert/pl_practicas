@@ -490,8 +490,17 @@ int main(int argc, char** argv) {
 
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
-	printf("Termine\n");
 
+
+/*  Codigo para cada iteracion	
+	fclose (yyin);
+	yyin=fopen(argv[1],"r");
+	resetFlex();
+	yyparse();
+	
+	Codigo para cuando se sale del bucle
+	finishFlex();*/
+	printf("Termine\n");
 	showSymTable();
 
 	printf("Termine2\n" );

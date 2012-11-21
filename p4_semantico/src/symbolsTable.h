@@ -70,9 +70,8 @@ struct Method {
 	//struct Method* block;
 }; //function;
 
-typedef struct Symbol Symbol; 
-static Symbol* symTable = NULL;
 
+typedef struct Symbol Symbol; 
 
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -107,7 +106,7 @@ struct Symbol* searchVariable( int symType, const char* const name );
 void initializeSymTable();
 
 // Show the entire symbol tree.
-void showSymTable( struct Symbol* sym, int level );
+void showSymTable();
 
 // Free the entire symbol tree.
 void freeSymbTable();

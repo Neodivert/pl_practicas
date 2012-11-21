@@ -13,6 +13,8 @@ This variable is set to 1 after inserting a Method in symTable, and it's set to
 */
 static char nextSymIsFirstChild = 0;
 
+static Symbol* symTable = NULL;
+
 // Definiciones de funciones para tratar la tabla de simbolos.
 
 //Método para insertar un nodo que contiene un símbolo
@@ -56,6 +58,8 @@ struct Symbol* createSymbol ( int symType, const char* const  name )
 
 void insertSymbol(struct Symbol *symb)
 {
+	assert( symb != NULL );
+
 	if(symTable == NULL){ 
 		symTable = symb;
 		symTable->prev = NULL;	
@@ -191,13 +195,20 @@ void initializeSymTable()
 	insertMethodDefinition( "_METHOD7" );
 }
 
-void showSymTable( struct Symbol* sym, int level )
+
+
+
+void showSymTable_( struct Symbol* sym, int level )
 {
-	if( sym == NULL ) return;
 	int i = 0;
+
 	if( level == 0 ){
 		printf( "Symbols table -------------------------------\n" );
 
+		if( sym == NULL ){
+			printf( "---------------------------------------------\n" );
+			return;
+		}
 		// Start showing from the beginning.
 		while( sym->prev ){
 			sym = sym->prev;
@@ -228,7 +239,7 @@ void showSymTable( struct Symbol* sym, int level )
 		}
 
 		
-		printf( " - name: [%s]", sym->name );
+		printf( " - [%s]", sym->name );
 
 		#ifdef DEBUG
 
@@ -270,9 +281,17 @@ void showSymTable( struct Symbol* sym, int level )
 	}
 }
 
+
+void showSymTable()
+{
+	showSymTable_( symTable, 0 );
+}
+
 void freeSymbol(struct Symbol* symbol)
 {
+	#ifdef DEBUG
 	printf( "Eliminando simbolo: [%s]\n", symbol->name );
+	#endif
 	free(symbol->name);
 	free(symbol->info);
 	free(symbol);
@@ -319,7 +338,6 @@ void goOutOfScope(){
 		}
 	}
 }
-
 
 /*
 int main( int argc, char *argv[] )

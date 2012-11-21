@@ -469,18 +469,23 @@ string_struct :
 //a yyparse pero esta vez ya tenemos en arbol lleno.  
 int main(int argc, char** argv) {
 	// Inicializa la tabla de simbolos con los tipos basicos.
+	insertMethodDefinition( "_main" );
 	insertTypeDefinition( "integer", TYPE_INTEGER );
 	insertTypeDefinition( "float", TYPE_FLOAT );
 	insertTypeDefinition( "string", TYPE_STRING );
 	insertTypeDefinition( "char", TYPE_CHAR );
 	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
 
-	showSymTable( symTable, 0 );
+	
 	//return;
 
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
-	printf("Termine");
+	printf("Termine\n");
+
+	showSymTable();
+
+	printf("Termine2\n" );
 
 	// Libera la tabla de simbolos
 	freeSymbTable();

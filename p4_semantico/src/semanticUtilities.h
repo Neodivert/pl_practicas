@@ -22,5 +22,7 @@ struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
 struct Symbol* getCreateVariable( int symType, const char* const name);
 
+int isVariable(struct Symbol *s);
+
 #endif
 // SEMANTIC_UTILITIES_H

@@ -112,7 +112,6 @@ void insertTypeDefinition( const char* const name, int typeId )
 
 void insertVariable( struct Symbol *symbol, struct Symbol *type )
 {	
-	symbol->info = (void *)malloc( sizeof( struct Variable ) );
 	((struct Variable *)(symbol->info))->type = (void *)type;
 
 	insertSymbol( symbol );

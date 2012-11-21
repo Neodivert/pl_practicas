@@ -131,7 +131,7 @@ Añadir argumento de nombre IDENTIF en el método actual.
 */
 more_arguments_definition : 
 	',' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
-	| { $$ = 0; }//{ countArguments(); }
+	| { $$ = 0; }
 	;
 
 separator : 

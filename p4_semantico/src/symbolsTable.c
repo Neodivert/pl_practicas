@@ -82,6 +82,20 @@ void insertSymbol(struct Symbol *symb)
 }
 
 
+struct Symbol* getCreateVariable( int symType, const char* const name)
+{
+	struct Symbol* variableStruct = searchVariable( symType, name );
+	if( variableStruct == NULL)
+	{
+		variableStruct = createSymbol( symType, name );
+		variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
+		((struct Variable *)(variableStruct->info))->type = NULL;
+		//variableStruct->info = NULL;
+	}
+	return variableStruct;
+}
+
+
 /*                       2. Specific symbols insertion                        */
 
 void insertMethodDefinition( const char* const name  )
@@ -144,7 +158,7 @@ struct Symbol* searchType( int typeId )
 }
 
 
-struct Symbol* searchVariable(  int symType, const char* const name )
+struct Symbol* searchVariable( int symType, const char* const name )
 {
 	struct Symbol* s = symTable;
 	while( s != NULL ){
@@ -195,24 +209,9 @@ void initializeSymTable()
 }
 
 
-
-
 void showSymTable_( struct Symbol* sym, int level )
 {
 	int i = 0;
-
-	if( level == 0 ){
-		printf( "Symbols table -------------------------------\n" );
-
-		if( sym == NULL ){
-			printf( "---------------------------------------------\n" );
-			return;
-		}
-		// Start showing from the beginning.
-		while( sym->prev ){
-			sym = sym->prev;
-		}
-	}
 
 	while( (sym != NULL) ){
 		for( i=0; i<level; i++ ) printf( "\t" );
@@ -237,7 +236,6 @@ void showSymTable_( struct Symbol* sym, int level )
 			break;
 		}
 
-		
 		printf( " - [%s]", sym->name );
 
 		#ifdef DEBUG
@@ -253,17 +251,40 @@ void showSymTable_( struct Symbol* sym, int level )
 		}else{
 			printf( " - next: [NULL]" );
 		}
-
-		#else
-			printf( "\n" );
+			
 		#endif
 
+		Symbol* aux;
+		switch( sym->symType ){
+			case SYM_VARIABLE:
+				aux = ((struct Variable*)(sym->info))->type;
+				printf( " - type: " );
+				if( aux ){
+					printf( "[%s]\n", aux->name );
+				}else{
+					printf( "NULL\n" );
+				}
+			break;
+			case SYM_METHOD:
+				aux = ((struct Method*)(sym->info))->localSymbols;
+				if( aux ){
+					printf( " - hijo: [%s]\n", aux->name );
+					showSymTable_( aux, level+1 );
+				}else{
+					printf( " - hijo: [NULL]\n" );
+				}
+			break;
+			default:
+				printf( "\n" );
+			break;
+		}
+		/*
 		if( ( sym->symType == SYM_METHOD ) && ((struct Method*)(sym->info))->localSymbols ){
 			#ifdef DEBUG
 			printf( " - hijo: [%s]\n",((struct Method*)(sym->info))->localSymbols->name );
 			#endif 
 			//printf( "\n\t%s\n", ((struct Method*)(sym->info))->localSymbols->name );
-			showSymTable( ((struct Method*)(sym->info))->localSymbols, level+1 );
+			showSymTable_( ((struct Method*)(sym->info))->localSymbols, level+1 );
 			
 		}
 		#ifdef DEBUG
@@ -271,19 +292,28 @@ void showSymTable_( struct Symbol* sym, int level )
 			printf( " - hijo: [NULL]\n" );
 		}
 		#endif
-	
+		*/
 		sym = sym->next;
-	}
-	
-	if( level == 0 ){
-		printf( "---------------------------------------------\n" );
 	}
 }
 
 
 void showSymTable()
 {
-	showSymTable_( symTable, 0 );
+	Symbol* sym = symTable;
+
+	printf( "Symbols table -------------------------------\n" );
+
+	// Start showing from the beginning.
+	while( sym->prev ){
+		sym = sym->prev;
+	}
+
+	if( symTable ){
+		showSymTable_( sym, 0 );
+	}
+
+	printf( "---------------------------------------------\n" );
 }
 
 void freeSymbol(struct Symbol* symbol)
@@ -310,7 +340,7 @@ void freeSymbTable_( struct Symbol* symTable_ ){
 }
 
 void freeSymbTable(){
-	struct Symbol *aux, *sym = symTable;
+	struct Symbol *sym = symTable;
 
 	if( !sym ) return;
 

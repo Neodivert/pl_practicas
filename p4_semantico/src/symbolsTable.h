@@ -83,6 +83,7 @@ struct Symbol* createSymbol ( int symType, const char* const name );
 
 void insertSymbol( struct Symbol *symb );
 
+struct Symbol* getCreateVariable( int symType, const char* const name);
 
 /*                       2. Specific symbols insertion                        */
 

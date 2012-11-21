@@ -96,8 +96,8 @@ Al final de cada regla: poner puntero currentScope a NULL.
 No vamos a permitir sobrecarga de metodos.
 */
 method_definition : 
-	DEF IDENTIF arguments_definition separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2);}
-	| DEF IDENTIF separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2);}
+	DEF IDENTIF { insertMethodDefinition( $2 ); } arguments_definition separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); goOutOfScope();}
+	| DEF IDENTIF { insertMethodDefinition( $2 ); } separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); goOutOfScope(); }
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
 	;
 
@@ -119,16 +119,15 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el metodo actual.
 */
 arguments_definition : 
-	'(' IDENTIF more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2);}
-	| IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $1);}
+	'(' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2);}
+	//| IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $1);}
 	;
-
 /*
 Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el método actual.
 */
 more_arguments_definition : 
-	',' IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2);}
+	',' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2);}
 	|
 	;
 
@@ -271,11 +270,11 @@ assignment :
 										{
 											//Left side and right side are the same type
 											//Generar codigo
-											showSymTable( symTable, 0 );
+											showSymTable();
 										}else
 										{
 											//If $2 = NULL right side was wrong/unknown and that was already warned
-											showSymTable( symTable, 0 );
+											showSymTable();
 											if($2 != NULL) 
 											{
 												char message[50];
@@ -289,14 +288,14 @@ assignment :
 										break;
 									case 1: //It is a variable without a known type
 										printf("--------> En assignment with not known type %s \n", $1->name);
-										showSymTable( symTable, 0 );
+										showSymTable();
 										if(searchVariable($1->symType, $1->name) == NULL) 
 											//Variable is not in symbolTable, insert it
 											insertVariable( $1, $2 );
 										else
 											//Variable is in symbolTable, set its type, $2 might be NULL
 											((struct Variable *)($1->info))->type = $2;	
-										showSymTable( symTable, 0 );
+										showSymTable();
 										printf("--------> En assignment with not known type end %s \n", $1->name);
 										//Generar codigo o no xD
 										break;
@@ -436,7 +435,7 @@ factor :
 
 literal : 
 	INTEGER		{$$ = searchType( TYPE_INTEGER ); }
-	| FLOAT		{printf("Entrando float\n");showSymTable( symTable, 0 ); printf("Entrando 2 float\n"); $$ = searchType( TYPE_FLOAT ); printf("Saliendo de float\n");}
+	| FLOAT		{printf("Entrando float\n");showSymTable(); printf("Entrando 2 float\n"); $$ = searchType( TYPE_FLOAT ); printf("Saliendo de float\n");}
 	| CHAR		{$$ = searchType( TYPE_CHAR ); }
 	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}
 	;

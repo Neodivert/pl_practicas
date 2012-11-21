@@ -20,7 +20,7 @@ struct Symbol* checkIsBoolean(struct Symbol* s);
 
 struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
-struct Symbol* getCreateVariable( int symType, const char* const name);
+
 
 int isVariable(struct Symbol *s);
 

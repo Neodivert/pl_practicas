@@ -262,42 +262,49 @@ y del right side coincidan.
 */
 assignment : 
 	left_side right_side separator {
-									if($1 != NULL)
+									printf("--------> En assignment \n");
+									switch(isVariable($1))
 									{
-										if($1->info == NULL) //Variable has not been inserted on symbTable
+									case 0: //It is a variable with a known type
+										printf("--------> En assignment with known type %s \n", $1->name);
+										if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
 										{
-											if($2 != NULL) //Right side has a known/valid type 
+											//Left side and right side are the same type
+											//Generar codigo
+											showSymTable( symTable, 0 );
+										}else
+										{
+											//If $2 = NULL right side was wrong/unknown and that was already warned
+											showSymTable( symTable, 0 );
+											if($2 != NULL) 
 											{
-												insertVariable( $1, $2 );
-											}else
-											{	//Since we do not know the type yet, we do not store
-												//the variable on the symbol table
-												freeSymbol($1);
+												char message[50];
+												message[0] = '\0';
+												strcat(message, "Type error: with variable ");
+												strcat(message, $1->name);
+												yyerror((char *)message);
 											}
-										}else //Variable already exists
-										{
-											if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
-											{
-												//Left side and right side are the same type
-												//Generar codigo
-											}else
-											{
-												//If $2 = NULL right side was wrong and that was already warned
-												if($2 != NULL) 
-												{
-													char message[50];
-													message[0] = '\0';
-													strcat(message, "Type error: with variable ");
-													strcat(message, $1->name);
-													yyerror((char *)message);
-												}
-											}	
-										}
-									}
-									else
-									{
+										}	
+										printf("--------> En assignment with known type end %s \n", $1->name);									
+										break;
+									case 1: //It is a variable without a known type
+										printf("--------> En assignment with not known type %s \n", $1->name);
+										showSymTable( symTable, 0 );
+										if(searchVariable($1->symType, $1->name) == NULL) 
+											//Variable is not in symbolTable, insert it
+											insertVariable( $1, $2 );
+										else
+											//Variable is in symbolTable, set its type, $2 might be NULL
+											((struct Variable *)($1->info))->type = $2;	
+										showSymTable( symTable, 0 );
+										printf("--------> En assignment with not known type end %s \n", $1->name);
+										//Generar codigo o no xD
+										break;
+									case 2: //It is not a variable
+										printf("--------> En assignment left side error\n");
 										yyerror("Left side of expression is invalid\n");
-									}
+										break;		
+									}	
 								}
 	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;
@@ -429,7 +436,7 @@ factor :
 
 literal : 
 	INTEGER		{$$ = searchType( TYPE_INTEGER ); }
-	| FLOAT		{$$ = searchType( TYPE_FLOAT ); }
+	| FLOAT		{printf("Entrando float\n");showSymTable( symTable, 0 ); printf("Entrando 2 float\n"); $$ = searchType( TYPE_FLOAT ); printf("Saliendo de float\n");}
 	| CHAR		{$$ = searchType( TYPE_CHAR ); }
 	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}
 	;
@@ -495,7 +502,8 @@ void yyerror(char* mens) {
 	// Este if es un apaño cutre porque si no muestra muchos mensajes de error
 	// que no dicen nada y de los que luego se recupera
 	if(strcmp(mens,"syntax error") != 0 ) 
-		printf("---------Error on line %i: %s\n",numlin,mens);
+		//Numlin - 1 porque siempre detecta el error cuando ya paso la linea
+		printf("---------Error on line %i: %s\n",numlin - 1,mens);
 }
 
 /* Vano intento por reducir la parte de method code, lo pongo aqui 

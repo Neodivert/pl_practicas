@@ -149,7 +149,29 @@ struct Symbol* getCreateVariable( int symType, const char* const name)
 	if( variableStruct == NULL)
 	{
 		variableStruct = createSymbol( symType, name );
-		variableStruct->info = NULL;
+		variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
+		((struct Variable *)(variableStruct->info))->type = NULL;
+		//variableStruct->info = NULL;
 	}
 	return variableStruct;
 }	
+
+int isVariable(struct Symbol *s)
+{
+	if(s == NULL || s->info == NULL)
+	{
+		return 2;
+	}
+	if(s->symType == SYM_VARIABLE || s->symType == SYM_GLOBAL
+		|| s->symType == SYM_CONSTANT)
+	{	
+		if(((struct Variable *)(s->info))->type == NULL)
+			return 1;
+		else
+			return 0;		
+	}
+	else
+	{
+		return 2;
+	}
+}

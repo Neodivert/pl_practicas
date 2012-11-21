@@ -86,3 +86,16 @@ void error(char* mens) {
 	printf("Lexical_failure_in_line_%i:_%s_caracter_=_%c.\n",numlin,mens, yytext[0]);
 }
 
+void resetFlex()
+{
+	//printf("En reset flex\n");
+	yypush_buffer_state(yy_create_buffer( yyin, YY_BUF_SIZE ));
+}		
+
+void finishFlex()
+{
+	//printf("En finish flex\n");
+	yyterminate();
+}
+
+

@@ -165,3 +165,8 @@ int isVariable(struct Symbol *s)
 	}
 }
 
+/*
+void checkMethodCall()
+{
+	
+}*/

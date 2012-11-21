@@ -22,5 +22,9 @@ struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
 int isVariable(struct Symbol *s);
 
+// Check if a method call has the same number of arguments that the method
+// definition.
+//void checkMethodCall( const char* const name );
+
 #endif
 // SEMANTIC_UTILITIES_H

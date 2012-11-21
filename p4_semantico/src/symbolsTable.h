@@ -7,7 +7,6 @@
 static const int MAX_SIZE = 30;
 
 
-
 /*                                   Constants                                */
 /******************************************************************************/
 
@@ -42,7 +41,7 @@ struct Symbol
 	// If firstChild = 0, prev points to the previous Symbol.
 	// If firstChild = 1, prev points to the parent.
 	char firstChild;
-	struct Symbol* prev, next;//, pos;	// Posición en el padre
+	struct Symbol *prev, *next;//, pos;	// Posición en el padre
 }; 								// *symbols;  
 
 
@@ -119,7 +118,7 @@ void freeSymbol(struct Symbol*);
 
 /*                                  5. Others                                 */
 
-void GoOutOfScope();
+void goOutOfScope();
 
 
 

@@ -272,19 +272,35 @@ void showSymTable( struct Symbol* sym, int level )
 
 void freeSymbol(struct Symbol* symbol)
 {
+	printf( "Eliminando simbolo: [%s]\n", symbol->name );
 	free(symbol->name);
 	free(symbol->info);
 	free(symbol);
 }
 
-void freeSymbTable(){
-	struct Symbol *aux;
-	aux = symTable;
-	while(aux != NULL){
-		symTable = aux->prev;
+
+void freeSymbTable_( struct Symbol* symTable_ ){
+	struct Symbol *aux = symTable_;
+	while( aux ){
+		symTable_ = aux->next;
+		if( aux->symType == SYM_METHOD ){
+			freeSymbTable_( ((struct Method *)(aux->info))->localSymbols );
+		}
 		freeSymbol( aux );
-		aux = symTable;
+		aux = symTable_;
 	}
+}
+
+void freeSymbTable(){
+	struct Symbol *aux, *sym = symTable;
+
+	if( !sym ) return;
+
+	while( sym->prev ){
+		sym = sym->prev;
+	}
+
+	freeSymbTable_( sym );
 }
 
 
@@ -305,7 +321,7 @@ void goOutOfScope(){
 }
 
 
-
+/*
 int main( int argc, char *argv[] )
 {
 	initializeSymTable();
@@ -318,7 +334,13 @@ int main( int argc, char *argv[] )
 	//insertMethodDefinition( "abc2" );
 	//insertMethodDefinition( "xyz" );
 	showSymTable( symTable, 0 );
+
+	freeSymbTable();
+
+
+
 	return 0;
 	
 }
+*/
 

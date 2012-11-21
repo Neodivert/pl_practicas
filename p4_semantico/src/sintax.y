@@ -475,7 +475,7 @@ int main(int argc, char** argv) {
 	insertTypeDefinition( "char", TYPE_CHAR );
 	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
 
-	showSymTable();
+	showSymTable( symTable, 0 );
 	//return;
 
 	if (argc>1) yyin=fopen(argv[1],"r");

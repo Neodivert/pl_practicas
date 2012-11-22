@@ -193,17 +193,18 @@ void insertMethodDefinition( const char* const name  )
 	insertMethodBlockDefinition_( symbol );
 }
 
-void insertBlockDefinition( const char* const argName  )
+void insertBlockDefinition( const char* const name, const char* const argName  )
 {
 	printf( "Insertando bloque con variable [%s]\n", argName );
 
 	// Create and fill the block's symbol.
-	struct Symbol* symbol = createSymbol( SYM_BLOCK, "_block" );
+	struct Symbol* symbol = createSymbol( SYM_BLOCK, name );
 
 	// Fill and insert the block's symbol.
 	insertMethodBlockDefinition_( symbol );
 
 	// Insert the block's argument.
+	//TODO La variable no es de tipo desconocido, es del tipo del array
 	insertVariable( getCreateVariable( SYM_VARIABLE, argName ), NULL );
 }
 

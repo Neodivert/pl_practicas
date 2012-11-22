@@ -98,7 +98,7 @@ void insertMethodDefinition( const char* const name  );
 // Insert block with argument "argName" in symbols table. If we don't go out of 
 // scope (by calling "goOutOfScope()"), next symbols will be added as block's 
 // local data.
-void insertBlockDefinition( const char* const argName );
+void insertBlockDefinition( const char* const name, const char* const argName );
 
 // Insert type with name "name" and id "typeId" in symbols table.
 void insertTypeDefinition( const char* const name, int typeId );

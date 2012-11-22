@@ -226,6 +226,21 @@ struct MethodInfo *checkMethodDefinition(const char* const name)
 	return info;	
 }
 
+struct Method *checkBlockDefinition(const char* const name, const char* const argName )
+{
+	struct Method* scope = getCurrentScope();
+	struct Symbol* block = searchVariable(SYM_BLOCK, name);
+	if(block == NULL)
+	{
+		insertBlockDefinition(name, argName);
+	}
+	else
+	{
+		goInScope(((struct Method *)(block->info)));
+	}	
+	return scope;	
+}
+
 int checkArgumentDefinition(const char* const name)
 {
 	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );

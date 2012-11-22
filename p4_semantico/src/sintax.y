@@ -307,7 +307,7 @@ Después del segundo IDENTIF: incluir como argumento.
 */
 
 block_call : 
-	IDENTIF EACH DO '|' IDENTIF '|' { $<method>$ = getCurrentScope(); insertBlockDefinition( $5 ); } separator
+	IDENTIF EACH DO '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
 		method_code
 	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goInScope($<method>7); }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}

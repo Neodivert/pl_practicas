@@ -2,7 +2,7 @@
 puts("Introduzca su nota: ")
 numero = getc()
 
-puts "Resultado: "
+puts("Resultado: ")
 if( numero >= 5) 
 	puts( "Aprobado con")
 	

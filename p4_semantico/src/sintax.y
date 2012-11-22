@@ -391,6 +391,7 @@ assignment :
 										if(searchVariable($1->symType, $1->name) == NULL)
 										{ 
 											//Variable is not in symbolTable, insert it
+											printf("Insertando con tipo %s\n", $2->name);
 											insertVariable( $1, $2 );
 										}	
 										else

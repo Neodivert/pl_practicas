@@ -57,6 +57,7 @@ void insertSymbol( struct Symbol *symb )
 		if( nextSymIsFirstChild ){
 			// This symbol is the first child of the symbols table top.
 			printf( "Insertando symbol nex is first 0\n");
+			printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
 			symb->firstChild = 1;
 			printf( "Insertando symbol nex is first 1\n");
 			((struct Method *)(symTable->info))->localSymbols = symb;
@@ -77,8 +78,9 @@ void insertSymbol( struct Symbol *symb )
 		symTable = symb;
 	}
 	//Update the lastSymbol of the current method
+	printf( "Cambiando last define por %s\n",symTable->name); 
 	lastDefinedMethod->lastSymbol = symTable;
-	printf( "Insertado %s, nodo anterior: %s\n", symb->name, lastDefinedMethod->lastSymbol->name );	
+	printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);	
 	nextSymIsFirstChild = 0;
 }
 
@@ -127,9 +129,10 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 	//((struct Method *)(symbol->info))->lastSymbol = NULL;
 	
 	// Insert method's symbol in table.
+	lastDefinedMethod = ((struct Method *)(symbol->info));
+	lastDefinedMethod->lastSymbol = symTable;
 	insertSymbol( symbol );
 
-	lastDefinedMethod = ((struct Method *)(symbol->info));
 	((struct Method *)(symbol->info))->lastSymbol = symbol;
 	// If we don't go out of scope, next symbol will be a "child".
 	nextSymIsFirstChild = 1;

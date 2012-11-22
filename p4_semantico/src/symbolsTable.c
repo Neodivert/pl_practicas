@@ -15,7 +15,7 @@ static char nextSymIsFirstChild = 0;
 
 struct Method* lastDefinedMethod = NULL;
 static Symbol* symTable = NULL;
-
+static Symbol* mainMethod = NULL;
 // Definiciones de funciones para tratar la tabla de simbolos.
 
 //Método para insertar un nodo que contiene un símbolo
@@ -180,6 +180,38 @@ struct Symbol* searchVariable( int symType, const char* const name )
 	return NULL;
 }
 
+struct Symbol* searchMethod(const char* const name )
+{
+	struct Symbol* s = mainMethod;
+	printf("Mainmethod apunta a %s\n", s->name);
+	while( s != NULL ){
+		printf("symtype = %d, name = %s\n", s->symType, s->name);
+		if( s->symType == SYM_METHOD && (strcmp(s->name, name) == 0)  ){
+			return s;
+		}
+
+		s = s->next;
+	}
+
+	showSymTable( symTable, 0 );
+
+	printf( "Metodo %s no encontrado \n", name );
+	return NULL;
+}
+
+struct Symbol* searchNArgument(struct Symbol *method, int n)
+{
+	if(method == NULL || n > ((struct Method *)(method->info))->nArguments 
+		|| n <= 0)
+	 return NULL; 
+	int i;
+	struct Symbol* argument = ((struct Method *)(method->info))->localSymbols;
+	for (i = 1; i < n; i++)
+	{
+		argument = argument->next;
+	}
+	return argument;
+}
 
 /*                       4. Symbols table management                          */
 
@@ -380,6 +412,10 @@ void setNArguments( int n ){
 	lastDefinedMethod->nArguments = n;
 }
 
+void setMain()
+{
+	mainMethod = symTable;	 
+}
 /*
 int main( int argc, char *argv[] )
 {

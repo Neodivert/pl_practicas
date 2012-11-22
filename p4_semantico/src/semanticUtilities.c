@@ -165,8 +165,38 @@ int isVariable(struct Symbol *s)
 	}
 }
 
-/*
-void checkMethodCall()
+int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 {
-	
-}*/
+	struct Symbol* aux = searchNArgument(method, argument);
+	//printf("+++++ En check method call %d\n", argument);
+	//Find the argument symbol
+	if(aux != NULL)
+	{
+		//printf("+++++ Encontre el argument %s\n", aux->name);
+		aux = ((struct Variable*)(aux->info))->type;
+		//Argument has a known type
+		if(aux != NULL)
+		{
+			aux = checkSameType(type, aux); 
+			if(aux != NULL)
+			{
+				//printf("+++++ Son del mismo tipo\n");
+				return 0;
+			}
+			else
+			{
+				yyerror("Type error: Arguments in method call do not match");
+				return 1;
+			}
+		}
+		//printf("+++++ No se sabe el tipo del argumento\n");
+		return 1;	
+	}
+	else
+	{
+	//yyerror("Type error: Wrong amount of arguments in method call");
+	//printf("+++++No se encontro el argumento\n");
+	return 1;
+	}
+}	  
+

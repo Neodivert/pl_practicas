@@ -11,6 +11,8 @@ int yydebug=1; /* modo debug si -t */
 
 void yyerror(char* mens);
 
+struct Symbol*currentMethod = NULL; 
+int nArguments = 0; 
 
 %}
 
@@ -23,21 +25,29 @@ void yyerror(char* mens);
 %type <symbol> term
 %type <symbol> factor
 %type <symbol> literal
-%type <string> relational_operator
 %type <symbol> array_content
 %type <symbol> right_side
 %type <symbol> left_side
-
-%type <integer> arguments_definition
-%type <integer> more_arguments_definition
+%type <symbol> simple_method_call
+%type <symbol> method_call_argument
 
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
 %token <symbol> CHAR
+
+%type <integer> arguments_definition
+%type <integer> more_arguments_definition
+%type <integer> arguments
+%type <integer> more_arguments
+
+%type <string> relational_operator
+
 %token <string> ID_GLOBAL_VARIABLE 
 %token <string> ID_INSTANCE_VARIABLE 
 %token <string> ID_CONSTANT 
 %token <string> IDENTIF 
+
+
 %token DEF 
 %token END 
 %token IF 
@@ -175,9 +185,28 @@ method_call :
 	| block_call  
 	;		
 
-simple_method_call:
-	IDENTIF '(' arguments ')' {printf("--------> En method call el identif vale %s\n", $1);}
-	| IDENTIF '(' ')' {printf("--------> En method call el identif vale %s\n", $1);}  
+simple_method_call:  
+	IDENTIF '(' { 	//printf("--------> En method call el identif vale %s\n", $1);
+					currentMethod = searchMethod($1);
+					if(currentMethod != NULL)
+					{
+						//printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
+						nArguments = ((struct Method *)(currentMethod->info))->nArguments;
+						//printf("+++++Tiene %d argumentos\n", nArguments);
+					}
+					$<symbol>$ = currentMethod;
+				}			
+		arguments ')' {
+					 // printf("+++++SE leyeron bien %d argumentos\n", $4);
+					  if(currentMethod != NULL && $4 == nArguments)
+					  {
+					  	//Todo fue bien
+					  }
+					  else
+					  {
+					  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
+					  } 
+					 }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
 	;
 /* 1
@@ -186,7 +215,29 @@ argumentos esperado
 */
 arguments : 
 	 method_call_argument more_arguments 
-	| method_call_argument
+							{ 
+								//printf("+++++En arguments leidos bien %d\n", $2);
+								if(currentMethod != NULL)
+								{
+								  	int result = checkMethodCall(currentMethod, $1, nArguments - $2);
+								  	//printf("+++++El check method call dio %d\n", result);
+									if(result == 0)
+										$$ = $2 + 1;
+									else
+										$$ = -1;
+								}		
+							}		 
+	| method_call_argument  {
+								if(currentMethod != NULL)
+								{	
+								 	int result = checkMethodCall(currentMethod, $1, nArguments);
+									if(result == 0)
+										$$ = nArguments;
+									else
+										$$ = -1;
+								}		
+						   }
+	| {$$ = 0;}
 	;
 
 /* 2
@@ -195,7 +246,7 @@ argumentos esperado
 */
 method_call_argument : 	
 	expression
-	| string
+	| string {$$ = searchType( TYPE_STRING );}
 	;
 	
 /* 3
@@ -203,8 +254,30 @@ Chequeo de tipos (argumento que pasas vs. argumento esperado) y de nº de
 argumentos esperado
 */
 more_arguments : 
-	',' method_call_argument
-	| ',' method_call_argument more_arguments	             
+	',' method_call_argument {  
+								if(currentMethod != NULL)
+								{
+									int result = checkMethodCall(currentMethod, $2, nArguments);
+									//printf("+++++El check method call dio %d\n", result);
+									if(result == 0)
+										$$ = 1;
+									else
+										$$ = -1;
+								}	 
+							}
+	| ',' method_call_argument more_arguments 
+			{ 
+				//printf("+++++En more arguments leidos bien %d\n", $3);
+				if(currentMethod != NULL)
+				{
+				  	int result = checkMethodCall(currentMethod, $2, nArguments - $3);
+				  	//printf("+++++El check method call dio %d\n", result);
+					if(result == 0)
+						$$ = $3 + 1;
+					else
+						$$ = -1;
+				}		
+			}	             
 	;
 
 /*
@@ -478,14 +551,24 @@ string_struct :
 //a yyparse pero esta vez ya tenemos en arbol lleno.  
 int main(int argc, char** argv) {
 	// Inicializa la tabla de simbolos con los tipos basicos.
-	insertMethodDefinition( "_main" );
+	insertMethodDefinition( "_main" ); 		
+	insertMethodDefinition( "puts" );
+	//En set main establecemos el primer hijo de main.
+	setMain();
+	//TODO Insertar codigo para que funcione el puts
+	//y ademas ponerle un argumento string
+	goOutOfScope();
+	insertMethodDefinition( "getc" );
+	//TODO Insertar codigo para que funcione el getc
+	goOutOfScope();		
 	insertTypeDefinition( "integer", TYPE_INTEGER );
 	insertTypeDefinition( "float", TYPE_FLOAT );
 	insertTypeDefinition( "string", TYPE_STRING );
 	insertTypeDefinition( "char", TYPE_CHAR );
 	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
-
-	
+	struct Symbol*s = searchMethod("puts");
+	if(s != NULL) 
+		printf("Encontre a %s\n",s->name);
 	//return;
 
 	if (argc>1) yyin=fopen(argv[1],"r");

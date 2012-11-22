@@ -100,6 +100,9 @@ struct Symbol* searchType( int id );
 
 struct Symbol* searchVariable( int symType, const char* const name );
 
+struct Symbol* searchMethod(const char* const name );
+
+struct Symbol* searchNArgument(struct Symbol *method, int n);
 
 /*                       4. Symbols table management                          */
 
@@ -122,6 +125,7 @@ void goOutOfScope();
 
 void setNArguments( int n );
 
+void setMain();
 //Asumo que ahora hay que crear el árbol
 
 //Nodos del arbol

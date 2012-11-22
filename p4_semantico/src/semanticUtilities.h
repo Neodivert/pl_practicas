@@ -20,7 +20,10 @@ struct Symbol* checkIsBoolean(struct Symbol* s);
 
 struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
+int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument);
+
 int isVariable(struct Symbol *s);
+
 
 // Check if a method call has the same number of arguments that the method
 // definition.

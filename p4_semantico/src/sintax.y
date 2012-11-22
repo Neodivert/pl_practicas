@@ -211,10 +211,11 @@ more_arguments :
 Después del primer IDENTIF: incluir en árbol.
 Después del segundo IDENTIF: incluir como argumento.
 */
+
 block_call : 
-	IDENTIF EACH DO '|' IDENTIF '|' separator
+	IDENTIF EACH DO '|' IDENTIF '|' { insertBlockDefinition( $5 ); } separator
 		method_code
-	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5);}
+	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goOutOfScope(); }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
 	;			 
 
@@ -478,14 +479,8 @@ string_struct :
 //a yyparse pero esta vez ya tenemos en arbol lleno.  
 int main(int argc, char** argv) {
 	// Inicializa la tabla de simbolos con los tipos basicos.
-	insertMethodDefinition( "_main" );
-	insertTypeDefinition( "integer", TYPE_INTEGER );
-	insertTypeDefinition( "float", TYPE_FLOAT );
-	insertTypeDefinition( "string", TYPE_STRING );
-	insertTypeDefinition( "char", TYPE_CHAR );
-	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
+	initializeSymTable()
 
-	
 	//return;
 
 	if (argc>1) yyin=fopen(argv[1],"r");

@@ -59,22 +59,19 @@ void insertSymbol( struct Symbol *symb )
 		// Not the first symbol added to symbols table.
 		if( nextSymIsFirstChild ){
 			// This symbol is the first child of the symbols table top.
-			//printf( "Insertando symbol nex is first 0\n");
-			//printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
+			printf( "Insertando symbol nex is first 0\n");
+			printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
 			symb->firstChild = 1;
-			//printf( "Insertando symbol nex is first 1\n");
+			printf( "Insertando symbol nex is first 1\n");
 			((struct Method *)(lastDefinedMethod->lastSymbol->info))->localSymbols = symb;
-			//symb->prev = symTable;
-			//printf( "Insertando symbol nex is first 2\n");
+			printf( "Insertando symbol nex is first 2\n");
 			symb->prev = lastDefinedMethod->lastSymbol;
-			//printf( "Insertando symbol nex is first 3\n");
-			//printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );			
+			printf( "Insertando symbol nex is first 3\n");
+			printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );			
 		}else{
 			// This symbols is the brother of the symbols table top.
-			//printf( "Insertando no next\n");
-			//printf( "Insertando %s, nodo anterior: %s\n", symb->name, lastDefinedMethod->lastSymbol->name );
-			//symb->prev = symTable;
-			//symTable->next = symb;
+			printf( "Insertando no next\n");
+			printf( "Insertando %s, nodo anterior: %s\n", symb->name, lastDefinedMethod->lastSymbol->name );
 			symb->prev = lastDefinedMethod->lastSymbol;
 			lastDefinedMethod->lastSymbol->next = symb;
 			if( ((struct Method*)(mainMethod->info))->lastSymbol == lastDefinedMethod->lastSymbol) 
@@ -148,6 +145,7 @@ void insertMainPuts()
 	lastDefinedMethod = ((struct Method *)(mainSymbol->info));		
 	mainMethod = mainSymbol;
 	printf( "Main y puts insertados\n");
+	nextSymIsFirstChild = 0;
 
 }
 
@@ -319,6 +317,7 @@ void initializeSymTable()
 	//TODO Insertar codigo para que funcione el puts
 	//y ademas ponerle un argumento string
 	struct Method* scope = getCurrentScope();
+	//printf("----->Scope apunta a %s\n", scope->lastSymbol->name);
 	insertMethodDefinition( "getc" );
 	//TODO Insertar codigo para que funcione el getc
 	goInScope(scope);		
@@ -540,6 +539,7 @@ struct Method* getCurrentScope()
 
 void goInScope(struct Method *method)
 {	
+	nextSymIsFirstChild = 0;
 	lastDefinedMethod = method;	
 }
 	

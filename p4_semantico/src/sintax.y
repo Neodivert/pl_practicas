@@ -566,10 +566,6 @@ int main(int argc, char** argv) {
 	insertTypeDefinition( "string", TYPE_STRING );
 	insertTypeDefinition( "char", TYPE_CHAR );
 	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
-	struct Symbol*s = searchMethod("puts");
-	if(s != NULL) 
-		printf("Encontre a %s\n",s->name);
-	//return;
 
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();

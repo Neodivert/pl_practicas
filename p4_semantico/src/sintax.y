@@ -109,8 +109,22 @@ Al final de cada regla: poner puntero currentScope a NULL.
 No vamos a permitir sobrecarga de metodos.
 */
 method_definition : 
-	DEF IDENTIF { insertMethodDefinition( $2 ); } arguments_definition separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); setNArguments( $4 ); goOutOfScope();}
-	| DEF IDENTIF { insertMethodDefinition( $2 ); } separator method_code END separator {printf("--------> En method def el identif vale %s\n", $2); setNArguments( 0 ); goOutOfScope(); }
+	DEF IDENTIF { $<integer>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
+		{printf("--------> En method def el identif vale %s\n", $2); 
+			if($<integer>3 == 0)
+			{
+				setNArguments( $4 ); 
+			}	
+			goOutOfScope();			
+		}
+	| DEF IDENTIF { $<integer>$ = checkMethodDefinition( $2 ); } separator method_code END separator
+		{printf("--------> En method def el identif vale %s\n", $2); 
+			if($<integer>3 == 0)
+			{
+				setNArguments( 0 ); 
+			}
+			goOutOfScope();		
+		}	
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
 	;
 
@@ -132,7 +146,7 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el metodo actual.
 */
 arguments_definition : 
-	'(' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
+	'(' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
 	//| IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $1);}
 	;
 /*
@@ -140,7 +154,7 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el método actual.
 */
 more_arguments_definition : 
-	',' IDENTIF { insertVariable( getCreateVariable(SYM_VARIABLE, $2), NULL ); } more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
+	',' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
 	| { $$ = 0; }
 	;
 
@@ -552,20 +566,20 @@ string_struct :
 //a yyparse pero esta vez ya tenemos en arbol lleno.  
 int main(int argc, char** argv) {
 	// Inicializa la tabla de simbolos con los tipos basicos.
-	initializeSymTable()
+	initializeSymTable();
 
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
 
 
-/*  Codigo para cada iteracion	
+  	//Codigo para cada iteracion	
 	fclose (yyin);
 	yyin=fopen(argv[1],"r");
 	resetFlex();
 	yyparse();
 	
-	Codigo para cuando se sale del bucle
-	finishFlex();*/
+	//Codigo para cuando se sale del bucle
+	finishFlex();
 	printf("Termine\n");
 	showSymTable();
 

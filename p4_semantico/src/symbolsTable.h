@@ -59,6 +59,7 @@ struct Variable {
 
 struct Method {
 	int nArguments;
+	struct Symbol *lastSymbol;
 	struct Symbol *localSymbols;
 };
 
@@ -74,6 +75,8 @@ struct Symbol* createSymbol ( int symType, const char* const name );
 
 // Insert symbol in symbols table's top.
 void insertSymbol( struct Symbol *symb );
+
+struct Symbol* createVariable( int symType, const char* const name);
 
 struct Symbol* getCreateVariable( int symType, const char* const name);
 
@@ -125,6 +128,8 @@ void freeSymbol(struct Symbol*);
 // Go backwards in the symbols table until reaching a method. Next symbols will 
 // be this method's brothers.
 void goOutOfScope();
+
+void goInScope(struct Symbol *method);
 
 // Set the last defined method's number of arguments to n. 
 void setNArguments( int n );

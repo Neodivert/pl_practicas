@@ -167,18 +167,19 @@ int isVariable(struct Symbol *s)
 
 int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 {
-	struct Symbol* aux = searchNArgument(method, argument);
+	struct Symbol* argumentSym = searchNArgument(method, argument);
+	struct Symbol* argumentType;
 	//printf("+++++ En check method call %d\n", argument);
 	//Find the argument symbol
-	if(aux != NULL)
+	if(argumentSym != NULL)
 	{
 		//printf("+++++ Encontre el argument %s\n", aux->name);
-		aux = ((struct Variable*)(aux->info))->type;
+		argumentType = ((struct Variable*)(argumentSym->info))->type;
 		//Argument has a known type
-		if(aux != NULL)
+		if(argumentType != NULL)
 		{
-			aux = checkSameType(type, aux); 
-			if(aux != NULL)
+			argumentType = checkSameType(type, argumentType); 
+			if(argumentType != NULL)
 			{
 				//printf("+++++ Son del mismo tipo\n");
 				return 0;
@@ -189,8 +190,14 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 				return 1;
 			}
 		}
-		//printf("+++++ No se sabe el tipo del argumento\n");
-		return 1;	
+		else
+		{//printf("+++++ No se sabe el tipo del argumento\n");
+			//If the argument does not have a known type we asume
+			//the method call is right and assign the type of the
+			//value to the argument.
+			((struct Variable*)(argumentSym->info))->type = (void *)type;
+			return 0;	
+		}
 	}
 	else
 	{
@@ -200,3 +207,30 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 	}
 }	  
 
+int checkMethodDefinition(const char* const name)
+{
+	struct Symbol* method = searchMethod(name);
+	if(method == NULL)
+	{
+		insertMethodDefinition(name);
+		return 0;
+	}
+	else
+	{
+		goInScope(method);
+		return 1;	
+	}		
+}
+
+int checkArgumentDefinition(const char* const name)
+{
+	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
+	if( variableStruct == NULL)
+	{
+		variableStruct = createVariable(SYM_VARIABLE, name);
+		insertVariable(variableStruct, NULL);
+		return 0;
+	}
+	else
+		return 1;	
+}

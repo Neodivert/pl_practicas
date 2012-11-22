@@ -40,3 +40,4 @@ Sintáctico
 
 	- Se han añadido los no terminales "content_vector", "code", "method_code" y "sentences".
 	- Añadido sintaxis de strings compuestas.
+	- Los metodos solo se pueden definir y llamar con parentesis.

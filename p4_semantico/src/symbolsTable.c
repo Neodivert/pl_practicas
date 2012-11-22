@@ -253,12 +253,20 @@ struct Symbol* searchType( int typeId )
 struct Symbol* searchVariable( int symType, const char* const name )
 {
 	struct Symbol* s = lastDefinedMethod->lastSymbol;
-	while( s != NULL && s->symType != SYM_METHOD){
+	struct Symbol* previousSymbol = s;
+	while( s != NULL ){
 		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
 			return s;
 		}
-
+		previousSymbol = s;
 		s = s->prev;
+		//If prev symbol is a method it could be the parent or the brother.
+		//If it is the parent stop the search 
+		if(s != NULL && s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == previousSymbol->prev)
+		{
+			printf( "Variable %s no encontrada \n", name );
+			return NULL;
+		}		
 	}
 
 	showSymTable( symTable, 0 );

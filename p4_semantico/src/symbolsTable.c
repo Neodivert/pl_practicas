@@ -60,7 +60,7 @@ void insertSymbol( struct Symbol *symb )
 			printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
 			symb->firstChild = 1;
 			printf( "Insertando symbol nex is first 1\n");
-			((struct Method *)(symTable->info))->localSymbols = symb;
+			((struct Method *)(lastDefinedMethod->lastSymbol->info))->localSymbols = symb;
 			//symb->prev = symTable;
 			printf( "Insertando symbol nex is first 2\n");
 			symb->prev = lastDefinedMethod->lastSymbol;
@@ -75,11 +75,12 @@ void insertSymbol( struct Symbol *symb )
 			symb->prev = lastDefinedMethod->lastSymbol;
 			lastDefinedMethod->lastSymbol->next = symb;
 		}
-		symTable = symb;
+		if(lastDefinedMethod->lastSymbol == symTable) 
+			symTable = symb;
 	}
 	//Update the lastSymbol of the current method
 	printf( "Cambiando last define por %s\n",symTable->name); 
-	lastDefinedMethod->lastSymbol = symTable;
+	lastDefinedMethod->lastSymbol = symb;
 	printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);	
 	nextSymIsFirstChild = 0;
 }
@@ -188,6 +189,7 @@ void insertVariable( struct Symbol *symbol, struct Symbol *type )
 
 struct Symbol* searchType( int typeId )
 {
+	printf("Buscando type %d\n", typeId);
 	struct Symbol* s = symTable;
 	while( s != NULL ){
 		if( s->symType == SYM_TYPE ){

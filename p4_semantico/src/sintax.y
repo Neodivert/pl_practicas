@@ -200,18 +200,19 @@ method_call :
 	;		
 
 simple_method_call:  
-	IDENTIF '(' { 	//printf("--------> En method call el identif vale %s\n", $1);
+	IDENTIF '(' { 	printf("--------> En method call el identif vale %s\n", $1);
 					currentMethod = searchMethod($1);
+					printf("--------> En method call despues\n");
 					if(currentMethod != NULL)
 					{
-						//printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
+						printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
 						nArguments = ((struct Method *)(currentMethod->info))->nArguments;
-						//printf("+++++Tiene %d argumentos\n", nArguments);
+						printf("+++++Tiene %d argumentos\n", nArguments);
 					}
 					$<symbol>$ = currentMethod;
 				}			
 		arguments ')' {
-					 // printf("+++++SE leyeron bien %d argumentos\n", $4);
+					  printf("+++++SE leyeron bien %d argumentos\n", $4);
 					  if(currentMethod != NULL && $4 == nArguments)
 					  {
 					  	//Todo fue bien

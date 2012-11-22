@@ -13,28 +13,18 @@ This variable is set to 1 after inserting a Method in symTable, and it's set to
 */
 static char nextSymIsFirstChild = 0;
 
+// Fast access to set the method's number of arguments. 
 struct Method* lastDefinedMethod = NULL;
+<<<<<<< HEAD
 static Symbol* symTable = NULL;
 static Symbol* mainMethod = NULL;
 // Definiciones de funciones para tratar la tabla de simbolos.
+=======
 
-//Método para insertar un nodo que contiene un símbolo
-/*Symbol* insert( struct Symbol* actual, struct Symbol *Symb, int type ) // He cambiado el & por * en el segundo argumento por que daba error (en C no habian referencias).
-{
-	//Si es nulo lo metemos y ya
-	if(actual == NULL){
-		symTable = actual;
-		actual->prev = NULL;
-	}else{
-		//Si no es nulo tenemos que desplazar la lista e insertar el nuevo nodo
-		
-		Symbol* aux;
-		aux = actual;
-		Symb.prev = aux;
-		return &Symb;
-	}
-		
-}*/
+// Symbols tree's root.
+static Symbol* symTable = NULL;
+>>>>>>> rama1
+
 
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -43,13 +33,15 @@ static Symbol* mainMethod = NULL;
 
 struct Symbol* createSymbol ( int symType, const char* const  name )
 {
+	// Allocate memory for new symbol.
 	struct Symbol *symbol = (Symbol *)malloc( sizeof( struct Symbol ) );
-	int n = strlen( name );
 
+	// Set symbol's type and name.
 	symbol->symType = symType;
-	symbol->name = (char *)malloc( n+1 );
+	symbol->name = (char *)malloc( strlen( name )+1 );
 	strcpy( symbol->name, name );
 
+	// Initialize symbol's "firstChild" field and pointers. 
 	symbol->firstChild = 0;
 	symbol->prev = NULL;
 	symbol->next = NULL;
@@ -57,22 +49,25 @@ struct Symbol* createSymbol ( int symType, const char* const  name )
 	return symbol;
 }
 
-void insertSymbol(struct Symbol *symb)
+void insertSymbol( struct Symbol *symb )
 {
 	assert( symb != NULL );
 
-	if(symTable == NULL){ 
+	if( symTable == NULL ){
+		// First symbol added to symbols table.
 		symTable = symb;
 		symTable->prev = NULL;	
 	}else{
+		// Not the first symbol added to symbols table.
 		if( nextSymIsFirstChild ){
-			printf( "\t\t\tPRIMER HIJO\n" );
+			// This symbol is the first child of the symbols table top.
 			symb->firstChild = 1;
-			// CAMBIAR ASSERT CUANDO SE INCLUYAN CLASES Y BLOQUES.
-			assert( symTable->symType == SYM_METHOD );
+
 			((struct Method *)(symTable->info))->localSymbols = symb;
 			symb->prev = symTable;
+			printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name, symTable->name );
 		}else{
+			// This symbols is the brother of the symbols table top.
 			printf( "Insertando %s, nodo anterior: %s\n", symb->name, symTable->name );
 			symb->prev = symTable;
 			symTable->next = symb;
@@ -81,7 +76,6 @@ void insertSymbol(struct Symbol *symb)
 	}
 	nextSymIsFirstChild = 0;
 }
-
 
 struct Symbol* getCreateVariable( int symType, const char* const name)
 {
@@ -96,29 +90,56 @@ struct Symbol* getCreateVariable( int symType, const char* const name)
 	return variableStruct;
 }
 
-
 /*                       2. Specific symbols insertion                        */
 
-void insertMethodDefinition( const char* const name  )
+void insertMethodBlockDefinition_( Symbol* symbol )
 {
-	// Create and fill the method's symbol.
-	struct Symbol* symbol = createSymbol( SYM_METHOD, name );
-
 	symbol->info = (void *)malloc( sizeof( struct Method ) );
 
-	((struct Method *)(symbol->info))->nArguments = 0;
+	if( symbol->symType == SYM_BLOCK ){
+		// We only allow the block "each", which only has one mandatory 
+		// argument.
+		((struct Method *)(symbol->info))->nArguments = 1;
+	}else{
+		// This will be filled when method's argument is read.
+		((struct Method *)(symbol->info))->nArguments = 0;
+
+		// When the final argument is declared, we'll use this pointer to access
+		// this method and fill its nArgument field.
+		lastDefinedMethod = ((struct Method *)(symbol->info));
+	}
 	((struct Method *)(symbol->info))->localSymbols = NULL;
 
-	// When the final argument is declared, we'll use this pointer to access
-	// this method and fill its nArgument field.
-	lastDefinedMethod = ((struct Method *)(symbol->info));
-	
 	// Insert method's symbol in table.
 	insertSymbol( symbol );
 
 	// If we don't go out of scope, next symbol will be a "child".
 	nextSymIsFirstChild = 1;
 }
+
+void insertMethodDefinition( const char* const name  )
+{
+	// Create and fill the method's symbol.
+	struct Symbol* symbol = createSymbol( SYM_METHOD, name );
+
+	// Fill and insert the method's symbol.
+	insertMethodBlockDefinition_( symbol );
+}
+
+void insertBlockDefinition( const char* const argName  )
+{
+	printf( "Insertando bloque con variable [%s]\n", argName );
+
+	// Create and fill the block's symbol.
+	struct Symbol* symbol = createSymbol( SYM_BLOCK, "_block" );
+
+	// Fill and insert the block's symbol.
+	insertMethodBlockDefinition_( symbol );
+
+	// Insert the block's argument.
+	insertVariable( getCreateVariable( SYM_VARIABLE, argName ), NULL );
+}
+
 
 void insertTypeDefinition( const char* const name, int typeId )
 {	
@@ -162,7 +183,8 @@ struct Symbol* searchType( int typeId )
 	return NULL;
 }
 
-
+// FALTA: Hay que hacer que si estamos buscando en un bocle, no se tiene acceso
+// a las variables globales.y en el método exterior.
 struct Symbol* searchVariable( int symType, const char* const name )
 {
 	struct Symbol* s = symTable;
@@ -217,41 +239,34 @@ struct Symbol* searchNArgument(struct Symbol *method, int n)
 
 void initializeSymTable()
 {
-	insertMethodDefinition( "_MAIN" );
+	insertMethodDefinition( "_main" ); 		
+	insertMethodDefinition( "puts" );
+	//En set main establecemos el primer hijo de main.
+	setMain();
+	//TODO Insertar codigo para que funcione el puts
+	//y ademas ponerle un argumento string
+	goOutOfScope();
+	insertMethodDefinition( "getc" );
+	//TODO Insertar codigo para que funcione el getc
+	goOutOfScope();		
 	insertTypeDefinition( "integer", TYPE_INTEGER );
 	insertTypeDefinition( "float", TYPE_FLOAT );
 	insertTypeDefinition( "string", TYPE_STRING );
 	insertTypeDefinition( "char", TYPE_CHAR );
 	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
-
-	// A partir de aqui es para hacer pruebas. BORRAR mas adelante.
-	insertMethodDefinition( "_METHOD2" );
-	insertTypeDefinition( "string", TYPE_STRING );
-	insertTypeDefinition( "char", TYPE_CHAR );
-	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
-	insertMethodDefinition( "_METHOD3" );
-	insertTypeDefinition( "string", TYPE_STRING );
-	insertTypeDefinition( "char", TYPE_CHAR );
-	goOutOfScope();
-	goOutOfScope();
-	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
-	insertMethodDefinition( "_METHOD3" );
-	insertMethodDefinition( "_METHOD4" );
-	goOutOfScope();
-	insertMethodDefinition( "_METHOD5" );
-	insertMethodDefinition( "_METHOD6" );
-	goOutOfScope();
-	goOutOfScope();
-	insertMethodDefinition( "_METHOD7" );
 }
 
-
+// Auxiliar function. Show symbols from sym, and tabulate them according to its 
+// their level.
 void showSymTable_( struct Symbol* sym, int level )
 {
 	int i = 0;
 
 	while( (sym != NULL) ){
+		// Tabulate current symbol.
 		for( i=0; i<level; i++ ) printf( "\t" );
+
+		// Show current symbol's name.
 		switch( sym->symType ){
 			case SYM_TYPE:
 				printf( "TYPE" );
@@ -275,8 +290,8 @@ void showSymTable_( struct Symbol* sym, int level )
 
 		printf( " - [%s]", sym->name );
 
+		// If DEBUG is defined, show previous and next symbol's name.
 		#ifdef DEBUG
-
 		if( sym->prev ){
 			printf( " - prev: [%s]", sym->prev->name );
 		}else{
@@ -288,9 +303,9 @@ void showSymTable_( struct Symbol* sym, int level )
 		}else{
 			printf( " - next: [NULL]" );
 		}
-			
 		#endif
 
+		// Show extra info according to the current symbol's type.
 		Symbol* aux;
 		switch( sym->symType ){
 			case SYM_VARIABLE:
@@ -303,6 +318,7 @@ void showSymTable_( struct Symbol* sym, int level )
 				}
 			break;
 			case SYM_METHOD:
+			case SYM_BLOCK:
 				aux = ((struct Method*)(sym->info))->localSymbols;
 
 				printf( " - nArguments: [%i]", ((struct Method*)(sym->info))->nArguments );
@@ -317,21 +333,7 @@ void showSymTable_( struct Symbol* sym, int level )
 				printf( "\n" );
 			break;
 		}
-		/*
-		if( ( sym->symType == SYM_METHOD ) && ((struct Method*)(sym->info))->localSymbols ){
-			#ifdef DEBUG
-			printf( " - hijo: [%s]\n",((struct Method*)(sym->info))->localSymbols->name );
-			#endif 
-			//printf( "\n\t%s\n", ((struct Method*)(sym->info))->localSymbols->name );
-			showSymTable_( ((struct Method*)(sym->info))->localSymbols, level+1 );
-			
-		}
-		#ifdef DEBUG
-		else{
-			printf( " - hijo: [NULL]\n" );
-		}
-		#endif
-		*/
+
 		sym = sym->next;
 	}
 }
@@ -383,6 +385,7 @@ void freeSymbTable(){
 
 	if( !sym ) return;
 
+	// Go to the beginning before start freeing.
 	while( sym->prev ){
 		sym = sym->prev;
 	}
@@ -403,7 +406,12 @@ void goOutOfScope(){
 
 		if( symTable ){
 			symTable = symTable->prev;
+
+			if( symTable->symType == SYM_METHOD ){
+				lastDefinedMethod = NULL;
+			}
 		}
+
 	}
 }
 
@@ -416,26 +424,4 @@ void setMain()
 {
 	mainMethod = symTable;	 
 }
-/*
-int main( int argc, char *argv[] )
-{
-	initializeSymTable();
-	//insertTypeDefinition( "class" );
-
-	struct Symbol* s = searchType( TYPE_INTEGER );
-	printf( "%s\n", s->name );
-
-	//insertMethodDefinition( "abc" );
-	//insertMethodDefinition( "abc2" );
-	//insertMethodDefinition( "xyz" );
-	showSymTable( symTable, 0 );
-
-	freeSymbTable();
-
-
-
-	return 0;
-	
-}
-*/
 

@@ -41,8 +41,8 @@ struct Symbol
 	// If firstChild = 0, prev points to the previous Symbol.
 	// If firstChild = 1, prev points to the parent.
 	char firstChild;
-	struct Symbol *prev, *next;//, pos;	// Posición en el padre
-}; 								// *symbols;  
+	struct Symbol *prev, *next;
+};	 
 
 
 //TODO Que hacemos con los arrays? Incluirlos dentro de type
@@ -55,21 +55,12 @@ struct Type {
 
 struct Variable {
    	struct Symbol* type;
-	//void *value; 				// int, float, char*, bool
-	// La linea anterior esta comentada porque en principio no nos interesa saber
-	// el valor de una variable (como compilador).
 };
 
 struct Method {
 	int nArguments;
 	struct Symbol *localSymbols;
-	//En caso de ser una definicion de método o de anónimo, tiene que tener un enlace al nodo
-	//que contiene toda su información en el árbol.
-	//asumo que esto es un puntero al nodo
-	
-	//struct Method* block;
-}; //function;
-
+};
 
 typedef struct Symbol Symbol; 
 
@@ -81,14 +72,24 @@ typedef struct Symbol Symbol;
 // Create a "empty generic" symbol defining only its symType and name
 struct Symbol* createSymbol ( int symType, const char* const name );
 
+// Insert symbol in symbols table's top.
 void insertSymbol( struct Symbol *symb );
 
 struct Symbol* getCreateVariable( int symType, const char* const name);
 
+
 /*                       2. Specific symbols insertion                        */
 
+// Insert method "name" in symbols table. If we don't go out of scope (by 
+// calling "goOutOfScope()"), next symbols will be added as method's local data.
 void insertMethodDefinition( const char* const name  );
 
+// Insert block with argument "argName" in symbols table. If we don't go out of 
+// scope (by calling "goOutOfScope()"), next symbols will be added as block's 
+// local data.
+void insertBlockDefinition( const char* const argName );
+
+// Insert type with name "name" and id "typeId" in symbols table.
 void insertTypeDefinition( const char* const name, int typeId );
 
 void insertVariable( struct Symbol *symbol, struct Symbol *type );
@@ -121,40 +122,14 @@ void freeSymbol(struct Symbol*);
 
 /*                                  5. Others                                 */
 
+// Go backwards in the symbols table until reaching a method. Next symbols will 
+// be this method's brothers.
 void goOutOfScope();
 
+// Set the last defined method's number of arguments to n. 
 void setNArguments( int n );
 
 void setMain();
-//Asumo que ahora hay que crear el árbol
-
-//Nodos del arbol
-//Nodo raiz VS Nodo def nodo anónimo(diferencia en el tipo especificado)
-
-	//Enlace a la tabla en el propio nodo
-	//Los enlaces a los hijos son contenidos en la definición del
-	//hijo dentro de la tabla de símbolos
-
-
-
-//Al crear métodos de insercion de cada tipo de elemento en Symbol
-//Métodos de inicialización?
-
-
-//Método para insertar un nodo que contiene un símbolo
-//struct Symbol* insert( struct Symbol* actual, struct Symbol *Symb, int type ); // He cambiado el & por * en el segundo argumento por que daba error (en C no habian referencias).
-
-
-
-
-// Cuando te encuentras una variable global en una definicion no haces nada, simplemente la almacenas
-// en la tabla local al método. Una vez encuentras la llamada a dicho método coges y haces un recorrido
-// del código en busca de las variables globales. Una vez hecho esto se cogen las variables globales
-// y se suben al ámbito superior (raiz) nada mas encontrarse. 
-//
-//
-//
-//
 
 #endif
 // SYMBOLS_TABLE_H

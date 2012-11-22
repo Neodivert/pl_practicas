@@ -27,8 +27,11 @@ tokens = ['INTEGER',
 'GREATER_EQUAL',
 'NIL',
 'BOOL',
-'SEC_SCAPE']
-
+'SEC_SCAPE',
+'NOT',
+'EACH',
+'NEW',
+'ARRAY']
 
 ARGV.each do |token|
   token_i = token.to_i 

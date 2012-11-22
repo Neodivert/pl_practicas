@@ -134,7 +134,7 @@ void goInScope(struct Symbol *method);
 // Set the last defined method's number of arguments to n. 
 void setNArguments( int n );
 
-void setMain();
+//void setMain();
 
 #endif
 // SYMBOLS_TABLE_H

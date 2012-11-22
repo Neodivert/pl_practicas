@@ -123,6 +123,9 @@ void insertMainPuts()
 	struct Symbol* mainSymbol = createSymbol( SYM_METHOD, "_main" );
 	struct Symbol* putsSymbol = createSymbol( SYM_METHOD, "puts" );
 	
+	mainSymbol->firstChild = 1;
+	putsSymbol->firstChild = 0;
+	
 	mainSymbol->info = (void *)malloc( sizeof( struct Method ) );
 	putsSymbol->info = (void *)malloc( sizeof( struct Method ) );
 	
@@ -139,11 +142,12 @@ void insertMainPuts()
 	
 	putsSymbol->prev = mainSymbol;
 	putsSymbol->next = NULL;
-	((struct Method *)(mainSymbol->info))->localSymbols = NULL;
-	((struct Method *)(mainSymbol->info))->lastSymbol = putsSymbol;
+	((struct Method *)(putsSymbol->info))->localSymbols = NULL;
+	((struct Method *)(putsSymbol->info))->lastSymbol = putsSymbol;
 	
 	lastDefinedMethod = ((struct Method *)(mainSymbol->info));		
 	mainMethod = mainSymbol;
+	printf( "Main y puts insertados\n");
 
 }
 
@@ -509,9 +513,9 @@ void setNArguments( int n ){
 	lastDefinedMethod->nArguments = n;
 }
 
-void setMain()
+/*void setMain()
 {
 	mainMethodNext = symTable;	
 	((struct Method*)(mainMethodNext->info))->lastSymbol = symTable;	 
-}
+}*/
 

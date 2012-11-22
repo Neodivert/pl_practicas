@@ -162,12 +162,9 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 		((struct Method *)(symbol->info))->nArguments = 1;
 	}else{
 		// This will be filled when method's argument is read.
-		((struct Method *)(symbol->info))->nArguments = 0;
-
-		// When the final argument is declared, we'll use this pointer to access
-		// this method and fill its nArgument field.
-		
+		((struct Method *)(symbol->info))->nArguments = 0;		
 	}
+
 	((struct Method *)(symbol->info))->localSymbols = NULL;
 	((struct Method *)(symbol->info))->lastSymbol = symbol;
 	
@@ -175,6 +172,8 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 	// Insert method's symbol in table.
 	insertSymbol( symbol );
 	
+	// When the final argument is declared, we'll use this pointer to access
+	// this method and fill its nArgument field.
 	lastDefinedMethod = ((struct Method *)(symbol->info));
 	//lastDefinedMethod->lastSymbol = symbol;	
 
@@ -411,12 +410,42 @@ void showSymTable_( struct Symbol* sym, int level )
 	}
 }
 
+void showGlobals_()
+{
+	if( nextSymIsFirstChild ){
+		printf( "nextSymIsFirstChild = 1\n" );
+	}else{
+		printf( "nextSymIsFirstChild = 0\n" );
+	}
+
+	if( symTable ){
+		printf( "symTable: [%s]\n", symTable->name );
+	}else{
+		printf( "symTable: [NULL]\n" );
+	}
+
+	if( mainMethod ){
+		printf( "mainMethod: [%s]\n", mainMethod->name );
+	}else{
+		printf( "mainMethod: [NULL]\n" );
+	}
+
+	if( mainMethodNext ){
+		printf( "mainMethodNext: [%s]\n", mainMethodNext->name );
+	}else{
+		printf( "mainMethodNext: [NULL]\n" );
+	}
+}
 
 void showSymTable()
 {
 	Symbol* sym = symTable;
 
 	printf( "Symbols table -------------------------------\n" );
+
+	showGlobals_();
+	
+	printf( "**********\n" );
 
 	// Start showing from the beginning.
 	while( sym->prev ){

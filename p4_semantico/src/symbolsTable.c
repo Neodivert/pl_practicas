@@ -18,6 +18,7 @@ struct Method* lastDefinedMethod = NULL;
 
 // Symbols tree's root.
 static Symbol* symTable = NULL;
+static Symbol* mainMethodNext = NULL;
 static Symbol* mainMethod = NULL;
 
 
@@ -50,8 +51,10 @@ void insertSymbol( struct Symbol *symb )
 	printf( "Insertando symbol\n");
 	if( symTable == NULL ){
 		// First symbol added to symbols table.
-		symTable = symb;
-		symTable->prev = NULL;	
+		//symTable = symb;
+		//symTable->prev = NULL;	
+		//lastDefinedMethod->lastSymbol = symb;
+		printf( "Insertando symbol\n");
 	}else{
 		// Not the first symbol added to symbols table.
 		if( nextSymIsFirstChild ){
@@ -65,7 +68,7 @@ void insertSymbol( struct Symbol *symb )
 			printf( "Insertando symbol nex is first 2\n");
 			symb->prev = lastDefinedMethod->lastSymbol;
 			printf( "Insertando symbol nex is first 3\n");
-			printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );
+			printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );			
 		}else{
 			// This symbols is the brother of the symbols table top.
 			printf( "Insertando no next\n");
@@ -74,9 +77,13 @@ void insertSymbol( struct Symbol *symb )
 			//symTable->next = symb;
 			symb->prev = lastDefinedMethod->lastSymbol;
 			lastDefinedMethod->lastSymbol->next = symb;
+			if( ((struct Method*)(mainMethod->info))->lastSymbol == lastDefinedMethod->lastSymbol) 
+			{
+				symTable = symb;
+				((struct Method*)(mainMethod->info))->lastSymbol = symb;
+			}			
 		}
-		if(lastDefinedMethod->lastSymbol == symTable) 
-			symTable = symb;
+	
 	}
 	//Update the lastSymbol of the current method
 	printf( "Cambiando last define por %s\n",symTable->name); 
@@ -109,6 +116,38 @@ struct Symbol* getCreateVariable( int symType, const char* const name)
 
 /*                       2. Specific symbols insertion                        */
 
+void insertMainPuts()
+{
+	printf( "Insertando main\n");
+	// Create and fill the method's symbol.
+	struct Symbol* mainSymbol = createSymbol( SYM_METHOD, "_main" );
+	struct Symbol* putsSymbol = createSymbol( SYM_METHOD, "puts" );
+	
+	mainSymbol->info = (void *)malloc( sizeof( struct Method ) );
+	putsSymbol->info = (void *)malloc( sizeof( struct Method ) );
+	
+	((struct Method *)(mainSymbol->info))->nArguments = 0;	
+	((struct Method *)(putsSymbol->info))->nArguments = 1;	
+	
+	symTable = putsSymbol;
+	mainMethodNext = putsSymbol;
+	
+	mainSymbol->prev = NULL;
+	mainSymbol->next = NULL;
+	((struct Method *)(mainSymbol->info))->localSymbols = putsSymbol;
+	((struct Method *)(mainSymbol->info))->lastSymbol = putsSymbol;
+	
+	putsSymbol->prev = mainSymbol;
+	putsSymbol->next = NULL;	
+	lastDefinedMethod = ((struct Method *)(symbol->info));
+	((struct Method *)(mainSymbol->info))->localSymbols = NULL;
+	((struct Method *)(mainSymbol->info))->lastSymbol = putsSymbol;
+	
+	lastDefinedMethod = ((struct Method *)(mainSymbol->info));		
+	mainMethod = mainSymbol;
+
+}
+
 void insertMethodBlockDefinition_( Symbol* symbol )
 {
 	printf( "Insertando block metod\n");
@@ -127,14 +166,16 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 		
 	}
 	((struct Method *)(symbol->info))->localSymbols = NULL;
-	//((struct Method *)(symbol->info))->lastSymbol = NULL;
-	
-	// Insert method's symbol in table.
-	lastDefinedMethod = ((struct Method *)(symbol->info));
-	lastDefinedMethod->lastSymbol = symTable;
-	insertSymbol( symbol );
-
 	((struct Method *)(symbol->info))->lastSymbol = symbol;
+	
+	//lastDefinedMethod->lastSymbol = symbol;
+	// Insert method's symbol in table.
+	insertSymbol( symbol );
+	
+	lastDefinedMethod = ((struct Method *)(symbol->info));
+	//lastDefinedMethod->lastSymbol = symbol;	
+
+	//((struct Method *)(symbol->info))->lastSymbol = symbol;
 	// If we don't go out of scope, next symbol will be a "child".
 	nextSymIsFirstChild = 1;
 }
@@ -189,7 +230,7 @@ void insertVariable( struct Symbol *symbol, struct Symbol *type )
 
 struct Symbol* searchType( int typeId )
 {
-	printf("Buscando type %d\n", typeId);
+	printf("Buscando type %d, symbtable apunta a %s\n", typeId, symTable->name);
 	struct Symbol* s = symTable;
 	while( s != NULL ){
 		if( s->symType == SYM_TYPE ){
@@ -228,8 +269,8 @@ struct Symbol* searchVariable( int symType, const char* const name )
 
 struct Symbol* searchMethod(const char* const name )
 {
-	struct Symbol* s = mainMethod;
-	printf("Mainmethod apunta a %s\n", s->name);
+	struct Symbol* s = mainMethodNext;
+	printf("mainMethodNext apunta a %s\n", s->name);
 	while( s != NULL ){
 		printf("symtype = %d, name = %s\n", s->symType, s->name);
 		if( s->symType == SYM_METHOD && (strcmp(s->name, name) == 0)  ){
@@ -263,18 +304,18 @@ struct Symbol* searchNArgument(struct Symbol *method, int n)
 void initializeSymTable()
 {
 	printf("Antes de main\n");
-	insertMethodDefinition( "_main" );
+	//insertMethodDefinition( "_main" );
+	insertMainPuts();
 	printf("Despues de main\n");
 	showSymTable();
-	lastDefinedMethod = (struct Method *)(symTable->info);
+	//lastDefinedMethod = (struct Method *)(symTable->info);
 	printf("El last method apunta a %s \n",symTable->name); 
-	insertMethodDefinition( "puts" );
-	printf("Despues de puts\n");
+	//insertMethodDefinition( "puts" );
+	//printf("Despues de puts\n");
 	//En set main establecemos el primer hijo de main.
-	setMain();
+	//setMain();
 	//TODO Insertar codigo para que funcione el puts
 	//y ademas ponerle un argumento string
-	goOutOfScope();
 	insertMethodDefinition( "getc" );
 	//TODO Insertar codigo para que funcione el getc
 	goOutOfScope();		
@@ -429,6 +470,7 @@ void goOutOfScope(){
 	if( nextSymIsFirstChild ){
 		nextSymIsFirstChild = 0;
 	}else{
+		struct Symbol*scope = lastDefinedMethod->lastSymbol;
 		while( symTable != NULL && !symTable->firstChild ){
 			symTable = symTable->prev;
 		}
@@ -436,18 +478,26 @@ void goOutOfScope(){
 		if( symTable ){
 			symTable = symTable->prev;
 			struct Symbol *s = symTable;
-			while( s != NULL && s->symType != SYM_METHOD && s->symType != SYM_BLOCK){
+			while( s != NULL && (s->symType != SYM_METHOD && s->symType != SYM_BLOCK)){
 				s = s->prev;
 			}
 			if(s != NULL)
+			{
+				printf("<<<<<<<<<<<<get out scope vale %s\n", s->name); 
 				lastDefinedMethod = ((struct Method*)(s->info));
+			}	
 			else
+			{
 				//If no previous method was found, assume main is last
 				//this should never happend
-				lastDefinedMethod = (struct Method *)(mainMethod->prev->info);	
+				printf("<<<<<<<<<<<get out scope xungo vale %s\n", s->name); 
+				lastDefinedMethod = (struct Method *)(mainMethodNext->prev->info);	
+			}	
 		}
 
 	}
+	showSymTable();
+	printf("<<<<<<<<<<<<get out scope symtable = %s\n", symTable->name); 
 }
 
 void goInScope(struct Symbol *method)
@@ -462,6 +512,7 @@ void setNArguments( int n ){
 
 void setMain()
 {
-	mainMethod = symTable;	 
+	mainMethodNext = symTable;	
+	((struct Method*)(mainMethodNext->info))->lastSymbol = symbTable;	 
 }
 

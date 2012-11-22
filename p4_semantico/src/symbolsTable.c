@@ -138,8 +138,7 @@ void insertMainPuts()
 	((struct Method *)(mainSymbol->info))->lastSymbol = putsSymbol;
 	
 	putsSymbol->prev = mainSymbol;
-	putsSymbol->next = NULL;	
-	lastDefinedMethod = ((struct Method *)(symbol->info));
+	putsSymbol->next = NULL;
 	((struct Method *)(mainSymbol->info))->localSymbols = NULL;
 	((struct Method *)(mainSymbol->info))->lastSymbol = putsSymbol;
 	
@@ -471,13 +470,13 @@ void goOutOfScope(){
 		nextSymIsFirstChild = 0;
 	}else{
 		struct Symbol*scope = lastDefinedMethod->lastSymbol;
-		while( symTable != NULL && !symTable->firstChild ){
-			symTable = symTable->prev;
+		while( scope != NULL && !scope->firstChild ){
+			scope = scope->prev;
 		}
 
-		if( symTable ){
-			symTable = symTable->prev;
-			struct Symbol *s = symTable;
+		if( scope ){
+			scope = scope->prev;
+			struct Symbol *s = scope;
 			while( s != NULL && (s->symType != SYM_METHOD && s->symType != SYM_BLOCK)){
 				s = s->prev;
 			}
@@ -491,7 +490,7 @@ void goOutOfScope(){
 				//If no previous method was found, assume main is last
 				//this should never happend
 				printf("<<<<<<<<<<<get out scope xungo vale %s\n", s->name); 
-				lastDefinedMethod = (struct Method *)(mainMethodNext->prev->info);	
+				lastDefinedMethod = (struct Method *)(mainMethod->info);	
 			}	
 		}
 
@@ -513,6 +512,6 @@ void setNArguments( int n ){
 void setMain()
 {
 	mainMethodNext = symTable;	
-	((struct Method*)(mainMethodNext->info))->lastSymbol = symbTable;	 
+	((struct Method*)(mainMethodNext->info))->lastSymbol = symTable;	 
 }
 

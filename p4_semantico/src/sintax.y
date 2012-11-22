@@ -16,6 +16,7 @@ void yyerror(char* mens);
 
 struct Symbol*currentMethod = NULL; 
 int nArguments = 0; 
+int firstParse = 1;
 
 %}
 
@@ -586,6 +587,7 @@ int main(int argc, char** argv) {
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
 
+	firstParse = 0;
 	int i = 0;
   	//Codigo para cada iteracion
   	while(getChange() && i < 5)

@@ -204,8 +204,8 @@ void insertBlockDefinition( const char* const name, const char* const argName  )
 	insertMethodBlockDefinition_( symbol );
 
 	// Insert the block's argument.
-	//TODO La variable no es de tipo desconocido, es del tipo del array
-	insertVariable( getCreateVariable( SYM_VARIABLE, argName ), NULL );
+	//TODO La variable no es de tipo desconocido, es del tipo del array	
+	insertVariable( createVariable(SYM_VARIABLE, argName), NULL );
 }
 
 
@@ -311,20 +311,28 @@ struct Symbol* searchType( int typeId )
 struct Symbol* searchVariable( int symType, const char* const name )
 {
 	struct Symbol* s = lastDefinedMethod->lastSymbol;
-	struct Symbol* previousSymbol = s;
-	while( s != NULL ){
+	//struct Symbol* previousSymbol = s;
+	
+	while( s != NULL){
 		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
+			printf( "Variable %s Encontrada \n", name );
 			return s;
 		}
-		previousSymbol = s;
-		s = s->prev;
 		//If prev symbol is a method it could be the parent or the brother.
-		//If it is the parent stop the search 
-		if(s != NULL && s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == previousSymbol->prev)
+		//If it is the parent stop the search 	
+		if(s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == lastDefinedMethod->localSymbols)
+		{
+			printf( "Variable %s no encontrada caso yupi\n", name );
+			return NULL;
+		}	
+		//previousSymbol = s;
+		s = s->prev;
+		
+		/*if(s != NULL && s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == previousSymbol->prev)
 		{
 			printf( "Variable %s no encontrada \n", name );
 			return NULL;
-		}		
+		}	*/			
 	}
 
 	showSymTable( symTable, 0 );

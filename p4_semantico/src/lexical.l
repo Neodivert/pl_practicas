@@ -4,6 +4,8 @@
 int numlin = 1;
 void error(char*);
 
+unsigned int arraySize = 0;
+
 %}
 capital [A-Z]
 letter [a-zA-Z]
@@ -35,7 +37,7 @@ Array						{return ARRAY;}
 $({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); return ID_GLOBAL_VARIABLE;}
 @({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); return ID_INSTANCE_VARIABLE;}
 {capital}({letdig}|_)*                               {strcpy(yylval.string, yytext); return ID_CONSTANT;}
-("+"|"-")?{digit}+                            {return INTEGER;}
+("+"|"-")?{digit}+                            { arraySize=atoi(yytext); return INTEGER;}
 ({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {return FLOAT;}
 "!="                                                     {return NOT_EQUAL;}
 "=="                                                      {return EQUAL_EQUAL;}

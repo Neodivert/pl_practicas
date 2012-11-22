@@ -9,6 +9,9 @@ extern int numlin; /* lexico le da valores */
 //extern int yylex();
 int yydebug=1; /* modo debug si -t */
 
+// We use this when defining an array to get its size.
+extern unsigned int arraySize;
+
 void yyerror(char* mens);
 
 struct Symbol*currentMethod = NULL; 
@@ -356,50 +359,61 @@ y del right side coincidan.
 */
 assignment : 
 	left_side right_side separator {
-									printf("--------> En assignment \n");
-									switch(isVariable($1))
-									{
-									case 0: //It is a variable with a known type
-										printf("--------> En assignment with known type %s \n", $1->name);
-										if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
-										{
-											//Left side and right side are the same type
-											//Generar codigo
-											showSymTable();
-										}else
-										{
-											//If $2 = NULL right side was wrong/unknown and that was already warned
-											showSymTable();
-											if($2 != NULL) 
-											{
-												char message[50];
-												message[0] = '\0';
-												strcat(message, "Type error: with variable ");
-												strcat(message, $1->name);
-												yyerror((char *)message);
-											}
-										}	
-										printf("--------> En assignment with known type end %s \n", $1->name);									
-										break;
-									case 1: //It is a variable without a known type
-										printf("--------> En assignment with not known type %s \n", $1->name);
-										showSymTable();
-										if(searchVariable($1->symType, $1->name) == NULL) 
-											//Variable is not in symbolTable, insert it
-											insertVariable( $1, $2 );
-										else
-											//Variable is in symbolTable, set its type, $2 might be NULL
-											((struct Variable *)($1->info))->type = $2;	
-										showSymTable();
-										printf("--------> En assignment with not known type end %s \n", $1->name);
-										//Generar codigo o no xD
-										break;
-									case 2: //It is not a variable
-										printf("--------> En assignment left side error\n");
-										yyerror("Left side of expression is invalid\n");
-										break;		
-									}	
-								}
+		printf("--------> En assignment \n");
+		switch(isVariable($1))
+		{
+		case 0: //It is a variable with a known type
+			printf("--------> En assignment with known type %s \n", $1->name);
+			if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
+			{
+				// Left side and right side are the same type
+				// Generar codigo
+				showSymTable();
+			}else
+			{
+				//If $2 = NULL right side was wrong/unknown and that was already warned
+				showSymTable();
+				if($2 != NULL) 
+				{
+					char message[50];
+					message[0] = '\0';
+					strcat(message, "Type error: with variable ");
+					strcat(message, $1->name);
+					yyerror((char *)message);
+				}
+			}	
+			printf("--------> En assignment with known type end %s \n", $1->name);									
+			break;
+		case 1: //It is a variable without a known type
+			printf("--------> En assignment with not known type %s \n", $1->name);
+			showSymTable();
+			if(searchVariable($1->symType, $1->name) == NULL){
+				//Variable is not in symbolTable, insert it
+				if( $2->symType == SYM_ARRAY_TYPE ){
+					insertArray( $1, $2 );
+				}else{
+					insertVariable( $1, $2 );
+				}
+			}else{
+				//Variable is in symbolTable, set its type, $2 might be NULL
+				((struct Variable *)($1->info))->type = $2;	
+			}
+			showSymTable();
+			printf("--------> En assignment with not known type end %s \n", $1->name);
+			//Generar codigo o no xD
+			break;
+		case 2: //It is not a variable
+			printf("--------> En assignment left side error\n");
+			yyerror("Left side of expression is invalid\n");
+			break;		
+		}	
+		if( $2->symType == SYM_ARRAY_TYPE ){
+			// When assigning an array, $1 and $2 are pointers to temporal data, so
+			// free them.
+			free( $1 );
+			free( $2 );
+		}
+	}
 	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;
 
@@ -432,7 +446,7 @@ right_side :
 	expression
 	| string {$$ = searchType( TYPE_STRING );}
 	//TODO En array se deberia devolver el tipo array y en constant new el tipo de la clase
-	| ARRAY NEW INTEGER {$$ = searchType( TYPE_INTEGER );} 	 
+	| ARRAY NEW '(' INTEGER ',' literal ')' { $$ = createArraySymbol( $6, arraySize ); }
 	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);
 						$$ = searchType( TYPE_INTEGER );}
 	| '[' array_content ']' {$$ = searchType( TYPE_INTEGER );}  
@@ -529,7 +543,7 @@ factor :
 	;
 
 literal : 
-	INTEGER		{$$ = searchType( TYPE_INTEGER ); }
+	INTEGER		{ $$ = searchType( TYPE_INTEGER ); }
 	| FLOAT		{printf("Entrando float\n");showSymTable(); printf("Entrando 2 float\n"); $$ = searchType( TYPE_FLOAT ); printf("Saliendo de float\n");}
 	| CHAR		{$$ = searchType( TYPE_CHAR ); }
 	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}

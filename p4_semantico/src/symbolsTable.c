@@ -1,6 +1,7 @@
 #include "symbolsTable.h"
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
 
 //#define DEBUG 1
 
@@ -218,6 +219,7 @@ void insertTypeDefinition( const char* const name, int typeId )
 	insertSymbol( symbol );
 }
 
+
 void insertVariable( struct Symbol *symbol, struct Symbol *type )
 {	
 	((struct Variable *)(symbol->info))->type = (void *)type;
@@ -225,6 +227,59 @@ void insertVariable( struct Symbol *symbol, struct Symbol *type )
 	insertSymbol( symbol );
 }
 
+
+Symbol* createArraySymbol( Symbol* type, unsigned int n )
+{
+	printf( "CREANDO ARRAY DE TAM %d de tipo %s\n", n, type->name );
+
+	struct Symbol* symbol = createSymbol( SYM_ARRAY_TYPE, "_array" );
+
+	symbol->info = (void *)malloc( sizeof( struct ArrayType ) );
+
+	((struct ArrayType *)(symbol->info))->type = type;
+	((struct ArrayType *)(symbol->info))->nElements = n;
+
+	printf( "Creado simbolo array - tipo [%s], nElements [%d]\n", ((struct ArrayType *)(symbol->info))->type->name, ((struct ArrayType *)(symbol->info))->nElements );
+
+	return symbol;
+}
+
+void insertArray( Symbol* array, Symbol* type )
+{
+	int i, n = ((struct ArrayType *)(type->info))->nElements;
+	char elementName[100];
+	char index[5];
+
+	Symbol* element = NULL;
+
+	printf( "Creando array\n" );
+
+	for( i=0; i<n; i++ ){
+		strcpy( elementName, array->name );
+		sprintf( index, "%d", i );
+		strcat( elementName, "[" );
+		strcat( elementName, index );
+		strcat( elementName, "]" );
+
+		element = createSymbol( SYM_VARIABLE, elementName );
+
+		element->info = (void *)malloc( sizeof( struct Variable ) );
+
+		//((struct Variable*)(element->info))->type = ((struct ArrayType*)(type->info))->type;
+	/*
+	variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
+	((struct Variable *)(variableStruct->info))->type = NULL;
+	return variableStruct;
+	*/
+
+		insertVariable( element, ((struct ArrayType*)(type->info))->type );
+
+		printf( "\tIntroduciendo elemento [%s]\n", elementName );
+		
+	}
+
+	showSymTable();
+}
 
 /*                             3. Symbol search                               */
 
@@ -363,6 +418,9 @@ void showSymTable_( struct Symbol* sym, int level )
 			case SYM_BLOCK:
 				printf( "BLOCK" );
 			break;
+			case SYM_ARRAY_TYPE:
+				printf( "SYM_ARRAY_TYPE" );
+			break;
 			default:
 				printf( "UKNOWN TYPE" );
 			break;
@@ -387,6 +445,7 @@ void showSymTable_( struct Symbol* sym, int level )
 
 		// Show extra info according to the current symbol's type.
 		Symbol* aux;
+		struct ArrayType* arrayInfo;
 		switch( sym->symType ){
 			case SYM_VARIABLE:
 				aux = ((struct Variable*)(sym->info))->type;
@@ -408,6 +467,10 @@ void showSymTable_( struct Symbol* sym, int level )
 				}else{
 					printf( " - hijo: [NULL]\n" );
 				}
+			break;
+			case SYM_ARRAY_TYPE:
+				arrayInfo = ((struct ArrayType *)(sym->info));
+				printf( " - nElements: [%i], elements type: [%s]\n", arrayInfo->nElements, arrayInfo->type->name );
 			break;
 			default:
 				printf( "\n" );

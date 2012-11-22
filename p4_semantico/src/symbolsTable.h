@@ -17,6 +17,7 @@ static const int MAX_SIZE = 30;
 #define SYM_GLOBAL 4
 #define SYM_METHOD 5
 #define SYM_BLOCK 6
+#define SYM_ARRAY_TYPE 7
 
 
 // Valores posibles para el campo "id" de Type.
@@ -50,7 +51,14 @@ struct Symbol
 //extra_info? con un struct k tenga tamaño y tipo del array
 struct Type {
    int id;
-   struct Symbol *fields;   // Si id = CLASS, esto apuntaria a los campos.
+	 
+	 //unsigned int nElements; // Used if id == TYPE_ARRAY;
+   //struct Symbol *fields;   // If id == TYPE_ARRAY, this points to first element.
+};
+
+struct ArrayType {
+	struct Symbol* type;
+	unsigned int nElements;
 };
 
 struct Variable {
@@ -97,6 +105,11 @@ void insertTypeDefinition( const char* const name, int typeId );
 
 void insertVariable( struct Symbol *symbol, struct Symbol *type );
 
+Symbol* createArraySymbol( Symbol* type, unsigned int n );
+
+// Insert n variables with name[i] where i is in range 0..n-1.
+void insertArray( Symbol* element, Symbol* type );
+
 
 /*                             3. Symbol search                               */
 
@@ -107,6 +120,7 @@ struct Symbol* searchVariable( int symType, const char* const name );
 struct Symbol* searchMethod(const char* const name );
 
 struct Symbol* searchNArgument(struct Symbol *method, int n);
+
 
 /*                       4. Symbols table management                          */
 

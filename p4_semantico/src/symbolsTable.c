@@ -59,20 +59,20 @@ void insertSymbol( struct Symbol *symb )
 		// Not the first symbol added to symbols table.
 		if( nextSymIsFirstChild ){
 			// This symbol is the first child of the symbols table top.
-			printf( "Insertando symbol nex is first 0\n");
-			printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
+			//printf( "Insertando symbol nex is first 0\n");
+			//printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
 			symb->firstChild = 1;
-			printf( "Insertando symbol nex is first 1\n");
+			//printf( "Insertando symbol nex is first 1\n");
 			((struct Method *)(lastDefinedMethod->lastSymbol->info))->localSymbols = symb;
 			//symb->prev = symTable;
-			printf( "Insertando symbol nex is first 2\n");
+			//printf( "Insertando symbol nex is first 2\n");
 			symb->prev = lastDefinedMethod->lastSymbol;
-			printf( "Insertando symbol nex is first 3\n");
-			printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );			
+			//printf( "Insertando symbol nex is first 3\n");
+			//printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );			
 		}else{
 			// This symbols is the brother of the symbols table top.
-			printf( "Insertando no next\n");
-			printf( "Insertando %s, nodo anterior: %s\n", symb->name, lastDefinedMethod->lastSymbol->name );
+			//printf( "Insertando no next\n");
+			//printf( "Insertando %s, nodo anterior: %s\n", symb->name, lastDefinedMethod->lastSymbol->name );
 			//symb->prev = symTable;
 			//symTable->next = symb;
 			symb->prev = lastDefinedMethod->lastSymbol;
@@ -319,9 +319,10 @@ void initializeSymTable()
 	//setMain();
 	//TODO Insertar codigo para que funcione el puts
 	//y ademas ponerle un argumento string
+	struct Method* scope = getCurrentScope();
 	insertMethodDefinition( "getc" );
 	//TODO Insertar codigo para que funcione el getc
-	goOutOfScope();		
+	goInScope(scope);		
 	insertTypeDefinition( "integer", TYPE_INTEGER );
 	insertTypeDefinition( "float", TYPE_FLOAT );
 	insertTypeDefinition( "string", TYPE_STRING );
@@ -468,7 +469,7 @@ void freeSymbTable(){
 
 
 /*                                  5. Others                                 */
-
+/*
 void goOutOfScope(){
 	if( nextSymIsFirstChild ){
 		nextSymIsFirstChild = 0;
@@ -501,11 +502,16 @@ void goOutOfScope(){
 	}
 	showSymTable();
 	printf("<<<<<<<<<<<<get out scope symtable = %s\n", symTable->name); 
+}*/
+
+struct Method* getCurrentScope()
+{
+	return lastDefinedMethod;
 }
 
-void goInScope(struct Symbol *method)
+void goInScope(struct Method *method)
 {	
-	lastDefinedMethod = ((struct Method *)(method->info));	
+	lastDefinedMethod = method;	
 }
 	
 void setNArguments( int n ){

@@ -16,7 +16,8 @@ int nArguments = 0;
 
 %}
 
-%union { int integer; char string[30]; struct Symbol *symbol; }
+%union { int integer; char string[30]; struct Symbol *symbol; 
+	struct MethodInfo *methodInfo; struct Method* method;}
 
 %type <symbol> expression
 %type <symbol> logical_expression
@@ -109,21 +110,23 @@ Al final de cada regla: poner puntero currentScope a NULL.
 No vamos a permitir sobrecarga de metodos.
 */
 method_definition : 
-	DEF IDENTIF { $<integer>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
+	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
 		{printf("--------> En method def el identif vale %s\n", $2); 
-			if($<integer>3 == 0)
+			if($<methodInfo>3->result == 0)
 			{
 				setNArguments( $4 ); 
 			}	
-			goOutOfScope();			
+			goInScope($<methodInfo>3->scope);
+			free($<methodInfo>3);			
 		}
-	| DEF IDENTIF { $<integer>$ = checkMethodDefinition( $2 ); } separator method_code END separator
+	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } separator method_code END separator
 		{printf("--------> En method def el identif vale %s\n", $2); 
-			if($<integer>3 == 0)
+			if($<methodInfo>3->result == 0)
 			{
 				setNArguments( 0 ); 
 			}
-			goOutOfScope();		
+			goInScope($<methodInfo>3->scope);
+			free($<methodInfo>3);			
 		}	
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
 	;
@@ -301,9 +304,9 @@ Después del segundo IDENTIF: incluir como argumento.
 */
 
 block_call : 
-	IDENTIF EACH DO '|' IDENTIF '|' { insertBlockDefinition( $5 ); } separator
+	IDENTIF EACH DO '|' IDENTIF '|' { $<method>$ = getCurrentScope(); insertBlockDefinition( $5 ); } separator
 		method_code
-	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goOutOfScope(); }
+	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goInScope($<method>7); }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
 	;			 
 

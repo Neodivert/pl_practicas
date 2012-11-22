@@ -207,19 +207,22 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 	}
 }	  
 
-int checkMethodDefinition(const char* const name)
+struct MethodInfo *checkMethodDefinition(const char* const name)
 {
+	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
 	struct Symbol* method = searchMethod(name);
+	info->scope = getCurrentScope();
 	if(method == NULL)
 	{
 		insertMethodDefinition(name);
-		return 0;
+		info->result = 0;
 	}
 	else
 	{
-		goInScope(method);
-		return 1;	
-	}		
+		goInScope(((struct Method *)(method->info)));
+		info->result = 1;	
+	}	
+	return info;	
 }
 
 int checkArgumentDefinition(const char* const name)

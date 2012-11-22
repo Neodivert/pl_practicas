@@ -127,9 +127,11 @@ void freeSymbol(struct Symbol*);
 
 // Go backwards in the symbols table until reaching a method. Next symbols will 
 // be this method's brothers.
-void goOutOfScope();
+struct Method* getCurrentScope();
 
-void goInScope(struct Symbol *method);
+//void goOutOfScope();
+
+void goInScope(struct Method *method);
 
 // Set the last defined method's number of arguments to n. 
 void setNArguments( int n );

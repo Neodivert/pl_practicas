@@ -7,6 +7,11 @@
 #include "symbolsTable.h"
 #include "sintax.tab.h"
 
+struct MethodInfo
+{
+	struct Method *scope;
+	int result;
+};
 
 struct Symbol* checkAritmeticExpression(struct Symbol* s1, struct Symbol* s2, char *op);
 
@@ -22,7 +27,7 @@ struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
 int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument);
 
-int checkMethodDefinition(const char* const name);
+struct MethodInfo *checkMethodDefinition(const char* const name);
 
 int checkArgumentDefinition(const char* const name);
 

@@ -150,6 +150,14 @@ void goInScope(struct Method *method);
 // Set the last defined method's number of arguments to n. 
 void setNArguments( int n );
 
+void setChanged();
+
+void resetChange();
+
+const char getChange();
+
+
+
 //void setMain();
 
 #endif

@@ -16,6 +16,7 @@ void yyerror(char* mens);
 
 struct Symbol*currentMethod = NULL; 
 int nArguments = 0; 
+int firstParse = 1;
 
 %}
 
@@ -307,7 +308,7 @@ Después del segundo IDENTIF: incluir como argumento.
 */
 
 block_call : 
-	IDENTIF EACH DO '|' IDENTIF '|' { $<method>$ = getCurrentScope(); insertBlockDefinition( $5 ); } separator
+	IDENTIF EACH DO '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
 		method_code
 	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goInScope($<method>7); }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
@@ -359,61 +360,59 @@ y del right side coincidan.
 */
 assignment : 
 	left_side right_side separator {
-		printf("--------> En assignment \n");
-		switch(isVariable($1))
-		{
-		case 0: //It is a variable with a known type
-			printf("--------> En assignment with known type %s \n", $1->name);
-			if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
-			{
-				// Left side and right side are the same type
-				// Generar codigo
-				showSymTable();
-			}else
-			{
-				//If $2 = NULL right side was wrong/unknown and that was already warned
-				showSymTable();
-				if($2 != NULL) 
-				{
-					char message[50];
-					message[0] = '\0';
-					strcat(message, "Type error: with variable ");
-					strcat(message, $1->name);
-					yyerror((char *)message);
-				}
-			}	
-			printf("--------> En assignment with known type end %s \n", $1->name);									
-			break;
-		case 1: //It is a variable without a known type
-			printf("--------> En assignment with not known type %s \n", $1->name);
-			showSymTable();
-			if(searchVariable($1->symType, $1->name) == NULL){
-				//Variable is not in symbolTable, insert it
-				if( $2->symType == SYM_ARRAY_TYPE ){
-					insertArray( $1, $2 );
-				}else{
-					insertVariable( $1, $2 );
-				}
-			}else{
-				//Variable is in symbolTable, set its type, $2 might be NULL
-				((struct Variable *)($1->info))->type = $2;	
-			}
-			showSymTable();
-			printf("--------> En assignment with not known type end %s \n", $1->name);
-			//Generar codigo o no xD
-			break;
-		case 2: //It is not a variable
-			printf("--------> En assignment left side error\n");
-			yyerror("Left side of expression is invalid\n");
-			break;		
-		}	
-		if( $2->symType == SYM_ARRAY_TYPE ){
-			// When assigning an array, $1 and $2 are pointers to temporal data, so
-			// free them.
-			free( $1 );
-			free( $2 );
-		}
-	}
+									printf("--------> En assignment \n");
+									switch(isVariable($1))
+									{
+									case 0: //It is a variable with a known type
+										printf("--------> En assignment with known type %s \n", $1->name);
+										if(checkSameType(((struct Variable*)($1->info))->type, $2) != NULL)
+										{
+											//Left side and right side are the same type
+											//Generar codigo
+											showSymTable();
+										}else
+										{
+											//If $2 = NULL right side was wrong/unknown and that was already warned
+											showSymTable();
+											if($2 != NULL) 
+											{
+												char message[50];
+												message[0] = '\0';
+												strcat(message, "Type error: with variable ");
+												strcat(message, $1->name);
+												yyerror((char *)message);
+											}
+										}	
+										printf("--------> En assignment with known type end %s \n", $1->name);									
+										break;
+									case 1: //It is a variable without a known type
+										printf("--------> En assignment with not known type %s \n", $1->name);
+										showSymTable();
+										if(searchVariable($1->symType, $1->name) == NULL)
+										{ 
+											//Variable is not in symbolTable, insert it
+											printf("Insertando con tipo %s\n", $2->name);
+											insertVariable( $1, $2 );
+										}	
+										else
+										{
+											//Variable is in symbolTable, set its type, $2 might be NULL
+											if($2 != NULL)
+											{
+												((struct Variable *)($1->info))->type = $2;												
+												setChanged();
+											}
+										}	
+										showSymTable();
+										printf("--------> En assignment with not known type end %s \n", $1->name);
+										//Generar codigo o no xD
+										break;
+									case 2: //It is not a variable
+										printf("--------> En assignment left side error\n");
+										yyerror("Left side of expression is invalid\n");
+										break;		
+									}	
+								}
 	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;
 
@@ -589,13 +588,20 @@ int main(int argc, char** argv) {
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
 
-
-  	//Codigo para cada iteracion	
-	fclose (yyin);
-	yyin=fopen(argv[1],"r");
-	resetFlex();
-	yyparse();
-	
+	firstParse = 0;
+	int i = 0;
+  	//Codigo para cada iteracion
+  	while(getChange() && i < 5)
+  	{ 	
+  		resetChange();
+  		numlin = 0;
+		fclose (yyin);
+		yyin=fopen(argv[1],"r");
+		resetFlex();
+		yyparse();
+		i++;
+		printf("\n\nIteracion %d\n\n", i);
+	}
 	//Codigo para cuando se sale del bucle
 	finishFlex();
 	printf("Termine\n");

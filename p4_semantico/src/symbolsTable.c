@@ -22,6 +22,7 @@ static Symbol* symTable = NULL;
 static Symbol* mainMethodNext = NULL;
 static Symbol* mainMethod = NULL;
 
+static char change = 0;
 
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -59,35 +60,55 @@ void insertSymbol( struct Symbol *symb )
 	}else{
 		// Not the first symbol added to symbols table.
 		if( nextSymIsFirstChild ){
-			// This symbol is the first child of the symbols table top.
-			printf( "Insertando symbol nex is first 0\n");
-			printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
-			symb->firstChild = 1;
-			printf( "Insertando symbol nex is first 1\n");
-			((struct Method *)(lastDefinedMethod->lastSymbol->info))->localSymbols = symb;
-			printf( "Insertando symbol nex is first 2\n");
-			symb->prev = lastDefinedMethod->lastSymbol;
-			printf( "Insertando symbol nex is first 3\n");
-			printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );			
-		}else{
-			// This symbols is the brother of the symbols table top.
-			printf( "Insertando no next\n");
-			printf( "Insertando %s, nodo anterior: %s\n", symb->name, lastDefinedMethod->lastSymbol->name );
-			symb->prev = lastDefinedMethod->lastSymbol;
-			lastDefinedMethod->lastSymbol->next = symb;
-			if( ((struct Method*)(mainMethod->info))->lastSymbol == lastDefinedMethod->lastSymbol) 
+			if(symb->symType == SYM_GLOBAL)
+			{	
+				symb->prev = ((struct Method*)(mainMethod->info))->lastSymbol;
+				((struct Method*)(mainMethod->info))->lastSymbol->next = symb;
+				((struct Method*)(mainMethod->info))->lastSymbol = symb;		
+			}else
 			{
-				symTable = symb;
-				((struct Method*)(mainMethod->info))->lastSymbol = symb;
+				// This symbol is the first child of the symbols table top.
+				printf( "Insertando symbol nex is first 0\n");
+				printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);			
+				symb->firstChild = 1;
+				printf( "Insertando symbol nex is first 1\n");
+				((struct Method *)(lastDefinedMethod->lastSymbol->info))->localSymbols = symb;
+				printf( "Insertando symbol nex is first 2\n");
+				symb->prev = lastDefinedMethod->lastSymbol;
+				printf( "Insertando symbol nex is first 3\n");
+				printf( "Insertando %s (primer hijo), nodo anterior: NULL\n", symb->name );		
+				lastDefinedMethod->lastSymbol = symb;	
+				nextSymIsFirstChild = 0;				
+			}		
+		}else{
+			if(symb->symType == SYM_GLOBAL)
+			{	
+				symb->prev = ((struct Method*)(mainMethod->info))->lastSymbol;
+				((struct Method*)(mainMethod->info))->lastSymbol->next = symb;
+				((struct Method*)(mainMethod->info))->lastSymbol = symb;		
+			}else
+			{		
+				// This symbols is the brother of the symbols table top.
+				printf( "Insertando no next\n");
+				printf( "Insertando %s, nodo anterior: %s\n", symb->name, lastDefinedMethod->lastSymbol->name );
+				symb->prev = lastDefinedMethod->lastSymbol;
+				lastDefinedMethod->lastSymbol->next = symb;
+				if( ((struct Method*)(mainMethod->info))->lastSymbol == lastDefinedMethod->lastSymbol) 
+				{
+					symTable = symb;
+					((struct Method*)(mainMethod->info))->lastSymbol = symb;
+				}
+				lastDefinedMethod->lastSymbol = symb;
+				printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);										
 			}			
+			nextSymIsFirstChild = 0;
 		}
 	
 	}
 	//Update the lastSymbol of the current method
 	printf( "Cambiando last define por %s\n",symTable->name); 
-	lastDefinedMethod->lastSymbol = symb;
-	printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);	
-	nextSymIsFirstChild = 0;
+
+	setChanged();
 }
 
 struct Symbol* createVariable( int symType, const char* const name)
@@ -147,7 +168,7 @@ void insertMainPuts()
 	mainMethod = mainSymbol;
 	printf( "Main y puts insertados\n");
 	nextSymIsFirstChild = 0;
-
+	setChanged();
 }
 
 void insertMethodBlockDefinition_( Symbol* symbol )
@@ -191,18 +212,19 @@ void insertMethodDefinition( const char* const name  )
 	insertMethodBlockDefinition_( symbol );
 }
 
-void insertBlockDefinition( const char* const argName  )
+void insertBlockDefinition( const char* const name, const char* const argName  )
 {
 	printf( "Insertando bloque con variable [%s]\n", argName );
 
 	// Create and fill the block's symbol.
-	struct Symbol* symbol = createSymbol( SYM_BLOCK, "_block" );
+	struct Symbol* symbol = createSymbol( SYM_BLOCK, name );
 
 	// Fill and insert the block's symbol.
 	insertMethodBlockDefinition_( symbol );
 
 	// Insert the block's argument.
-	insertVariable( getCreateVariable( SYM_VARIABLE, argName ), NULL );
+	//TODO La variable no es de tipo desconocido, es del tipo del array	
+	insertVariable( createVariable(SYM_VARIABLE, argName), NULL );
 }
 
 
@@ -307,21 +329,37 @@ struct Symbol* searchType( int typeId )
 // a las variables globales.y en el método exterior.
 struct Symbol* searchVariable( int symType, const char* const name )
 {
-	struct Symbol* s = lastDefinedMethod->lastSymbol;
-	struct Symbol* previousSymbol = s;
-	while( s != NULL ){
+	struct Symbol* s;
+	if(symType == SYM_GLOBAL)
+	{
+		s = ((struct Method*)(mainMethod->info))->lastSymbol;
+	}
+	else
+	{
+		s = lastDefinedMethod->lastSymbol;
+	}
+	//struct Symbol* previousSymbol = s;
+	
+	while( s != NULL){
 		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
+			printf( "Variable %s Encontrada \n", name );
 			return s;
 		}
-		previousSymbol = s;
-		s = s->prev;
 		//If prev symbol is a method it could be the parent or the brother.
-		//If it is the parent stop the search 
-		if(s != NULL && s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == previousSymbol->prev)
+		//If it is the parent stop the search 	
+		if(s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == lastDefinedMethod->localSymbols)
+		{
+			printf( "Variable %s no encontrada caso yupi\n", name );
+			return NULL;
+		}	
+		//previousSymbol = s;
+		s = s->prev;
+		
+		/*if(s != NULL && s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == previousSymbol->prev)
 		{
 			printf( "Variable %s no encontrada \n", name );
 			return NULL;
-		}		
+		}	*/			
 	}
 
 	showSymTable( symTable, 0 );
@@ -406,12 +444,15 @@ void showSymTable_( struct Symbol* sym, int level )
 			case SYM_TYPE:
 				printf( "TYPE" );
 			break;
+			case SYM_GLOBAL:
+				printf( "GLOBAL" );	
+			break;			
 			case SYM_VARIABLE:
 				printf( "VARIABLE" );
 			break;
 			case SYM_CONSTANT:
 				printf( "CONSTANT" );
-			break;
+			break;		
 			case SYM_METHOD:
 				printf( "METHOD" );
 			break;
@@ -448,6 +489,8 @@ void showSymTable_( struct Symbol* sym, int level )
 		struct ArrayType* arrayInfo;
 		switch( sym->symType ){
 			case SYM_VARIABLE:
+			case SYM_GLOBAL:
+			case SYM_CONSTANT:
 				aux = ((struct Variable*)(sym->info))->type;
 				printf( " - type: " );
 				if( aux ){
@@ -617,6 +660,21 @@ void goInScope(struct Method *method)
 void setNArguments( int n ){
 	assert( lastDefinedMethod );
 	lastDefinedMethod->nArguments = n;
+}
+
+void setChanged()
+{
+	change = 1;
+}
+
+void resetChange()
+{
+	change = 0;
+}
+
+const char getChange()
+{
+	return change;
 }
 
 /*void setMain()

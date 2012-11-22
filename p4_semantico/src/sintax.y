@@ -384,12 +384,20 @@ assignment :
 									case 1: //It is a variable without a known type
 										printf("--------> En assignment with not known type %s \n", $1->name);
 										showSymTable();
-										if(searchVariable($1->symType, $1->name) == NULL) 
+										if(searchVariable($1->symType, $1->name) == NULL)
+										{ 
 											//Variable is not in symbolTable, insert it
 											insertVariable( $1, $2 );
+										}	
 										else
+										{
 											//Variable is in symbolTable, set its type, $2 might be NULL
-											((struct Variable *)($1->info))->type = $2;	
+											if($2 != NULL)
+											{
+												((struct Variable *)($1->info))->type = $2;												
+												setChanged();
+											}
+										}	
 										showSymTable();
 										printf("--------> En assignment with not known type end %s \n", $1->name);
 										//Generar codigo o no xD
@@ -575,13 +583,19 @@ int main(int argc, char** argv) {
 	if (argc>1) yyin=fopen(argv[1],"r");
 	yyparse();
 
-
-  	//Codigo para cada iteracion	
-	fclose (yyin);
-	yyin=fopen(argv[1],"r");
-	resetFlex();
-	yyparse();
-	
+	int i = 0;
+  	//Codigo para cada iteracion
+  	while(getChange() && i < 5)
+  	{ 	
+  		resetChange();
+  		numlin = 0;
+		fclose (yyin);
+		yyin=fopen(argv[1],"r");
+		resetFlex();
+		yyparse();
+		i++;
+		printf("\n\nIteracion %d\n\n", i);
+	}
 	//Codigo para cuando se sale del bucle
 	finishFlex();
 	printf("Termine\n");

@@ -21,6 +21,7 @@ static Symbol* symTable = NULL;
 static Symbol* mainMethodNext = NULL;
 static Symbol* mainMethod = NULL;
 
+static char change = 0;
 
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -87,6 +88,7 @@ void insertSymbol( struct Symbol *symb )
 	lastDefinedMethod->lastSymbol = symb;
 	printf( "Last defined apunta a %s\n", lastDefinedMethod->lastSymbol->name);	
 	nextSymIsFirstChild = 0;
+	setChanged();
 }
 
 struct Symbol* createVariable( int symType, const char* const name)
@@ -146,7 +148,7 @@ void insertMainPuts()
 	mainMethod = mainSymbol;
 	printf( "Main y puts insertados\n");
 	nextSymIsFirstChild = 0;
-
+	setChanged();
 }
 
 void insertMethodBlockDefinition_( Symbol* symbol )
@@ -554,6 +556,21 @@ void goInScope(struct Method *method)
 void setNArguments( int n ){
 	assert( lastDefinedMethod );
 	lastDefinedMethod->nArguments = n;
+}
+
+void setChanged()
+{
+	change = 1;
+}
+
+void resetChange()
+{
+	change = 0;
+}
+
+const char getChange()
+{
+	return change;
 }
 
 /*void setMain()

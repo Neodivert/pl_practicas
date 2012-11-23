@@ -50,8 +50,7 @@ struct Symbol
 //entonces, habria que añadir dos campos mas, kizas un void*
 //extra_info? con un struct k tenga tamaño y tipo del array
 struct Type {
-   int id;
-	 
+	int id;
 	 //unsigned int nElements; // Used if id == TYPE_ARRAY;
    //struct Symbol *fields;   // If id == TYPE_ARRAY, this points to first element.
 };
@@ -69,6 +68,7 @@ struct Method {
 	int nArguments;
 	struct Symbol *lastSymbol;
 	struct Symbol *localSymbols;
+	struct Symbol *returnType;
 };
 
 typedef struct Symbol Symbol; 

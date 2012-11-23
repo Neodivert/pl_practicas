@@ -35,6 +35,9 @@ int firstParse = 1;
 %type <symbol> left_side
 %type <symbol> simple_method_call
 %type <symbol> method_call_argument
+%type <symbol> assignment
+%type <symbol> method_call
+%type <symbol> method_code
 
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
@@ -121,7 +124,8 @@ method_definition :
 				setNArguments( $4 ); 
 			}	
 			goInScope($<methodInfo>3->scope);
-			free($<methodInfo>3);			
+			setMethodReturnType(searchMethod($2), $6);			
+			free($<methodInfo>3);		
 		}
 	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } separator method_code END separator
 		{printf("--------> En method def el identif vale %s\n", $2); 
@@ -130,22 +134,37 @@ method_definition :
 				setNArguments( 0 ); 
 			}
 			goInScope($<methodInfo>3->scope);
+			setMethodReturnType(searchMethod($2), $5);			
 			free($<methodInfo>3);			
 		}	
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
 	;
 
 method_code : 
-	separator
+	separator {$$ = NULL;} 
 	| assignment
-	| assignment method_code
+	| assignment method_code 
+		{
+			if($2 == NULL){
+				$$ = $1;
+			}else{
+				$$ = $2;
+			}
+		}
 	| method_call
 	| method_call method_code
-	| separator method_code
-	| loop
-	| loop method_code
-	| if_construction	
-	| if_construction method_code 
+		{
+			if($2 == NULL){
+				$$ = $1;
+			}else{
+				$$ = $2;
+			}
+		}	
+	| separator method_code {$$ = $2;}
+	| loop {$$ = NULL;}
+	| loop method_code {$$ = NULL;}
+	| if_construction {$$ = NULL;}	 
+	| if_construction method_code {$$ = NULL;} 
 	;
 
 /*
@@ -154,6 +173,7 @@ Añadir argumento de nombre IDENTIF en el metodo actual.
 */
 arguments_definition : 
 	'(' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
+	| '(' ')' {$$ = 0;}
 	//| IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $1);}
 	;
 /*
@@ -203,7 +223,7 @@ Buscar método llamado IDENTIF en el árbol.
 */
 method_call : 
 	simple_method_call separator
-	| block_call  
+	| block_call {$$ = NULL;} 
 	;		
 
 simple_method_call:  
@@ -228,6 +248,7 @@ simple_method_call:
 					  {
 					  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
 					  } 
+					  $$ = searchMethod($1);
 					 }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
 	;
@@ -411,7 +432,8 @@ assignment :
 										printf("--------> En assignment left side error\n");
 										yyerror("Left side of expression is invalid\n");
 										break;		
-									}	
+									}
+									$$ = $1;	
 								}
 	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;

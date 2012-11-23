@@ -253,3 +253,25 @@ int checkArgumentDefinition(const char* const name)
 	else
 		return 1;	
 }
+
+void setMethodReturnType(struct Symbol *method, struct Symbol *type)
+{
+	if(method != NULL)
+	{
+		struct Method *methodInfo = ((struct Method*)(method->info));
+		if(methodInfo->returnType == NULL)
+		{
+			if(type != NULL)
+			{
+				if(type->symType == SYM_METHOD)
+				{
+					methodInfo->returnType = ((struct Method*)(type->info))->returnType;
+				}
+				else //It's a variable
+				{
+					methodInfo->returnType = ((struct Variable*)(type->info))->type;
+				}
+			}
+		}	
+	}	
+}

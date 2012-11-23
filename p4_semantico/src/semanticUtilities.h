@@ -13,15 +13,32 @@ struct MethodInfo
 	int result;
 };
 
+/*                                  1. Expressions                            */
+
+// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
+// previous condition is satisfied, return s1. Otherwise, generate an error 
+// message (using op) and return NULL.
 struct Symbol* checkAritmeticExpression(struct Symbol* s1, struct Symbol* s2, char *op);
 
+// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
+// previous condition is satisfied, search for boolean type in symbols' table
+// and return it. Otherwise, generate an error message (using op) and return 
+// NULL. 
 struct Symbol* checkRelationalExpression(struct Symbol* s1, struct Symbol* s2, char *op);
 
+// Check if subexpressions types s1 and s2 are both BOOLEAN. If previous 
+// condition is satisfied, return s1. Otherwise, generate an error message 
+// (using op) and return NULL.
 struct Symbol* checkLogicalExpression(struct Symbol* s1, struct Symbol* s2, char *op);
+
 
 struct Symbol* checkNotExpression(struct Symbol* s);
 
+// Check if type s is an boolean. If previous  condition is satisfied, return s.
+// Otherwise, generate an error message and return NULL (*).
+// If s == NULL, this returns NULL, but doens't generate an error message. 
 struct Symbol* checkIsBoolean(struct Symbol* s);
+
 
 struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
@@ -42,6 +59,8 @@ struct Method * checkBlockDefinition(const char* const name, const char* const a
 char *createBlockName(const char* const name, const char* const argName);
 
 int isVariable(struct Symbol *s);
+
+
 
 
 // Check if a method call has the same number of arguments that the method

@@ -679,6 +679,16 @@ const char getChange()
 	return change;
 }
 
+int getArgumentsNumber( const char* const name )
+{
+	Symbol* method = searchMethod( name );
+	if( method ){
+		return ((struct Method *)(method->info))->nArguments;
+	}else{
+		return -1;
+	}
+}
+
 /*void setMain()
 {
 	mainMethodNext = symTable;	

@@ -78,7 +78,9 @@ struct Method {
 	struct Symbol *returnType;
 };
 
-typedef struct Symbol Symbol; 
+typedef struct Symbol Symbol;
+
+typedef const char* const = string; 
 
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -161,6 +163,10 @@ void setChanged();
 void resetChange();
 
 const char getChange();
+
+// Search for method "name" and return its argument's number. If method ins't 
+// in symbols table, return -1.
+int getArgumentsNumber( const char* const name );
 
 
 

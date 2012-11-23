@@ -292,7 +292,7 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 	{
 	//yyerror("Type error: Wrong amount of arguments in method call");
 	//printf("+++++No se encontro el argumento\n");
-	return 1;
+	return 1; 
 	}
 }	  
 
@@ -385,3 +385,5 @@ char *createBlockName(const char* const name, const char* const argName)
 	printf("create 5\n");
 	return blockName;
 }
+
+

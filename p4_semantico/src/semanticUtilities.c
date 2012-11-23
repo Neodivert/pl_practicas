@@ -1,19 +1,24 @@
 #include "semanticUtilities.h"
 
-struct Symbol* checkAritmeticExpression(struct Symbol* s1, struct Symbol* s2, char *op){
+/*                                  1. Expressions                            */
+
+// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. If 
+// previous condition is satisfied, return s1. Otherwise, generate an error 
+// message (using op) and return NULL.
+// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL)
 		return NULL; 
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
-	//Factor and term are both integer or float.
-	if((t1 == t2) && (t1 <= TYPE_FLOAT))
-	{
-	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
+	
+	if((t1 == t2) && (t1 <= TYPE_FLOAT)){
+		// s1 and s2 are both integer or float.
 		return s1;
-	}
-	else
-	{
+	}else{
+		// s1 and s2 are either, unlike types, or both different than integer and float
+		// Generate error message
 		char message[50];
 		message[0] = '\0';
 		strcat(message, "Type error: ");
@@ -28,7 +33,12 @@ struct Symbol* checkAritmeticExpression(struct Symbol* s1, struct Symbol* s2, ch
 	}
 }	
 
-struct Symbol* checkRelationalExpression(struct Symbol* s1, struct Symbol* s2, char *op){
+// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
+// previous condition is satisfied, search for boolean type in symbols' table
+// and return it. Otherwise, generate an error message (using op) and return 
+// NULL. 
+// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL)
 		return NULL; 	
@@ -57,7 +67,11 @@ struct Symbol* checkRelationalExpression(struct Symbol* s1, struct Symbol* s2, c
 	
 }
 
-struct Symbol* checkLogicalExpression(struct Symbol* s1, struct Symbol* s2, char *op){
+// Check if subexpressions types s1 and s2 are both BOOLEAN. If previous 
+// condition is satisfied, return s1. Otherwise, generate an error message 
+// (using op) and return NULL.
+// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL)
 		return NULL; 	
@@ -85,7 +99,12 @@ struct Symbol* checkLogicalExpression(struct Symbol* s1, struct Symbol* s2, char
 	}
 }
 
-struct Symbol* checkNotExpression(struct Symbol* s){
+// Check if expression's type s is TYPE_BOOLEAN (so its allowed in a NOT 
+// expression).
+// If s is of type TYPE_BOOLEAN, return NULL. Otherwise show an error message
+// and return NULL.
+// (*) If s is NULL, this function simply returns NULL.
+Symbol* checkNotExpression(Symbol* s){
 	int t;
 	if( s == NULL )
 		return NULL; 	
@@ -107,7 +126,10 @@ struct Symbol* checkNotExpression(struct Symbol* s){
 	} 
 }
 
-struct Symbol* checkIsBoolean(struct Symbol* s){
+// Check if type s is an boolean. If previous  condition is satisfied, return s.
+// Otherwise, generate an error message and return NULL (*).
+// (*) If s is NULL, this function simply returns NULL.
+Symbol* checkIsBoolean(Symbol* s){
 	int t;
 	if( s == NULL )
 		return NULL; 	
@@ -124,7 +146,37 @@ struct Symbol* checkIsBoolean(struct Symbol* s){
 	}	
 }
 
-struct SymbolInfo* checkIsInteger(struct Symbol* s)
+// Return s1 if both subexpressions types s1 and s2 are of the same time.
+// Otherwise return NULL.
+Symbol* checkSameType(Symbol* s1, Symbol* s2){
+	int t1, t2;
+	if( s1 == NULL || s2 == NULL)
+		return NULL;
+		 
+	t1 = ((struct Type *)(s1->info))->id;
+	t2 = ((struct Type *)(s2->info))->id;
+	//Both operators are boolean.
+	if(t1 == t2 )
+	{
+	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
+		return s1;
+	}else
+	{
+		return NULL;
+	}
+}	
+
+
+/*                               2. Arrays                                    */
+
+// Check if expression's type s is integer.
+// Return a SymbolInfo struct, whose "info" field is set to TYPE_ARRAY, and 
+// "symbol" field...
+// - points to s if s is a TYPE_INTEGER.
+// - points to null otherwise (in this case, an error message is shown too.
+// This function is used to verify that an array index is actually a integer.
+// (*) If s is NULL, this function simply returns NULL.
+struct SymbolInfo* checkIsInteger(Symbol* s)
 {
 	int t;
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
@@ -147,31 +199,17 @@ struct SymbolInfo* checkIsInteger(struct Symbol* s)
 	}	
 }	
 
-
-struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2){
-	int t1, t2;
-	if( s1 == NULL || s2 == NULL)
-		return NULL;
-		 
-	t1 = ((struct Type *)(s1->info))->id;
-	t2 = ((struct Type *)(s2->info))->id;
-	//Both operators are boolean.
-	if(t1 == t2 )
-	{
-	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
-		return s1;
-	}else
-	{
-		return NULL;
-	}
-}	
-
-struct Symbol* checkArray(Symbol* type, int n)
+// Search in the symbols' table for an type array of size "n" and whose elements
+// are of type "type".
+// If n < 0 (invalid size), return NULL.
+// Otherwise, return the array's type symbol (if array wasn't found, this 
+// function also create it and insert it).
+Symbol* checkArray(Symbol* type, int n)
 {
 	if( n >= 0)
 	{
-		struct Symbol *arraySymbol = createArraySymbol( type, n );
-		struct Symbol *aux = searchVariable(SYM_TYPE, arraySymbol->name);
+		Symbol *arraySymbol = createArraySymbol( type, n );
+		Symbol *aux = searchVariable(SYM_TYPE, arraySymbol->name);
 		if(aux == NULL)
 		{
 			//Array type did not exist
@@ -185,18 +223,163 @@ struct Symbol* checkArray(Symbol* type, int n)
 			return aux;
 		}	
 	}
-	else //Array size is valid
+	else //Array size is invalid
 	{
 		return NULL;
 	}		
 }
 
-struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
+
+/*                              3. Methods                                    */
+
+// Return 0 if call argument with type "type" and position "argument" match the
+// corresponding argument in method definition (*). Otherwise return 1.
+// (*) If the argument does not have a known type we asume the method call is 
+// right and assign the type of the value to the argument.
+int checkMethodCall(Symbol *method, Symbol *type, int argument)
+{
+	Symbol* argumentSym = searchNArgument(method, argument);
+	Symbol* argumentType;
+	//printf("+++++ En check method call %d\n", argument);
+	//Find the argument symbol
+	if(argumentSym != NULL)
+	{
+		//printf("+++++ Encontre el argument %s\n", aux->name);
+		argumentType = ((struct Variable*)(argumentSym->info))->type;
+		//Argument has a known type
+		if(argumentType != NULL)
+		{
+			argumentType = checkSameType(type, argumentType); 
+			if(argumentType != NULL)
+			{
+				//printf("+++++ Son del mismo tipo\n");
+				return 0;
+			}
+			else
+			{
+				yyerror("Type error: Arguments in method call do not match");
+				return 1;
+			}
+		}
+		else
+		{//printf("+++++ No se sabe el tipo del argumento\n");
+			//If the argument does not have a known type we asume
+			//the method call is right and assign the type of the
+			//value to the argument.
+			((struct Variable*)(argumentSym->info))->type = (void *)type;
+			setChanged();
+			return 0;	
+		}
+	}
+	else
+	{
+	//yyerror("Type error: Wrong amount of arguments in method call");
+	//printf("+++++No se encontro el argumento\n");
+	return 1; 
+	}
+}	  
+
+// Check if method name is already in symbols' table (if not, insert it).
+// Return a MethodInfo struct, whose "scope" field points to the current 
+// scope's symbol and "result" is an integer which indicates if method was
+// already defined (1) or not (0).
+struct MethodInfo *checkMethodDefinition(cstr name)
+{
+	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
+	Symbol* method = searchMethod(name);
+	info->scope = getCurrentScope();
+	if(method == NULL)
+	{
+		insertMethodDefinition(name);
+		info->result = 0;
+	}
+	else
+	{
+		goInScope(((struct Method *)(method->info)));
+		info->result = 1;	
+	}	
+	return info;	
+}
+
+// Set method's return type to type of symbols "type"
+void setMethodReturnType(Symbol *method, Symbol *type)
+{
+	if(method != NULL)
+	{
+		struct Method *methodInfo = ((struct Method*)(method->info));
+		if(type != NULL)
+		{
+			if(type->symType == SYM_METHOD)
+			{
+				methodInfo->returnType = ((struct Method*)(type->info))->returnType;
+			}
+			else //It's a variable
+			{
+				methodInfo->returnType = ((struct Variable*)(type->info))->type;
+			}
+		}	
+	}	
+}
+
+// Return 0 if variable name exists in symbols' table. If not, create and insert
+// it, and then return 1.
+int checkArgumentDefinition(cstr name)
+{
+	Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
+	if( variableStruct == NULL)
+	{
+		variableStruct = createVariable(SYM_VARIABLE, name);
+		insertVariable(variableStruct, NULL);
+		return 0;
+	}
+	else
+		return 1;	
+}
+
+/*                             4. Blocks                                      */
+
+// Search in symbols' table for block "name" with argument "argName". If it is
+// not in the symbols' table, create it and insert it. This functions returns
+// and Method* that points to the current scope's (the block) symbol.
+struct Method *checkBlockDefinition(cstr name, cstr argName )
+{
+	struct Method* scope = getCurrentScope();
+	char *blockName = createBlockName(name, argName);
+	Symbol* block = searchVariable(SYM_BLOCK, blockName);
+	if(block == NULL)
+	{
+		insertBlockDefinition(blockName, argName);
+	}
+	else
+	{
+		goInScope(((struct Method *)(block->info)));
+	}	
+	free(blockName);
+	return scope;	
+}
+
+// Generate a name for block whose name is "name" and argument is "argName".
+char *createBlockName(cstr name, cstr argName)
+{
+	printf("create 0\n");
+	char *blockName = (char *)malloc(sizeof(char) * 50);
+	printf("create 1\n");
+	blockName[0] = '\0';
+	printf("create 2\n");
+	strcat(blockName, name);
+	strcat(blockName, "_");
+	strcat(blockName, argName);
+	printf("create 5\n");
+	return blockName;
+}
+
+
+Symbol* checkAssignement(struct SymbolInfo* left_, Symbol *right)
 {
 	printf("--------> En assignment \n");
-	struct Symbol* left = left_->symbol;
+	Symbol* left = left_->symbol;
 	int info = left_->info;
-	struct Symbol* variableType = NULL;
+	Symbol* variableType = NULL;
 	
 	switch(isVariable(left))
 	{
@@ -266,7 +449,7 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	return left;	
 }	
 
-int isVariable(struct Symbol *s)
+int isVariable(Symbol *s)
 {
 	if(s == NULL || s->info == NULL)
 	{
@@ -286,129 +469,7 @@ int isVariable(struct Symbol *s)
 	}
 }
 
-int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
-{
-	struct Symbol* argumentSym = searchNArgument(method, argument);
-	struct Symbol* argumentType;
-	//printf("+++++ En check method call %d\n", argument);
-	//Find the argument symbol
-	if(argumentSym != NULL)
-	{
-		//printf("+++++ Encontre el argument %s\n", aux->name);
-		argumentType = ((struct Variable*)(argumentSym->info))->type;
-		//Argument has a known type
-		if(argumentType != NULL)
-		{
-			argumentType = checkSameType(type, argumentType); 
-			if(argumentType != NULL)
-			{
-				//printf("+++++ Son del mismo tipo\n");
-				return 0;
-			}
-			else
-			{
-				yyerror("Type error: Arguments in method call do not match");
-				return 1;
-			}
-		}
-		else
-		{//printf("+++++ No se sabe el tipo del argumento\n");
-			//If the argument does not have a known type we asume
-			//the method call is right and assign the type of the
-			//value to the argument.
-			((struct Variable*)(argumentSym->info))->type = (void *)type;
-			setChanged();
-			return 0;	
-		}
-	}
-	else
-	{
-	//yyerror("Type error: Wrong amount of arguments in method call");
-	//printf("+++++No se encontro el argumento\n");
-	return 1; 
-	}
-}	  
 
-struct MethodInfo *checkMethodDefinition(const char* const name)
-{
-	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
-	struct Symbol* method = searchMethod(name);
-	info->scope = getCurrentScope();
-	if(method == NULL)
-	{
-		insertMethodDefinition(name);
-		info->result = 0;
-	}
-	else
-	{
-		goInScope(((struct Method *)(method->info)));
-		info->result = 1;	
-	}	
-	return info;	
-}
-
-struct Method *checkBlockDefinition(const char* const name, const char* const argName )
-{
-	struct Method* scope = getCurrentScope();
-	char *blockName = createBlockName(name, argName);
-	struct Symbol* block = searchVariable(SYM_BLOCK, blockName);
-	if(block == NULL)
-	{
-		insertBlockDefinition(blockName, argName);
-	}
-	else
-	{
-		goInScope(((struct Method *)(block->info)));
-	}	
-	free(blockName);
-	return scope;	
-}
-
-int checkArgumentDefinition(const char* const name)
-{
-	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
-	if( variableStruct == NULL)
-	{
-		variableStruct = createVariable(SYM_VARIABLE, name);
-		insertVariable(variableStruct, NULL);
-		return 0;
-	}
-	else
-		return 1;	
-}
-
-void setMethodReturnType(struct Symbol *method, struct Symbol *type)
-{
-	if(method != NULL)
-	{
-		struct Method *methodInfo = ((struct Method*)(method->info));
-		if(type != NULL)
-		{
-			if(type->symType == SYM_METHOD)
-			{
-				methodInfo->returnType = ((struct Method*)(type->info))->returnType;
-			}
-			else //It's a variable
-			{
-				methodInfo->returnType = ((struct Variable*)(type->info))->type;
-			}
-		}	
-	}	
-}
-
-char *createBlockName(const char* const name, const char* const argName)
-{
-	printf("create 0\n");
-	char *blockName = (char *)malloc(sizeof(char) * 50);
-	printf("create 1\n");
-	blockName[0] = '\0';
-	printf("create 2\n");
-	strcat(blockName, name);
-	strcat(blockName, "_");
-	strcat(blockName, argName);
-	printf("create 5\n");
-	return blockName;
-}
 
 struct SymbolInfo* nullSymbolInfo()
 {

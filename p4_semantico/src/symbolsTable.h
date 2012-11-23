@@ -42,7 +42,9 @@ struct Symbol
 	// If firstChild = 1, prev points to the parent.
 	char firstChild;
 	struct Symbol *prev, *next;
-};	 
+};	
+
+typedef struct Symbol Symbol; 
 
 
 //TODO Que hacemos con los arrays? Incluirlos dentro de type
@@ -58,33 +60,33 @@ struct Type {
 };
 
 struct ArrayType {
-	struct Symbol* type;
+	Symbol* type;
 	unsigned int nElements;
 };
 
 struct ClassType{
 	unsigned int nElements;
-	struct Symbol* firstField;
+	Symbol* firstField;
 };
 
 struct Variable {
-   	struct Symbol* type;
+   	Symbol* type;
 };
 
 struct Method {
 	int nArguments;
-	struct Symbol *lastSymbol;
-	struct Symbol *localSymbols;
-	struct Symbol *returnType;
+	Symbol *lastSymbol;
+	Symbol *localSymbols;
+	Symbol *returnType;
 };
 
-typedef struct Symbol Symbol;
 
-typedef const char* const = string; 
+
+typedef const char* const cstr;
 
 struct SymbolInfo
 {
-	struct Symbol *symbol;
+	Symbol *symbol;
 	int info;
 };
 /*                                  Functions                                 */
@@ -93,14 +95,14 @@ struct SymbolInfo
 /*                       1. Generic Symbols insertion                         */
 
 // Create a "empty generic" symbol defining only its symType and name
-struct Symbol* createSymbol ( int symType, const char* const name );
+Symbol* createSymbol ( int symType, cstr name );
 
 // Insert symbol in symbols table's top.
-void insertSymbol( struct Symbol *symb );
+void insertSymbol( Symbol *symb );
 
-struct Symbol* createVariable( int symType, const char* const name);
+Symbol* createVariable( int symType, cstr name);
 
-struct Symbol* getCreateVariable( int symType, const char* const name, struct SymbolInfo* atribute);
+Symbol* getCreateVariable( int symType, cstr name, struct SymbolInfo* atribute);
 
 Symbol* createArraySymbol( Symbol* type, unsigned int n );
 
@@ -108,17 +110,17 @@ Symbol* createArraySymbol( Symbol* type, unsigned int n );
 
 // Insert method "name" in symbols table. If we don't go out of scope (by 
 // calling "goOutOfScope()"), next symbols will be added as method's local data.
-void insertMethodDefinition( const char* const name  );
+void insertMethodDefinition( cstr name  );
 
 // Insert block with argument "argName" in symbols table. If we don't go out of 
 // scope (by calling "goOutOfScope()"), next symbols will be added as block's 
 // local data.
-void insertBlockDefinition( const char* const name, const char* const argName );
+void insertBlockDefinition( cstr name, cstr argName );
 
 // Insert type with name "name" and id "typeId" in symbols table.
-void insertTypeDefinition( const char* const name, int typeId );
+void insertTypeDefinition( cstr name, int typeId );
 
-void insertVariable( struct Symbol *symbol, struct Symbol *type );
+void insertVariable( Symbol *symbol, Symbol *type );
 
 // Insert n variables with name[i] where i is in range 0..n-1.
 void insertArray( Symbol* type, unsigned int n );
@@ -126,13 +128,13 @@ void insertArray( Symbol* type, unsigned int n );
 
 /*                             3. Symbol search                               */
 
-struct Symbol* searchType( int id );
+Symbol* searchType( int id );
 
-struct Symbol* searchVariable( int symType, const char* const name );
+Symbol* searchVariable( int symType, cstr name );
 
-struct Symbol* searchMethod(const char* const name );
+Symbol* searchMethod(cstr name );
 
-struct Symbol* searchNArgument(struct Symbol *method, int n);
+Symbol* searchNArgument(Symbol *method, int n);
 
 
 /*                       4. Symbols table management                          */
@@ -147,7 +149,7 @@ void showSymTable();
 void freeSymbTable();
 
 // Free the allocate memory for a symbol.
-void freeSymbol(struct Symbol*);
+void freeSymbol(Symbol*);
 
 
 /*                                  5. Others                                 */
@@ -169,9 +171,9 @@ void resetChange();
 
 const char getChange();
 
-struct Symbol* getArrayType(struct Symbol* variable);  
+Symbol* getArrayType(Symbol* variable);  
 
-struct Symbol* getVariableType(int symType, const char* const name, struct SymbolInfo* symbolInfo);
+Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo);
 
 //void setMain();
 

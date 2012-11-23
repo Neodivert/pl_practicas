@@ -29,10 +29,10 @@ static char change = 0;
 
 /*                       1. Generic Symbols insertion                         */
 
-struct Symbol* createSymbol ( int symType, const char* const  name )
+Symbol* createSymbol ( int symType, cstr  name )
 {
 	// Allocate memory for new symbol.
-	struct Symbol *symbol = (Symbol *)malloc( sizeof( struct Symbol ) );
+	Symbol *symbol = (Symbol *)malloc( sizeof( Symbol ) );
 
 	// Set symbol's type and name.
 	symbol->symType = symType;
@@ -47,7 +47,7 @@ struct Symbol* createSymbol ( int symType, const char* const  name )
 	return symbol;
 }
 
-void insertSymbol( struct Symbol *symb )
+void insertSymbol( Symbol *symb )
 {
 	assert( symb != NULL );
 	printf( "Insertando symbol\n");
@@ -111,17 +111,17 @@ void insertSymbol( struct Symbol *symb )
 	setChanged();
 }
 
-struct Symbol* createVariable( int symType, const char* const name)
+Symbol* createVariable( int symType, cstr name)
 {
-	struct Symbol* variableStruct = createSymbol( symType, name );
+	Symbol* variableStruct = createSymbol( symType, name );
 	variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
 	((struct Variable *)(variableStruct->info))->type = NULL;
 	return variableStruct;
 }
 
-struct Symbol* getCreateVariable( int symType, const char* const name, struct SymbolInfo* atribute)
+Symbol* getCreateVariable( int symType, cstr name, struct SymbolInfo* atribute)
 {
-	struct Symbol* variableStruct = searchVariable( symType, name );
+	Symbol* variableStruct = searchVariable( symType, name );
 	if(atribute == NULL)
 	{
 		yyerror("Atribute should never be null");
@@ -168,8 +168,8 @@ void insertMainPuts()
 {
 	printf( "Insertando main\n");
 	// Create and fill the method's symbol.
-	struct Symbol* mainSymbol = createSymbol( SYM_METHOD, "_main" );
-	struct Symbol* putsSymbol = createSymbol( SYM_METHOD, "puts" );
+	Symbol* mainSymbol = createSymbol( SYM_METHOD, "_main" );
+	Symbol* putsSymbol = createSymbol( SYM_METHOD, "puts" );
 	
 	mainSymbol->firstChild = 1;
 	putsSymbol->firstChild = 0;
@@ -232,22 +232,22 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 	nextSymIsFirstChild = 1;
 }
 
-void insertMethodDefinition( const char* const name  )
+void insertMethodDefinition( cstr name  )
 {
 	printf( "Insertando metod\n");
 	// Create and fill the method's symbol.
-	struct Symbol* symbol = createSymbol( SYM_METHOD, name );
+	Symbol* symbol = createSymbol( SYM_METHOD, name );
 
 	// Fill and insert the method's symbol.
 	insertMethodBlockDefinition_( symbol );
 }
 
-void insertBlockDefinition( const char* const name, const char* const argName  )
+void insertBlockDefinition( cstr name, cstr argName  )
 {
 	printf( "Insertando bloque con variable [%s]\n", argName );
 
 	// Create and fill the block's symbol.
-	struct Symbol* symbol = createSymbol( SYM_BLOCK, name );
+	Symbol* symbol = createSymbol( SYM_BLOCK, name );
 
 	// Fill and insert the block's symbol.
 	insertMethodBlockDefinition_( symbol );
@@ -258,11 +258,11 @@ void insertBlockDefinition( const char* const name, const char* const argName  )
 }
 
 
-void insertTypeDefinition( const char* const name, int typeId )
+void insertTypeDefinition( cstr name, int typeId )
 {	
 	printf( "Insertando tipo %i\n", typeId );
 	
-	struct Symbol* symbol = createSymbol( SYM_TYPE, name );
+	Symbol* symbol = createSymbol( SYM_TYPE, name );
 
 	symbol->info = (void *)malloc( sizeof( struct Type ) );
 	
@@ -272,7 +272,7 @@ void insertTypeDefinition( const char* const name, int typeId )
 }
 
 
-void insertVariable( struct Symbol *symbol, struct Symbol *type )
+void insertVariable( Symbol *symbol, Symbol *type )
 {	
 	((struct Variable *)(symbol->info))->type = (void *)type;
 
@@ -290,7 +290,7 @@ Symbol* createArraySymbol( Symbol* type, unsigned int n )
 	strcat(arrayName, type->name);
 	strcat(arrayName, "_");
 	strcat(arrayName, index);
-	struct Symbol* symbol = createSymbol( SYM_TYPE, arrayName );
+	Symbol* symbol = createSymbol( SYM_TYPE, arrayName );
 
 	symbol->info = (void *)malloc( sizeof( struct Type ) );
 
@@ -308,7 +308,7 @@ Symbol* createArraySymbol( Symbol* type, unsigned int n )
 
 void insertArray( Symbol* type, unsigned int n )
 {
-	struct Symbol* symbol;
+	Symbol* symbol;
 	printf("Insert array type %s size %d\n", type->name, n);
 	symbol = createArraySymbol(type, n);
 	printf("Insert symbol type %s\n", symbol->name);
@@ -319,10 +319,10 @@ void insertArray( Symbol* type, unsigned int n )
 
 /*                             3. Symbol search                               */
 
-struct Symbol* searchType( int typeId )
+Symbol* searchType( int typeId )
 {
 	printf("Buscando type %d, symbtable apunta a %s\n", typeId, symTable->name);
-	struct Symbol* s = symTable;
+	Symbol* s = symTable;
 	while( s != NULL ){
 		if( s->symType == SYM_TYPE ){
 			if( ((struct Type *)(s->info))->id == typeId ){
@@ -341,9 +341,9 @@ struct Symbol* searchType( int typeId )
 
 // FALTA: Hay que hacer que si estamos buscando en un bocle, no se tiene acceso
 // a las variables globales.y en el método exterior.
-struct Symbol* searchVariable( int symType, const char* const name )
+Symbol* searchVariable( int symType, cstr name )
 {
-	struct Symbol* s;
+	Symbol* s;
 	if(symType == SYM_GLOBAL)
 	{
 		s = ((struct Method*)(mainMethod->info))->lastSymbol;
@@ -352,7 +352,7 @@ struct Symbol* searchVariable( int symType, const char* const name )
 	{
 		s = lastDefinedMethod->lastSymbol;
 	}
-	//struct Symbol* previousSymbol = s;
+	//Symbol* previousSymbol = s;
 	
 	while( s != NULL){
 		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
@@ -382,9 +382,9 @@ struct Symbol* searchVariable( int symType, const char* const name )
 	return NULL;
 }
 
-struct Symbol* searchMethod(const char* const name )
+Symbol* searchMethod(cstr name )
 {
-	struct Symbol* s = mainMethodNext;
+	Symbol* s = mainMethodNext;
 	printf("mainMethodNext apunta a %s\n", s->name);
 	while( s != NULL ){
 		printf("symtype = %d, name = %s\n", s->symType, s->name);
@@ -400,13 +400,13 @@ struct Symbol* searchMethod(const char* const name )
 	return NULL;
 }
 
-struct Symbol* searchNArgument(struct Symbol *method, int n)
+Symbol* searchNArgument(Symbol *method, int n)
 {
 	if(method == NULL || n > ((struct Method *)(method->info))->nArguments 
 		|| n <= 0)
 	 return NULL; 
 	int i;
-	struct Symbol* argument = ((struct Method *)(method->info))->localSymbols;
+	Symbol* argument = ((struct Method *)(method->info))->localSymbols;
 	for (i = 1; i < n; i++)
 	{
 		argument = argument->next;
@@ -445,7 +445,7 @@ void initializeSymTable()
 
 // Auxiliar function. Show symbols from sym, and tabulate them according to its 
 // their level.
-void showSymTable_( struct Symbol* sym, int level )
+void showSymTable_( Symbol* sym, int level )
 {
 	int i = 0;
 
@@ -596,7 +596,7 @@ void showSymTable()
 	printf( "---------------------------------------------\n" );
 }
 
-void freeSymbol(struct Symbol* symbol)
+void freeSymbol(Symbol* symbol)
 {
 	#ifdef DEBUG
 	printf( "Eliminando simbolo: [%s]\n", symbol->name );
@@ -615,8 +615,8 @@ void freeSymbol(struct Symbol* symbol)
 }
 
 
-void freeSymbTable_( struct Symbol* symTable_ ){
-	struct Symbol *aux = symTable_;
+void freeSymbTable_( Symbol* symTable_ ){
+	Symbol *aux = symTable_;
 	while( aux ){
 		symTable_ = aux->next;
 		if( aux->symType == SYM_METHOD ){
@@ -628,7 +628,7 @@ void freeSymbTable_( struct Symbol* symTable_ ){
 }
 
 void freeSymbTable(){
-	struct Symbol *sym = symTable;
+	Symbol *sym = symTable;
 
 	if( !sym ) return;
 
@@ -647,14 +647,14 @@ void goOutOfScope(){
 	if( nextSymIsFirstChild ){
 		nextSymIsFirstChild = 0;
 	}else{
-		struct Symbol*scope = lastDefinedMethod->lastSymbol;
+		Symbol*scope = lastDefinedMethod->lastSymbol;
 		while( scope != NULL && !scope->firstChild ){
 			scope = scope->prev;
 		}
 
 		if( scope ){
 			scope = scope->prev;
-			struct Symbol *s = scope;
+			Symbol *s = scope;
 			while( s != NULL && (s->symType != SYM_METHOD && s->symType != SYM_BLOCK)){
 				s = s->prev;
 			}
@@ -708,9 +708,9 @@ const char getChange()
 	return change;
 }
 
-struct Symbol* getArrayType(struct Symbol* variable)
+Symbol* getArrayType(Symbol* variable)
 {
-	struct Symbol* array = ((struct Variable*)(variable->info))->type;
+	Symbol* array = ((struct Variable*)(variable->info))->type;
 	if( array == NULL){
 		return NULL;
 	}else{
@@ -722,10 +722,10 @@ struct Symbol* getArrayType(struct Symbol* variable)
 	}		
 }
 
-struct Symbol* getVariableType(int symType, const char* const name, struct SymbolInfo* symbolInfo)
+Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo)
 {
-	struct Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 
-	struct Symbol* type = NULL;
+	Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 
+	Symbol* type = NULL;
 	if(variable == NULL){
 		type = NULL;
 	}else{

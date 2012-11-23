@@ -359,7 +359,34 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 	else
 	{
 		goInScope(((struct Method *)(block->info)));
-	}	
+	}
+	struct Symbol* variable = searchVariable( SYM_VARIABLE, name);	
+	if(variable != NULL)
+	{	//Variabe.each is defined in symbol table
+		struct Symbol* type = ((struct Variable*)(variable->info))->type;
+		//Get type of variable
+		if( type != NULL )
+		{
+			if( ((struct Type*)(type->info))->id == TYPE_ARRAY )
+			{	//Variable's type is array
+				type = getArrayType(variable);
+				if(type != NULL)
+				{	//Array type is known
+					variable = searchVariable( SYM_VARIABLE, argName);
+					//Get block argument and it's type
+					if(variable != NULL && ((struct Variable*)(variable->info))->type == NULL )
+					{	//Argument type is not defined, so set it now
+						((struct Variable*)(variable->info))->type = type;
+						setChanged();
+					}
+				}
+			}
+			else
+			{
+				yyerror("Type error: block can only be used with array variables");
+			}	
+		}
+	}
 	free(blockName);
 	return scope;	
 }

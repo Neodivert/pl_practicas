@@ -35,6 +35,8 @@ void setMethodReturnType(struct Symbol *method, struct Symbol *type);
 
 struct Method * checkBlockDefinition(const char* const name, const char* const argName);
 
+char *createBlockName(const char* const name, const char* const argName);
+
 int isVariable(struct Symbol *s);
 
 

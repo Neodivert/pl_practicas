@@ -17,7 +17,6 @@ static const int MAX_SIZE = 30;
 #define SYM_GLOBAL 4
 #define SYM_METHOD 5
 #define SYM_BLOCK 6
-#define SYM_ARRAY_TYPE 7
 
 
 // Valores posibles para el campo "id" de Type.
@@ -27,7 +26,7 @@ static const int MAX_SIZE = 30;
 #define TYPE_CHAR 4
 #define TYPE_BOOLEAN 5
 #define TYPE_CLASS 6
-
+#define TYPE_ARRAY 7
 
 /*                                Data structs                                */
 /******************************************************************************/
@@ -96,6 +95,7 @@ struct Symbol* createVariable( int symType, const char* const name);
 
 struct Symbol* getCreateVariable( int symType, const char* const name);
 
+Symbol* createArraySymbol( Symbol* type, unsigned int n );
 
 /*                       2. Specific symbols insertion                        */
 
@@ -113,10 +113,8 @@ void insertTypeDefinition( const char* const name, int typeId );
 
 void insertVariable( struct Symbol *symbol, struct Symbol *type );
 
-Symbol* createArraySymbol( Symbol* type, unsigned int n );
-
 // Insert n variables with name[i] where i is in range 0..n-1.
-void insertArray( Symbol* element, Symbol* type );
+void insertArray( Symbol* type, unsigned int n );
 
 
 /*                             3. Symbol search                               */

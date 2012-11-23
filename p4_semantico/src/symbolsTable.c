@@ -254,53 +254,37 @@ void insertVariable( struct Symbol *symbol, struct Symbol *type )
 Symbol* createArraySymbol( Symbol* type, unsigned int n )
 {
 	printf( "CREANDO ARRAY DE TAM %d de tipo %s\n", n, type->name );
+	char arrayName[50] = "";
+	char index[5];
+	sprintf( index, "%d", n );
+	strcat(arrayName, "array_");
+	strcat(arrayName, type->name);
+	strcat(arrayName, "_");
+	strcat(arrayName, index);
+	struct Symbol* symbol = createSymbol( SYM_TYPE, arrayName );
 
-	struct Symbol* symbol = createSymbol( SYM_ARRAY_TYPE, "_array" );
+	symbol->info = (void *)malloc( sizeof( struct Type ) );
 
-	symbol->info = (void *)malloc( sizeof( struct ArrayType ) );
+	struct Type* arrayType = ((struct Type*)(symbol->info));
+	arrayType->id = TYPE_ARRAY;
+	arrayType->arrayInfo = malloc( sizeof( struct ArrayType ) );
+	arrayType->arrayInfo->type = type;
+	arrayType->arrayInfo->nElements = n;
 
-	((struct ArrayType *)(symbol->info))->type = type;
-	((struct ArrayType *)(symbol->info))->nElements = n;
-
-	printf( "Creado simbolo array - tipo [%s], nElements [%d]\n", ((struct ArrayType *)(symbol->info))->type->name, ((struct ArrayType *)(symbol->info))->nElements );
+	printf( "Creado simbolo array - nombre[%s] tipo [%s], nElements [%d]\n", 
+		arrayName, arrayType->arrayInfo->type->name, arrayType->arrayInfo->nElements );
 
 	return symbol;
 }
 
-void insertArray( Symbol* array, Symbol* type )
+void insertArray( Symbol* type, unsigned int n )
 {
-	int i, n = ((struct ArrayType *)(type->info))->nElements;
-	char elementName[100];
-	char index[5];
-
-	Symbol* element = NULL;
-
-	printf( "Creando array\n" );
-
-	for( i=0; i<n; i++ ){
-		strcpy( elementName, array->name );
-		sprintf( index, "%d", i );
-		strcat( elementName, "[" );
-		strcat( elementName, index );
-		strcat( elementName, "]" );
-
-		element = createSymbol( SYM_VARIABLE, elementName );
-
-		element->info = (void *)malloc( sizeof( struct Variable ) );
-
-		//((struct Variable*)(element->info))->type = ((struct ArrayType*)(type->info))->type;
-	/*
-	variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
-	((struct Variable *)(variableStruct->info))->type = NULL;
-	return variableStruct;
-	*/
-
-		insertVariable( element, ((struct ArrayType*)(type->info))->type );
-
-		printf( "\tIntroduciendo elemento [%s]\n", elementName );
-		
-	}
-
+	struct Symbol* symbol;
+	printf("Insert array type %s size %d\n", type->name, n);
+	symbol = createArraySymbol(type, n);
+	printf("Insert symbol type %s\n", symbol->name);
+	insertSymbol(symbol);
+	printf("Insert symbol done\n");
 	showSymTable();
 }
 
@@ -460,9 +444,6 @@ void showSymTable_( struct Symbol* sym, int level )
 			case SYM_BLOCK:
 				printf( "BLOCK" );
 			break;
-			case SYM_ARRAY_TYPE:
-				printf( "SYM_ARRAY_TYPE" );
-			break;
 			default:
 				printf( "UKNOWN TYPE" );
 			break;
@@ -489,6 +470,16 @@ void showSymTable_( struct Symbol* sym, int level )
 		Symbol* aux;
 		struct ArrayType* arrayInfo;
 		switch( sym->symType ){
+			case SYM_TYPE:
+				if(((struct Type*)(sym->info))->id == TYPE_ARRAY)
+				{
+					struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
+					printf(" - type:[%s] - nElements:[%d]\n", arrayInfo->type->name,arrayInfo->nElements);
+				}else
+				{
+					printf("\n");
+				}
+				break;
 			case SYM_VARIABLE:
 			case SYM_GLOBAL:
 			case SYM_CONSTANT:
@@ -517,10 +508,6 @@ void showSymTable_( struct Symbol* sym, int level )
 				}else{
 					printf( " - hijo: [NULL]\n" );
 				}
-			break;
-			case SYM_ARRAY_TYPE:
-				arrayInfo = ((struct ArrayType *)(sym->info));
-				printf( " - nElements: [%i], elements type: [%s]\n", arrayInfo->nElements, arrayInfo->type->name );
 			break;
 			default:
 				printf( "\n" );
@@ -585,6 +572,14 @@ void freeSymbol(struct Symbol* symbol)
 	#ifdef DEBUG
 	printf( "Eliminando simbolo: [%s]\n", symbol->name );
 	#endif
+	if(symbol->symType == SYM_TYPE)
+	{
+		struct Type *type = ((struct Type*)(symbol->info));
+		if ( type->id == TYPE_ARRAY )
+		{
+			free(type->arrayInfo);
+		}	
+	}	
 	free(symbol->name);
 	free(symbol->info);
 	free(symbol);
@@ -597,7 +592,7 @@ void freeSymbTable_( struct Symbol* symTable_ ){
 		symTable_ = aux->next;
 		if( aux->symType == SYM_METHOD ){
 			freeSymbTable_( ((struct Method *)(aux->info))->localSymbols );
-		}
+		}		
 		freeSymbol( aux );
 		aux = symTable_;
 	}

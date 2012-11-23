@@ -476,7 +476,8 @@ right_side :
 	expression
 	| string {$$ = searchType( TYPE_STRING );}
 	//TODO En array se deberia devolver el tipo array y en constant new el tipo de la clase
-	| ARRAY NEW '(' INTEGER ',' literal ')' { $$ = createArraySymbol( $6, arraySize ); }
+	| ARRAY NEW '(' INTEGER ',' literal ')' { $$ = createArraySymbol( $6, arraySize );
+	insertArray( $6, arraySize ); }
 	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);
 						$$ = searchType( TYPE_INTEGER );}
 	| '[' array_content ']' {$$ = searchType( TYPE_INTEGER );}  

@@ -412,8 +412,16 @@ assignment :
 										if(searchVariable($1->symType, $1->name) == NULL)
 										{ 
 											//Variable is not in symbolTable, insert it
-											printf("Insertando con tipo %s\n", $2->name);
-											insertVariable( $1, $2 );
+											if($2 != NULL)
+											{
+												printf("Insertando con tipo %s\n", $2->name);
+												insertVariable( $1, $2 );
+											}
+											else
+											{
+												printf("Insertando con tipo NULL\n");
+												insertVariable( $1, NULL );
+											}
 										}	
 										else
 										{
@@ -445,7 +453,8 @@ left_side :
 	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
 									$$ = getCreateVariable(SYM_GLOBAL, $1);}
 	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-							$$ = getCreateVariable(SYM_VARIABLE, $1);}
+							$$ = getCreateVariable(SYM_VARIABLE, $1);
+							printf("Despues de asignar\n"); }
 	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
 								$$ = getCreateVariable(SYM_CONSTANT, $1);}
 	;
@@ -611,9 +620,9 @@ int main(int argc, char** argv) {
 	yyparse();
 
 	firstParse = 0;
-	int i = 0;
+	int i = 1;
   	//Codigo para cada iteracion
-  	while(getChange() && i < 5)
+  	while(getChange() && i < 6)
   	{ 	
   		resetChange();
   		numlin = 0;

@@ -51,13 +51,21 @@ struct Symbol
 //extra_info? con un struct k tenga tamaño y tipo del array
 struct Type {
 	int id;
-	 //unsigned int nElements; // Used if id == TYPE_ARRAY;
-   //struct Symbol *fields;   // If id == TYPE_ARRAY, this points to first element.
+	union 
+	{
+		struct ArrayType* arrayInfo; // Used if id == TYPE_ARRAY;
+		struct ClassType* classInfo;   // If id == TYPE_ARRAY, this points to first element.
+   	};
 };
 
 struct ArrayType {
 	struct Symbol* type;
 	unsigned int nElements;
+};
+
+struct ClassType{
+	unsigned int nElements;
+	struct Symbol* firstField;
 };
 
 struct Variable {

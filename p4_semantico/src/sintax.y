@@ -21,7 +21,8 @@ int firstParse = 1;
 %}
 
 %union { int integer; char string[30]; struct Symbol *symbol; 
-	struct MethodInfo *methodInfo; struct Method* method;}
+	struct MethodInfo *methodInfo; struct Method* method;
+	struct SymbolInfo* symbolInfo;}
 
 %type <symbol> expression
 %type <symbol> logical_expression
@@ -32,7 +33,6 @@ int firstParse = 1;
 %type <symbol> literal
 %type <symbol> array_content
 %type <symbol> right_side
-%type <symbol> left_side
 %type <symbol> simple_method_call
 %type <symbol> method_call_argument
 %type <symbol> assignment
@@ -42,6 +42,9 @@ int firstParse = 1;
 %token <symbol> INTEGER
 %token <symbol> FLOAT 
 %token <symbol> CHAR
+
+%type <symbolInfo> atribute
+%type <symbolInfo> left_side
 
 %type <integer> arguments_definition
 %type <integer> more_arguments_definition
@@ -329,12 +332,22 @@ Después del segundo IDENTIF: incluir como argumento.
 */
 
 block_call : 
-	IDENTIF EACH DO '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
+	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
 		method_code
-	END separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goInScope($<method>7); }
+	end_block separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goInScope($<method>7); }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
 	;			 
 
+start_block:
+	DO
+	| '{'
+	;
+
+end_block:
+	END
+	| '}'
+	;
+	
 loop : 
 	WHILE expression DO separator
 		method_code 
@@ -389,20 +402,22 @@ si no existe se añade a menos que atribute no sea
 epsilon. En cuyo caso se debe dar un error.*/
 left_side :
 	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-									$$ = getCreateVariable(SYM_GLOBAL, $1);}
+									$2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
+									$$ = $2;}
 	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-							$$ = getCreateVariable(SYM_VARIABLE, $1);
-							printf("Despues de asignar\n"); }
+							$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
+							$$ = $2; }
 	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-								$$ = getCreateVariable(SYM_CONSTANT, $1);}
+								$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
+								$$ = $2;}
 	;
 	
 /*Aqui se comprueba si la variable es de tipo struct y efectivamente
 tiene el campo identif, o es de tipo vector y expresion es de tipo integer*/
 atribute :
-	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2);}
-	| '[' expression ']'
-	|
+	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2); $$ = nullSymbolInfo();}
+	| '[' expression ']' { $$ = checkIsInteger($2); }
+	| { $$ = nullSymbolInfo();}
 	;	
 
 /*Si es un array new, nueva variable de tipo array, aunque no sabemos de que tipo es el contenido
@@ -483,29 +498,32 @@ En todos los casos hay que devolver el tipo del literal/variable
 //la tabla a ver si existe, etc.
 factor :
 	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol* variable = searchVariable( SYM_VARIABLE, $1 ); 
+				struct Symbol* variable = getCreateVariable( SYM_VARIABLE, $1, $2 ); 
 				if(variable == NULL)
 					$$ = NULL;
 				else
 					$$ = ((struct Variable*)(variable->info))->type;
+				free($2);	
 				}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol* variable = searchVariable( SYM_CONSTANT, $1 ); 
+				struct Symbol* variable = getCreateVariable( SYM_CONSTANT, $1, $2 ); 
 				if(variable == NULL)
 					$$ = NULL;
 				else
 					$$ = ((struct Variable*)(variable->info))->type;
+				free($2);	
 				}
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol* variable = searchVariable( SYM_GLOBAL, $1 ); 
+				struct Symbol* variable = getCreateVariable( SYM_GLOBAL, $1, $2 ); 
 				if(variable == NULL)
 					$$ = NULL;
 				else
 					$$ = ((struct Variable*)(variable->info))->type;
+				free($2);	
 				}
 	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
 	| NOT factor {$$ = checkNotExpression($2);}
-	| simple_method_call {$$ = NULL;}
+	| simple_method_call {$$ = ((struct Method*)($1->info))->returnType;}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
@@ -563,7 +581,7 @@ int main(int argc, char** argv) {
   	while(getChange() && i < 6)
   	{ 	
   		resetChange();
-  		numlin = 0;
+  		numlin = 1;
 		fclose (yyin);
 		yyin=fopen(argv[1],"r");
 		resetFlex();

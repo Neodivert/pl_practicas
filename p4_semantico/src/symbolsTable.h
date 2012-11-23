@@ -80,6 +80,11 @@ struct Method {
 
 typedef struct Symbol Symbol; 
 
+struct SymbolInfo
+{
+	struct Symbol *symbol;
+	int info;
+};
 /*                                  Functions                                 */
 /******************************************************************************/
 
@@ -93,7 +98,7 @@ void insertSymbol( struct Symbol *symb );
 
 struct Symbol* createVariable( int symType, const char* const name);
 
-struct Symbol* getCreateVariable( int symType, const char* const name);
+struct Symbol* getCreateVariable( int symType, const char* const name, struct SymbolInfo* atribute);
 
 Symbol* createArraySymbol( Symbol* type, unsigned int n );
 
@@ -161,6 +166,8 @@ void setChanged();
 void resetChange();
 
 const char getChange();
+
+struct Symbol* getArrayType(struct Symbol* variable);  
 
 
 

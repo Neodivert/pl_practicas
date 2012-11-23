@@ -46,10 +46,6 @@ struct Symbol
 
 typedef struct Symbol Symbol; 
 
-
-//TODO Que hacemos con los arrays? Incluirlos dentro de type
-//entonces, habria que añadir dos campos mas, kizas un void*
-//extra_info? con un struct k tenga tamaño y tipo del array
 struct Type {
 	int id;
 	union 

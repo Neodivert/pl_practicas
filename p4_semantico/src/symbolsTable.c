@@ -297,8 +297,7 @@ void insertBlockDefinition( cstr name, cstr argName  )
 	// Fill and insert the block's symbol.
 	insertMethodBlockDefinition_( symbol );
 
-	// Insert the block's argument.
-	//TODO La variable no es de tipo desconocido, es del tipo del array	
+	// Insert the block's argument, it's type will be set later
 	insertVariable( createVariable(SYM_VARIABLE, argName), NULL );
 }
 

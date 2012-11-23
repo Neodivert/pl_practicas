@@ -112,7 +112,7 @@ int isVariable(Symbol *s);
 
 struct SymbolInfo* nullSymbolInfo();
 
-
+struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo );
 
 // Check if a method call has the same number of arguments that the method
 // definition.

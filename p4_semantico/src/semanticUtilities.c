@@ -469,7 +469,160 @@ int isVariable(Symbol *s)
 	}
 }
 
+int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
+{
+	struct Symbol* argumentSym = searchNArgument(method, argument);
+	struct Symbol* argumentType;
+	//printf("+++++ En check method call %d\n", argument);
+	//Find the argument symbol
+	if(argumentSym != NULL)
+	{
+		//printf("+++++ Encontre el argument %s\n", aux->name);
+		argumentType = ((struct Variable*)(argumentSym->info))->type;
+		//Argument has a known type
+		if(argumentType != NULL)
+		{
+			argumentType = checkSameType(type, argumentType); 
+			if(argumentType != NULL)
+			{
+				//printf("+++++ Son del mismo tipo\n");
+				return 0;
+			}
+			else
+			{
+				yyerror("Type error: Arguments in method call do not match");
+				return 1;
+			}
+		}
+		else
+		{//printf("+++++ No se sabe el tipo del argumento\n");
+			//If the argument does not have a known type we asume
+			//the method call is right and assign the type of the
+			//value to the argument.
+			((struct Variable*)(argumentSym->info))->type = (void *)type;
+			setChanged();
+			return 0;	
+		}
+	}
+	else
+	{
+	//yyerror("Type error: Wrong amount of arguments in method call");
+	//printf("+++++No se encontro el argumento\n");
+	return 1;
+	}
+}	  
 
+struct MethodInfo *checkMethodDefinition(const char* const name)
+{
+	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
+	struct Symbol* method = searchMethod(name);
+	info->scope = getCurrentScope();
+	if(method == NULL)
+	{
+		insertMethodDefinition(name);
+		info->result = 0;
+	}
+	else
+	{
+		goInScope(((struct Method *)(method->info)));
+		info->result = 1;	
+	}	
+	return info;	
+}
+
+struct Method *checkBlockDefinition(const char* const name, const char* const argName )
+{
+	struct Method* scope = getCurrentScope();
+	char *blockName = createBlockName(name, argName);
+	struct Symbol* block = searchVariable(SYM_BLOCK, blockName);
+	if(block == NULL)
+	{
+		insertBlockDefinition(blockName, argName);
+	}
+	else
+	{
+		goInScope(((struct Method *)(block->info)));
+	}
+	struct Symbol* variable = searchVariable( SYM_VARIABLE, name);	
+	if(variable != NULL)
+	{	//Variabe.each is defined in symbol table
+		struct Symbol* type = ((struct Variable*)(variable->info))->type;
+		//Get type of variable
+		if( type != NULL )
+		{
+			if( ((struct Type*)(type->info))->id == TYPE_ARRAY )
+			{	//Variable's type is array
+				type = getArrayType(variable);
+				if(type != NULL)
+				{	//Array type is known
+					variable = searchVariable( SYM_VARIABLE, argName);
+					//Get block argument and it's type
+					if(variable != NULL && ((struct Variable*)(variable->info))->type == NULL )
+					{	//Argument type is not defined, so set it now
+						((struct Variable*)(variable->info))->type = type;
+						setChanged();
+					}
+				}
+			}
+			else
+			{
+				yyerror("Type error: block can only be used with array variables");
+			}	
+		}
+	}
+	free(blockName);
+	return scope;	
+}
+
+int checkArgumentDefinition(const char* const name)
+{
+	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
+	if( variableStruct == NULL)
+	{
+		variableStruct = createVariable(SYM_VARIABLE, name);
+		insertVariable(variableStruct, NULL);
+		return 0;
+	}
+	else
+		return 1;	
+}
+
+void setMethodReturnType(struct Symbol *method, struct Symbol *type)
+{
+	if(method != NULL)
+	{
+		struct Method *methodInfo = ((struct Method*)(method->info));
+		if(type != NULL)
+		{
+			if(type->symType == SYM_METHOD)
+			{
+				methodInfo->returnType = ((struct Method*)(type->info))->returnType;
+			}
+			else //It's a variable
+			{
+				methodInfo->returnType = ((struct Variable*)(type->info))->type;
+			}
+		}	
+	}	
+}
+
+
+struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo )
+{
+	struct SymbolInfo* returnInfo = arrayInfo;
+	if( arrayInfo->info != -1 ){
+		struct Symbol* otherType = checkSameType( type, arrayInfo->symbol);
+		if(otherType == NULL)
+		{
+			yyerror("All elements in array must be the same type");	
+			returnInfo->info = -1;						
+		}else
+		{ 
+			returnInfo->info = returnInfo->info + 1;
+		}		
+	}	
+	return returnInfo;
+}
 
 struct SymbolInfo* nullSymbolInfo()
 {

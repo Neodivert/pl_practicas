@@ -187,6 +187,7 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 
 	((struct Method *)(symbol->info))->localSymbols = NULL;
 	((struct Method *)(symbol->info))->lastSymbol = symbol;
+	((struct Method *)(symbol->info))->returnType = NULL;
 	
 	//lastDefinedMethod->lastSymbol = symbol;
 	// Insert method's symbol in table.
@@ -500,6 +501,12 @@ void showSymTable_( struct Symbol* sym, int level )
 				}
 			break;
 			case SYM_METHOD:
+				aux = ((struct Method*)(sym->info))->returnType;
+				if(aux == NULL){
+					printf( " return type: [NULL]");
+				}else{
+					printf( " return type: [%s]", aux->name);
+				}	
 			case SYM_BLOCK:
 				aux = ((struct Method*)(sym->info))->localSymbols;
 
@@ -653,7 +660,7 @@ struct Method* getCurrentScope()
 
 void goInScope(struct Method *method)
 {	
-	nextSymIsFirstChild = 0;
+	nextSymIsFirstChild = 0;	
 	lastDefinedMethod = method;	
 }
 	

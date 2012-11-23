@@ -31,7 +31,6 @@ int firstParse = 1;
 %type <symbol> term
 %type <symbol> factor
 %type <symbol> literal
-%type <symbol> array_content
 %type <symbol> right_side
 %type <symbol> simple_method_call
 %type <symbol> method_call_argument
@@ -45,6 +44,7 @@ int firstParse = 1;
 
 %type <symbolInfo> atribute
 %type <symbolInfo> left_side
+%type <symbolInfo> array_content
 
 %type <integer> arguments_definition
 %type <integer> more_arguments_definition
@@ -432,18 +432,12 @@ right_side :
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
 	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);
 						$$ = searchType( TYPE_INTEGER );}
-	| '[' array_content ']' {$$ = searchType( TYPE_INTEGER );}  
+	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
 	;
 			
 array_content :   
-	literal
-	| literal ',' array_content {
-						struct Symbol* type = checkSameType($1, $3);
-						if(type == NULL)
-						{
-							yyerror("All elements in array must be the same type");							
-						}
-						$$ = $1;}
+	literal { $$ = nullSymbolInfo(); $$->symbol = $1; $$->info = 1; }
+	| literal ',' array_content { $$ = checkArrayContent($1, $3); }
 	;		      
 
 relational_operator :

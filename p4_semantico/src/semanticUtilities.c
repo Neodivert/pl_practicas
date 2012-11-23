@@ -410,6 +410,23 @@ char *createBlockName(const char* const name, const char* const argName)
 	return blockName;
 }
 
+struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo )
+{
+	struct SymbolInfo* returnInfo = arrayInfo;
+	if( arrayInfo->info != -1 ){
+		struct Symbol* otherType = checkSameType( type, arrayInfo->symbol);
+		if(otherType == NULL)
+		{
+			yyerror("All elements in array must be the same type");	
+			returnInfo->info = -1;						
+		}else
+		{ 
+			returnInfo->info = returnInfo->info + 1;
+		}		
+	}	
+	return returnInfo;
+}
+
 struct SymbolInfo* nullSymbolInfo()
 {
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));

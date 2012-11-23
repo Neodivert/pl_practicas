@@ -12,6 +12,7 @@ def metodo ( arg1, arg2 )
 			$po = 1
 			d = 5.4
 			h = d
+			x = Array.new(1,3)
 		end	
 	end
 	$pu = 1

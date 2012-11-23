@@ -15,7 +15,8 @@ extern unsigned int arraySize;
 
 void yyerror(char* mens);
 
-struct Symbol*currentMethod = NULL; 
+struct Symbol* currentMethod = NULL;
+struct Symbol* currentClass = NULL; 
 int nArguments = 0; 
 int firstParse = 1;
 
@@ -47,6 +48,7 @@ int firstParse = 1;
 %type <integer> more_arguments_definition
 %type <integer> arguments
 %type <integer> more_arguments
+%type <integer> class_content
 %type <string> relational_operator
 
 // Tokens
@@ -124,8 +126,8 @@ method_definition :
 			}
 			// Go into the method's scope and set its return type.
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchMethod($2), $6);
-			free($<methodInfo>3);
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $6);			
+			free($<methodInfo>3);	
 		}
 	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } separator method_code END separator
 		{
@@ -136,7 +138,7 @@ method_definition :
 			}
 			// Go into the method's scope and set its return type.
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchMethod($2), $5);			
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);			
 			free($<methodInfo>3);			
 		}
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
@@ -183,9 +185,43 @@ separator :
 Después de ID_CONSTANT: incluir registro de clase con nombre ID_CONSTANT.
 */ 
 class_definition : 
-	CLASS ID_CONSTANT separator
-		class_content
-	END separator {printf("--------> En class def el identif vale %s\n", $2);}
+	CLASS ID_CONSTANT separator 
+		{ 
+			int i = 0;
+			struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, $2 );
+			if( classSymbol == NULL ){
+				classSymbol = createClassSymbol($2);
+				insertSymbol( classSymbol );
+			}
+			
+			struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+			
+			//Elements were counted but no yet inserted			
+			if( classInfo->nElements != 0 && classInfo->elements == NULL)
+			{
+				currentClass = classSymbol;
+				classInfo->elements = malloc(sizeof( struct Symbol *) * classInfo->nElements );
+				for(i = 0; i < classInfo->nElements; i++){
+					classInfo->elements[i] = NULL;
+				}
+			}
+		}
+		
+		class_content END separator 
+		
+		{
+			currentClass = NULL;
+			struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, $2 );
+			struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+			if( classInfo->nElements == 0 )
+			{
+				if( $5 != 0 ){
+					classInfo->nElements = $5;
+				}else{
+					yyerror("Type error: Classess must have at least one class variable");
+				}				
+			}	
+		}
 	|	CLASS error	END separator {yyerror( "Sintax error on class definition" ); yyerrok;}
 	;
 
@@ -194,10 +230,10 @@ Después de cada ID_INSTANCE_VARIABLE: añadir campo de nombre
 ID_INSTANCE_VARIABLE en la clase actual.
 */
 class_content : 
-	ID_INSTANCE_VARIABLE '=' literal {printf("--------> En class content el identif vale %s\n", $1);}
-	| ID_INSTANCE_VARIABLE '=' literal separator class_content {printf("--------> En class content el identif vale %s\n", $1);}
-	| separator class_content	
-	|		
+	ID_INSTANCE_VARIABLE '=' literal  { $$ = checkClassDefinition(currentClass, $1, $3, 0); }
+	| ID_INSTANCE_VARIABLE '=' literal separator class_content { $$ = checkClassDefinition(currentClass, $1, $3, $5); }
+	| separator class_content {$$ = $2;}	
+	| {$$ = 0;}		
 	;
 
 // In $$ we return symple_method_call return type, or NULL, if we have a 
@@ -210,27 +246,31 @@ method_call :
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
 simple_method_call:  
-        IDENTIF '(' { 
-                                        // Search for a method with name IDENTIF. If found, get its
-                                        // argument's number for futher comprobation.
-                                        currentMethod = searchMethod( $1 );
-                                        if( currentMethod != NULL ){
-                                                nArguments = ((struct Method *)(currentMethod->info))->nArguments;
-                                        }
-                                        $<symbol>$ = currentMethod;
-                                }                        
-                arguments ')' {
-					// Check if we are making a correct call to a
-					// defined method.
-                                          if(currentMethod != NULL && $4 == nArguments){
-                                                  // Correct call to a defined method. OK.
-                                          }else{
-                                                  yyerror("Type error: Wrong amount/undefined of arguments in method call");
-                                          } 
-                                          $$ = searchMethod( $1 );
-                                         }
-        | IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
-        ;
+	IDENTIF '(' { 	printf("--------> En method call el identif vale %s\n", $1);
+					currentMethod = searchTopLevel( SYM_METHOD, $1);
+					printf("--------> En method call despues\n");
+					if(currentMethod != NULL)
+					{
+						printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
+						nArguments = ((struct Method *)(currentMethod->info))->nArguments;
+						printf("+++++Tiene %d argumentos\n", nArguments);
+					}
+					$<symbol>$ = currentMethod;
+				}			
+		arguments ')' {
+					  printf("+++++SE leyeron bien %d argumentos\n", $4);
+					  if(currentMethod != NULL && $4 == nArguments)
+					  {
+					  	//Todo fue bien
+					  }
+					  else
+					  {
+					  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
+					  } 
+					  $$ = searchTopLevel( SYM_METHOD, $1);
+					 }  
+	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
+	;
 
 // arguments - semantic actions:
 // Check if every argument in method call match the corresponding argument in

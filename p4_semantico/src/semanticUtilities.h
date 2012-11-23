@@ -72,6 +72,9 @@ Symbol* checkArray(Symbol* type, int n);
 
 
 /*                               3. Methods                                   */
+int checkClassDefinition(struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos);
+
+void setMethodReturnType(struct Symbol *method, struct Symbol *type);
 
 // Return 0 if call argument with type "type" and position "argument" match the
 // corresponding argument in method definition (*). Otherwise return 1.

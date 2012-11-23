@@ -515,7 +515,7 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 struct MethodInfo *checkMethodDefinition(const char* const name)
 {
 	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
-	struct Symbol* method = searchMethod(name);
+	struct Symbol* method = searchTopLevel( SYM_METHOD, name);
 	info->scope = getCurrentScope();
 	if(method == NULL)
 	{
@@ -549,7 +549,7 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 		struct Symbol* type = ((struct Variable*)(variable->info))->type;
 		//Get type of variable
 		if( type != NULL )
-		{
+		{	//Variable type is known
 			if( ((struct Type*)(type->info))->id == TYPE_ARRAY )
 			{	//Variable's type is array
 				type = getArrayType(variable);
@@ -585,6 +585,21 @@ int checkArgumentDefinition(const char* const name)
 	}
 	else
 		return 1;	
+}
+
+int checkClassDefinition( struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos)
+{
+	if( classSymbol)
+	{
+		char classVarName[50] = "";
+		strcat(classVarName, classSymbol->name);
+		strcat(classVarName, varName);
+		struct Symbol* classVar = createVariable( SYM_CLASS_VARIABLE, classVarName );
+		insertVariable( classVar, type );
+		struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+		classInfo->elements[pos] = classVar;				
+	}
+	return (pos + 1);	
 }
 
 void setMethodReturnType(struct Symbol *method, struct Symbol *type)

@@ -143,7 +143,95 @@ struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2){
 	}
 }	
 
-	
+struct Symbol* checkArray(Symbol* type, int n)
+{
+	if( n >= 0)
+	{
+		struct Symbol *arraySymbol = createArraySymbol( type, n );
+		struct Symbol *aux = searchVariable(SYM_TYPE, arraySymbol->name);
+		if(aux == NULL)
+		{
+			//Array type did not exist
+			insertArray( type, n );
+			return arraySymbol;
+		}
+		else
+		{
+			//Array type did exist
+			freeSymbol(arraySymbol);
+			return aux;
+		}	
+	}
+	else //Array size is valid
+	{
+		return NULL;
+	}		
+}
+
+struct Symbol* checkAssignement(struct Symbol *left, struct Symbol *right)
+{
+	printf("--------> En assignment \n");
+	switch(isVariable(left))
+	{
+	case 0: //It is a variable with a known type
+		printf("--------> En assignment with known type %s \n", left->name);
+		if(checkSameType(((struct Variable*)(left->info))->type, right) != NULL)
+		{
+			//Left side and right side are the same type
+			//Generar codigo
+			showSymTable();
+		}else
+		{
+			//If right = NULL right side was wrong/unknown and that was already warned
+			showSymTable();
+			if(right != NULL) 
+			{
+				char message[50];
+				message[0] = '\0';
+				strcat(message, "Type error: with variable ");
+				strcat(message, left->name);
+				yyerror((char *)message);
+			}
+		}	
+		printf("--------> En assignment with known type end %s \n", left->name);									
+		break;
+	case 1: //It is a variable without a known type
+		printf("--------> En assignment with not known type %s \n", left->name);
+		showSymTable();
+		if(searchVariable(left->symType, left->name) == NULL)
+		{ 
+			//Variable is not in symbolTable, insert it
+			if(right != NULL)
+			{
+				printf("Insertando con tipo %s\n", right->name);
+				insertVariable( left, right );
+			}
+			else
+			{
+				printf("Insertando con tipo NULL\n");
+				insertVariable( left, NULL );
+			}
+		}	
+		else
+		{
+			//Variable is in symbolTable, set its type, right might be NULL
+			if(right != NULL)
+			{
+				((struct Variable *)(left->info))->type = right;												
+				setChanged();
+			}
+		}	
+		showSymTable();
+		printf("--------> En assignment with not known type end %s \n", left->name);
+		//Generar codigo o no xD
+		break;
+	case 2: //It is not a variable
+		printf("--------> En assignment left side error\n");
+		yyerror("Left side of expression is invalid\n");
+		break;		
+	}
+	return left;	
+}	
 
 int isVariable(struct Symbol *s)
 {

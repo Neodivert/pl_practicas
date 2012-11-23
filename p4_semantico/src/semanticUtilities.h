@@ -25,6 +25,10 @@ struct Symbol* checkIsBoolean(struct Symbol* s);
 
 struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2);
 
+struct Symbol* checkArray(Symbol* type, int n);
+
+struct Symbol* checkAssignement(struct Symbol *left, struct Symbol *right);
+
 int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument);
 
 struct MethodInfo *checkMethodDefinition(const char* const name);

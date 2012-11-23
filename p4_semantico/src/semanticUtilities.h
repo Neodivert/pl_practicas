@@ -37,6 +37,8 @@ struct MethodInfo *checkMethodDefinition(const char* const name);
 
 int checkArgumentDefinition(const char* const name);
 
+int checkClassDefinition(struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos);
+
 void setMethodReturnType(struct Symbol *method, struct Symbol *type);
 
 struct Method * checkBlockDefinition(const char* const name, const char* const argName);

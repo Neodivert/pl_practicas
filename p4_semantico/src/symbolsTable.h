@@ -15,8 +15,9 @@ static const int MAX_SIZE = 30;
 #define SYM_VARIABLE 2
 #define SYM_CONSTANT 3
 #define SYM_GLOBAL 4
-#define SYM_METHOD 5
-#define SYM_BLOCK 6
+#define SYM_CLASS_VARIABLE 5
+#define SYM_METHOD 6
+#define SYM_BLOCK 7
 
 
 // Valores posibles para el campo "id" de Type.
@@ -60,7 +61,7 @@ struct ArrayType {
 
 struct ClassType{
 	unsigned int nElements;
-	struct Symbol* firstField;
+	struct Symbol **elements;
 };
 
 struct Variable {
@@ -98,6 +99,8 @@ struct Symbol* getCreateVariable( int symType, const char* const name, struct Sy
 
 Symbol* createArraySymbol( Symbol* type, unsigned int n );
 
+Symbol* createClassSymbol( const char* const name );
+
 /*                       2. Specific symbols insertion                        */
 
 // Insert method "name" in symbols table. If we don't go out of scope (by 
@@ -124,7 +127,7 @@ struct Symbol* searchType( int id );
 
 struct Symbol* searchVariable( int symType, const char* const name );
 
-struct Symbol* searchMethod(const char* const name );
+struct Symbol* searchTopLevel(int symType, const char* const name );
 
 struct Symbol* searchNArgument(struct Symbol *method, int n);
 

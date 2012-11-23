@@ -82,6 +82,11 @@ typedef struct Symbol Symbol;
 
 typedef const char* const = string; 
 
+struct SymbolInfo
+{
+	struct Symbol *symbol;
+	int info;
+};
 /*                                  Functions                                 */
 /******************************************************************************/
 
@@ -95,7 +100,7 @@ void insertSymbol( struct Symbol *symb );
 
 struct Symbol* createVariable( int symType, const char* const name);
 
-struct Symbol* getCreateVariable( int symType, const char* const name);
+struct Symbol* getCreateVariable( int symType, const char* const name, struct SymbolInfo* atribute);
 
 Symbol* createArraySymbol( Symbol* type, unsigned int n );
 
@@ -164,11 +169,9 @@ void resetChange();
 
 const char getChange();
 
-// Search for method "name" and return its argument's number. If method ins't 
-// in symbols table, return -1.
-int getArgumentsNumber( const char* const name );
+struct Symbol* getArrayType(struct Symbol* variable);  
 
-
+struct Symbol* getVariableType(int symType, const char* const name, struct SymbolInfo* symbolInfo);
 
 //void setMain();
 

@@ -124,6 +124,29 @@ struct Symbol* checkIsBoolean(struct Symbol* s){
 	}	
 }
 
+struct SymbolInfo* checkIsInteger(struct Symbol* s)
+{
+	int t;
+	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
+	if( s == NULL )
+		return NULL; 	
+	t = ((struct Type *)(s->info))->id;
+	//Operand is boolean.
+	if(t == TYPE_INTEGER)
+	{
+		info->symbol = s;
+		info->info = TYPE_ARRAY; 
+		return info;
+	}	
+	else
+	{	
+		yyerror("Type error: expression between [] must be integer");
+		info->symbol = NULL;
+		info->info = TYPE_ARRAY; 		
+		return info;
+	}	
+}	
+
 
 struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2){
 	int t1, t2;
@@ -168,14 +191,23 @@ struct Symbol* checkArray(Symbol* type, int n)
 	}		
 }
 
-struct Symbol* checkAssignement(struct Symbol *left, struct Symbol *right)
+struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 {
 	printf("--------> En assignment \n");
+	struct Symbol* left = left_->symbol;
+	int info = left_->info;
+	struct Symbol* variableType = NULL;
+	
 	switch(isVariable(left))
 	{
 	case 0: //It is a variable with a known type
 		printf("--------> En assignment with known type %s \n", left->name);
-		if(checkSameType(((struct Variable*)(left->info))->type, right) != NULL)
+		if(info == TYPE_ARRAY){
+			variableType = getArrayType(left);
+		}else{
+			variableType = ((struct Variable*)(left->info))->type;
+		}		
+		if(checkSameType( variableType, right) != NULL)
 		{
 			//Left side and right side are the same type
 			//Generar codigo
@@ -230,6 +262,7 @@ struct Symbol* checkAssignement(struct Symbol *left, struct Symbol *right)
 		yyerror("Left side of expression is invalid\n");
 		break;		
 	}
+	free(left_);
 	return left;	
 }	
 
@@ -316,27 +349,18 @@ struct MethodInfo *checkMethodDefinition(const char* const name)
 
 struct Method *checkBlockDefinition(const char* const name, const char* const argName )
 {
-	printf("Falla block -2 \n");
 	struct Method* scope = getCurrentScope();
-	printf("Falla block -1 \n");
 	char *blockName = createBlockName(name, argName);
-	printf("Falla block 0 \n");
 	struct Symbol* block = searchVariable(SYM_BLOCK, blockName);
-	printf("Falla block 1 \n");
 	if(block == NULL)
 	{
-		printf("Falla block 2 \n");
 		insertBlockDefinition(blockName, argName);
-		printf("Falla block 3 \n");
 	}
 	else
 	{
-		printf("Falla block 2a \n");
 		goInScope(((struct Method *)(block->info)));
-		printf("Falla block 3a \n");
 	}	
 	free(blockName);
-	printf("Falla block 4 \n");
 	return scope;	
 }
 
@@ -386,4 +410,10 @@ char *createBlockName(const char* const name, const char* const argName)
 	return blockName;
 }
 
-
+struct SymbolInfo* nullSymbolInfo()
+{
+	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
+	info->symbol = NULL;
+	info->info = 0;
+	
+}

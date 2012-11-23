@@ -498,28 +498,13 @@ En todos los casos hay que devolver el tipo del literal/variable
 //la tabla a ver si existe, etc.
 factor :
 	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol* variable = getCreateVariable( SYM_VARIABLE, $1, $2 ); 
-				if(variable == NULL)
-					$$ = NULL;
-				else
-					$$ = ((struct Variable*)(variable->info))->type;
-				free($2);	
+				$$ = getVariableType( SYM_VARIABLE, $1, $2 );
 				}
     | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol* variable = getCreateVariable( SYM_CONSTANT, $1, $2 ); 
-				if(variable == NULL)
-					$$ = NULL;
-				else
-					$$ = ((struct Variable*)(variable->info))->type;
-				free($2);	
+				$$ = getVariableType( SYM_CONSTANT, $1, $2 );	
 				}
     | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
-				struct Symbol* variable = getCreateVariable( SYM_GLOBAL, $1, $2 ); 
-				if(variable == NULL)
-					$$ = NULL;
-				else
-					$$ = ((struct Variable*)(variable->info))->type;
-				free($2);	
+				$$ = getVariableType( SYM_GLOBAL, $1, $2 );	
 				}
 	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
 	| NOT factor {$$ = checkNotExpression($2);}

@@ -169,7 +169,7 @@ const char getChange();
 
 struct Symbol* getArrayType(struct Symbol* variable);  
 
-
+struct Symbol* getVariableType(int symType, const char* const name, struct SymbolInfo* symbolInfo);
 
 //void setMain();
 

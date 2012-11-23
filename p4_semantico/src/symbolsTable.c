@@ -119,17 +119,46 @@ struct Symbol* createVariable( int symType, const char* const name)
 	return variableStruct;
 }
 
-struct Symbol* getCreateVariable( int symType, const char* const name)
+struct Symbol* getCreateVariable( int symType, const char* const name, struct SymbolInfo* atribute)
 {
 	struct Symbol* variableStruct = searchVariable( symType, name );
-	if( variableStruct == NULL)
+	if(atribute == NULL)
 	{
-		variableStruct = createVariable(symType, name);
-		//variableStruct = createSymbol( symType, name );
-		//variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
-		//((struct Variable *)(variableStruct->info))->type = NULL;
-		//variableStruct->info = NULL;
+		yyerror("Atribute should never be null");
 	}
+	
+	if( atribute->info == 0)//No atribute info 
+	{	//Variable with a simple type
+		printf("atribute info es 0\n");
+		if( variableStruct == NULL)
+		{
+			variableStruct = createVariable(symType, name);
+			//variableStruct = createSymbol( symType, name );
+			//variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
+			//((struct Variable *)(variableStruct->info))->type = NULL;
+			//variableStruct->info = NULL;
+		}
+	}else //Array or class variable
+	{
+		printf("Atribute info no es 0 \n");
+		if(variableStruct != NULL )
+		{	//The variable already exists
+			printf("LA variable existe \n");
+			if(atribute->info == TYPE_ARRAY){
+				//Atribute is [] so this variable must be an array
+				printf("Variable no es null y atribute es de tipo array\n");
+				struct Variable* variable = ((struct Variable*)(variableStruct->info));
+				if( ((struct Type*)(variable->type)) != NULL ){
+					if(((struct Type*)(variable->type->info))->id != TYPE_ARRAY)
+					{
+						yyerror("Type error: [] operator can not be applied on variable");
+					}
+				}	
+			}	
+		}else{
+			variableStruct = createVariable(symType, name);
+		}
+	}	
 	return variableStruct;
 }
 
@@ -677,6 +706,43 @@ void resetChange()
 const char getChange()
 {
 	return change;
+}
+
+struct Symbol* getArrayType(struct Symbol* variable)
+{
+	struct Symbol* array = ((struct Variable*)(variable->info))->type;
+	if( array == NULL){
+		return NULL;
+	}else{
+		if(array->info == NULL){
+			return NULL;
+		}else{	
+			return ((struct Type*)(array->info))->arrayInfo->type;
+		}
+	}		
+}
+
+struct Symbol* getVariableType(int symType, const char* const name, struct SymbolInfo* symbolInfo)
+{
+	struct Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 
+	struct Symbol* type = NULL;
+	if(variable == NULL){
+		type = NULL;
+	}else{
+		if( symbolInfo->info == TYPE_ARRAY ){
+			type = getArrayType(variable);
+		}else{
+			type = ((struct Variable*)(variable->info))->type;
+		}	
+	}	
+	free(symbolInfo);
+	//This is only call on right side of expression so insert variable here
+	//if it does not exits on symbol table
+	printf("Antes de insertar\n");
+	if(searchVariable(symType, name) == NULL){
+		insertVariable(variable, NULL);
+	}
+	return type;
 }
 
 /*void setMain()

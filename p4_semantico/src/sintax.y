@@ -179,10 +179,6 @@ separator :
 	| ';'
 	;
 
-
-/*
-Después de ID_CONSTANT: incluir registro de clase con nombre ID_CONSTANT.
-*/ 
 class_definition : 
 	CLASS ID_CONSTANT separator { currentClass = checkClassDefinitonPre($2, currentClass);}
 		class_content 
@@ -190,10 +186,6 @@ class_definition :
 	|	CLASS error	END separator {yyerror( "Sintax error on class definition" ); yyerrok;}
 	;
 
-/*
-Después de cada ID_INSTANCE_VARIABLE: añadir campo de nombre 
-ID_INSTANCE_VARIABLE en la clase actual.
-*/
 class_content : 
 	ID_INSTANCE_VARIABLE '=' literal  { $$ = checkClassContentDefinition(currentClass, $1, $3, 0); }
 	| ID_INSTANCE_VARIABLE '=' literal separator class_content { $$ = checkClassContentDefinition(currentClass, $1, $3, $5); }
@@ -211,28 +203,18 @@ method_call :
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
 simple_method_call:  
-	IDENTIF '(' { 	//printf("--------> En method call el identif vale %s\n", $1);
-					currentMethod = searchTopLevel( SYM_METHOD, $1);
-					//printf("--------> En method call despues\n");
-					if(currentMethod && currentMethod->info )
-					{
-						//printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
-						nArguments = ((struct Method *)(currentMethod->info))->nArguments;
-						//printf("+++++Tiene %d argumentos\n", nArguments);
+	IDENTIF '(' { 	
+					currentMethod = searchTopLevel( SYM_METHOD, $1);					
+					if(currentMethod && currentMethod->info ){						
+						nArguments = ((struct Method *)(currentMethod->info))->nArguments;						
 					}
 					$<symbol>$ = currentMethod;
 				}			
 		arguments ')' {
-					  //printf("+++++SE leyeron bien %d argumentos\n", $4);
-					  if(currentMethod != NULL && $4 == nArguments)
-					  {
-					  	//Todo fue bien
-					  }
-					  else
-					  {
-					  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
-					  } 
-					  $$ = searchTopLevel( SYM_METHOD, $1);
+						  if( !(currentMethod != NULL && $4 == nArguments) ){
+						  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
+						  } 
+						  $$ = searchTopLevel( SYM_METHOD, $1);
 					 }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
 	;
@@ -244,19 +226,18 @@ simple_method_call:
 arguments : 
 	 method_call_argument more_arguments 
 							{ 
-							printf("llege0\n");
 								if(currentMethod != NULL){
 								  	int result = checkMethodCall(currentMethod, $1, nArguments - $2);
-									if(result == 0)
+									if(result == 0){
 										// Valid argument, count it.
 										$$ = $2 + 1;
-									else
+									}else{
 										// Invalid argument.
 										$$ = -1;
+									}	
 								}		
 							}		 
 	| method_call_argument  {
-		printf("llege\n");
 								if(currentMethod != NULL){	
 								 	int result = checkMethodCall(currentMethod, $1, nArguments);
 									if(result == 0){
@@ -286,24 +267,23 @@ more_arguments :
 								if(currentMethod != NULL)
 								{
 									int result = checkMethodCall(currentMethod, $2, nArguments);
-									////printf("+++++El check method call dio %d\n", result);
-									if(result == 0)
+									if(result == 0){
 										$$ = 1;
-									else
+									}else{
 										$$ = -1;
+									}	
 								}	 
 							}
 	| ',' method_call_argument more_arguments 
 			{ 
-				////printf("+++++En more arguments leidos bien %d\n", $3);
 				if(currentMethod != NULL)
 				{
 				  	int result = checkMethodCall(currentMethod, $2, nArguments - $3);
-				  	////printf("+++++El check method call dio %d\n", result);
-					if(result == 0)
+					if(result == 0){
 						$$ = $3 + 1;
-					else
+					}else{
 						$$ = -1;
+					}	
 				}		
 			}	             
 	;
@@ -405,11 +385,7 @@ right_side :
 	| string {$$ = searchType( TYPE_STRING );}
 	//We save arraySize because otherwise it could be overwritten by literal
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
-	| ID_CONSTANT NEW 
-		{
-			//printf("--------> En assignation right side con %s new \n", $1);
-			$$ = searchTopLevel( SYM_TYPE, $1);	
-		}
+	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
 	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
 	;
 
@@ -434,7 +410,7 @@ relational_operator :
 // In all the expressions, if an operator is used, current expression becomes
 // its operator's type, otherwise type does not change
 expression :
-	logical_expression //{//printf("--------> En expresion el tipo vale %s\n", $1->name);}
+	logical_expression 
 	| logical_expression OR expression {$$ = checkLogicalExpression($1, $3, "or");}
 	;
 logical_expression :
@@ -454,28 +430,15 @@ aritmetic_expression :
 	;
 	
 term :
-	factor //{//printf("De factor a term tipo = %s %d \n",$1->name, ((struct Type *)($1->info))->id);}
+	factor 
 	| factor '*' term {$$ = checkAritmeticExpression($1, $3, "*");}
 	| factor '/' term {$$ = checkAritmeticExpression($1, $3, "/");}
 	;
 
-/*Comprobar que los identificadores existen y es una variable,
-Si existen comprobar los atribute.
-Si no existen entonces la variable no esta definida y es un error
-Si es con not entonces factor tiene que ser de tipo logico
-En todos los casos hay que devolver el tipo del literal/variable
-*/
 factor :
-	IDENTIF atribute {//printf("--------> En factor el identif vale %s\n", $1);
-			printf("--------------------------------------Estoy en la linea %d\n", numlin);
-				$$ = getVariableType( SYM_VARIABLE, $1, $2 );	
-				}
-    | ID_CONSTANT atribute {//printf("--------> En factor el identif vale %s\n", $1);
-				$$ = getVariableType( SYM_CONSTANT, $1, $2 );	
-				}
-    | ID_GLOBAL_VARIABLE atribute {//printf("--------> En factor el identif vale %s\n", $1);
-				$$ = getVariableType( SYM_GLOBAL, $1, $2 );	
-				}
+	IDENTIF atribute {$$ = getVariableType( SYM_VARIABLE, $1, $2 );	}
+    | ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
+    | ID_GLOBAL_VARIABLE atribute {	$$ = getVariableType( SYM_GLOBAL, $1, $2 );	}
 	| literal 
 	| NOT factor {$$ = checkNotExpression($2);}
 	| simple_method_call {$$ = getReturnType($1);}
@@ -507,24 +470,16 @@ substring_part :
 	| SEC_SCAPE 
 	;
 	
-// Hay que modificar el lexico, porque por ahora solo permite una variable	
-// Como aqui esta expresion, ni hay que comprobar k la variable existe ni na,
-// todo eso ya se hizo en expresion
+//TODO Lexical analizer does not allow expression on strings, so here we are only getting
+//simple variables
 string_struct :
 		START_STRUCT expression END_STRUCT
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%
-//Lo que tenemos que hacer es dos bucles, en donde llamamos a yyparse
-//En el primero seria recorrer arbol e ir rellenandolo, hasta que no
-//haya cambios. El arbol esta compuesto de nodos con tablas de simbolos
-//y desde un punto se puede acceder a las variables de de su tabla, del
-//padre, el abuelo, etc. Se hacen un numero indeterminado de lecturas
-//del fichero.
-//En la segunda parte es la generacion de codigo, que seria volver a llamar
-//a yyparse pero esta vez ya tenemos en arbol lleno.  
+  
 int main(int argc, char** argv) {
-	// Inicializa la tabla de simbolos con los tipos basicos.
+
 	initializeSymTable();
 
 	if (argc>1) yyin=fopen(argv[1],"r");
@@ -532,7 +487,7 @@ int main(int argc, char** argv) {
 
 	firstParse = 0;
 	int i = 1;
-  	//Codigo para cada iteracion
+
   	while(getChange() && i < 6)
   	{ 	
   		resetChange();
@@ -544,44 +499,17 @@ int main(int argc, char** argv) {
 		i++;		
 		printf("\n\nIteracion %d\n\n", i);
 	}
-	//Codigo para cuando se sale del bucle
+
 	finishFlex();
-	//printf("Termine\n");
 	showSymTable();
-
-	//printf("Termine2\n" );
-
-	// Libera la tabla de simbolos
 	freeSymbTable();
 }
 
 void yyerror(char* mens) {
-	// Este if es un apaño cutre porque si no muestra muchos mensajes de error
-	// que no dicen nada y de los que luego se recupera
-	if(strcmp(mens,"syntax error") != 0 ) 
-		//Numlin - 1 porque siempre detecta el error cuando ya paso la linea
+	//Syntax error alone gives no information, ignore it
+	if(strcmp(mens,"syntax error") != 0 ){ 
+		//We printf numlin - 1 because lexical analizer is ahead one or more lines 
 		printf("---------Error on line %i: %s\n",numlin - 1,mens);
+	}	
 }
-
-/* Vano intento por reducir la parte de method code, lo pongo aqui 
-	para referencias futuras
-code : 
-	method_definition
-	| class_definition
-	| method_code
-	;
-
-method_code :
-	sentences
-	| sentences method_code
-	;
-	
-sentences : 
-	separator
-	| method_call
-   	| loop
-   	| if_construction
-	| assignment
-	;
-*/
 

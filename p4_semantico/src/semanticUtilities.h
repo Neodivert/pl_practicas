@@ -74,8 +74,6 @@ Symbol* checkArray(Symbol* type, int n);
 
 /*                               3. Methods                                   */
 
-int checkClassDefinition(struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos);
-
 // Return 0 if call argument with type "type" and position "argument" match the
 // corresponding argument in method definition (*). Otherwise return 1.
 // (*) If the argument does not have a known type we asume the method call is 
@@ -106,10 +104,18 @@ struct Method * checkBlockDefinition(cstr name, cstr argName);
 // Generate a name for block whose name is "name" and argument is "argName".
 char *createBlockName(cstr name, cstr argName);
 
+/*                                 5. Classes                                  */
+
+struct Symbol* checkClassDefinitonPre(const char * const className, struct Symbol *currentClass);
+
+struct Symbol* checkClassDefinitonPost(const char * const className, int nVariables);
+
 int checkClassNew(struct Symbol *classSymbol, const char* const varName);
 
+int checkClassContentDefinition(struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos);
 
-/*                                5. Others                                   */
+
+/*                                6. Others                                   */
 
 Symbol* checkAssignement(struct SymbolInfo* left_, Symbol *right);
 

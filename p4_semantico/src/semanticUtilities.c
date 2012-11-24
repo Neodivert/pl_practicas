@@ -210,6 +210,28 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 	}	
 }	
 
+struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo )
+{
+	struct SymbolInfo* returnInfo = arrayInfo;
+	if( arrayInfo != NULL && arrayInfo->info != -1 && arrayInfo->symbol != NULL){
+		struct Symbol* otherType = checkSameType( type, arrayInfo->symbol);
+		if(otherType == NULL)
+		{
+			yyerror("All elements in array must be the same type");	
+			returnInfo->symbol = NULL;
+			returnInfo->info = -1;						
+		}else
+		{ 
+			returnInfo->symbol = arrayInfo->symbol;
+			returnInfo->info = returnInfo->info + 1;
+		}				
+	}else{	
+		returnInfo->symbol = NULL;
+		returnInfo->info = -1;		
+	}
+	return returnInfo;
+}
+
 // Search in the symbols' table for an type array of size "n" and whose elements
 // are of type "type".
 // If n < 0 (invalid size), return NULL.
@@ -242,6 +264,264 @@ Symbol* checkArray(Symbol* type, int n)
 		return NULL;
 	}		
 }
+
+/*                              3. Methods                                    */
+
+// Return 0 if call argument with type "type" and position "argument" match the
+// corresponding argument in method definition (*). Otherwise return 1.
+// (*) If the argument does not have a known type we asume the method call is 
+// right and assign the type of the value to the argument.
+int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
+{
+	struct Symbol* argumentSym = searchNArgument(method, argument);
+	struct Symbol* argumentType;
+	//Find the argument symbol
+	if(argumentSym != NULL && argumentSym->info != NULL)
+	{
+		argumentType = ((struct Variable*)(argumentSym->info))->type;
+		//Argument has a known type
+		if(argumentType != NULL)
+		{
+			argumentType = checkSameType(type, argumentType); 
+			if(argumentType != NULL)
+			{
+				return 0;
+			}
+			else
+			{
+				yyerror("Type error: Arguments in method call do not match");
+				return 1;
+			}
+		}
+		else
+		{
+			//If the argument does not have a known type we asume
+			//the method call is right and assign the type of the
+			//value to the argument.
+			((struct Variable*)(argumentSym->info))->type = (void *)type;
+			setChanged();
+			return 0;	
+		}
+	}
+	else
+	{
+	return 1;
+	}
+}	  
+
+// Check if method name is already in symbols' table (if not, insert it).
+// Return a MethodInfo struct, whose "scope" field points to the current 
+// scope's symbol and "result" is an integer which indicates if method was
+// already defined (1) or not (0).
+struct MethodInfo *checkMethodDefinition(const char* const name)
+{
+	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
+	struct Symbol* method = searchTopLevel( SYM_METHOD, name);
+	info->scope = getCurrentScope();
+	if(method == NULL)
+	{
+		insertMethodDefinition(name);
+		info->result = 0;
+	}
+	else
+	{
+		goInScope(((struct Method *)(method->info)));
+		info->result = 1;	
+	}	
+	return info;	
+}
+
+// Set method's return type to type of symbols "type"
+void setMethodReturnType(struct Symbol *method, struct Symbol *type)
+{
+	if(method != NULL && method->info != NULL && type != NULL && type->info != NULL )
+	{
+		struct Method *methodInfo = ((struct Method*)(method->info));
+		if( type->symType == SYM_METHOD )
+		{
+			methodInfo->returnType = ((struct Method*)(type->info))->returnType;
+		}
+		else //It's a variable
+		{
+			methodInfo->returnType = ((struct Variable*)(type->info))->type;
+		}	
+	}	
+}
+
+// Return 0 if variable name exists in symbols' table. If not, create and insert
+// it, and then return 1.
+int checkArgumentDefinition(const char* const name)
+{
+	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
+	if( variableStruct == NULL)
+	{
+		variableStruct = createVariable(SYM_VARIABLE, name);
+		insertVariable(variableStruct, NULL);
+		return 0;
+	}
+	else
+		return 1;	
+}
+
+/*                             4. Blocks                                      */
+
+// Search in symbols' table for block "name" with argument "argName". If it is
+// not in the symbols' table, create it and insert it. This functions returns
+// and Method* that points to the current scope's (the block) symbol.
+struct Method *checkBlockDefinition(const char* const name, const char* const argName )
+{
+	struct Method* scope = getCurrentScope();
+	char *blockName = createBlockName(name, argName);
+	struct Symbol* block = searchVariable(SYM_BLOCK, blockName);
+	if(block == NULL)
+	{
+		insertBlockDefinition(blockName, argName);
+	}
+	else
+	{
+		goInScope(((struct Method *)(block->info)));
+	}
+	struct Symbol* variable = searchVariable( SYM_VARIABLE, name);	
+	if(variable != NULL)
+	{	//Variabe.each is defined in symbol table
+		struct Symbol* type = ((struct Variable*)(variable->info))->type;
+		//Get type of variable
+		if( type != NULL )
+		{	//Variable type is known
+			if( ((struct Type*)(type->info))->id == TYPE_ARRAY )
+			{	//Variable's type is array
+				type = getArrayType(variable);
+				if(type != NULL)
+				{	//Array type is known
+					variable = searchVariable( SYM_VARIABLE, argName);
+					//Get block argument and it's type
+					if(variable != NULL && ((struct Variable*)(variable->info))->type == NULL )
+					{	//Argument type is not defined, so set it now
+						((struct Variable*)(variable->info))->type = type;
+						setChanged();
+					}
+				}
+			}
+			else
+			{
+				yyerror("Type error: block can only be used with array variables");
+			}	
+		}
+	}
+	free(blockName);
+	return scope;	
+}
+
+// Generate a name for block whose name is "name" and argument is "argName".
+char *createBlockName(cstr name, cstr argName)
+{
+	printf("create 0\n");
+	char *blockName = (char *)malloc(sizeof(char) * 50);
+	printf("create 1\n");
+	blockName[0] = '\0';
+	printf("create 2\n");
+	strcat(blockName, name);
+	strcat(blockName, "_");
+	strcat(blockName, argName);
+	printf("create 5\n");
+	return blockName;
+}
+	
+/*                                 5. Classes                                  */
+
+struct Symbol* checkClassDefinitonPre(const char * const className, struct Symbol *currentClass)
+{
+	int i = 0;
+	struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, className );
+	struct Symbol *newClass = currentClass;
+	if( classSymbol == NULL ){
+		classSymbol = createClassSymbol(className);
+		insertSymbol( classSymbol );
+	}
+	
+	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+	
+	//Elements were counted but no yet inserted			
+	if( classInfo->nElements != 0 && classInfo->elements == NULL)
+	{
+		newClass = classSymbol;
+		classInfo->elements = malloc(sizeof( struct Symbol *) * classInfo->nElements );
+		for(i = 0; i < classInfo->nElements; i++){
+			classInfo->elements[i] = NULL;
+		}
+	}
+	return newClass;
+}			
+
+struct Symbol* checkClassDefinitonPost(const char * const className, int nVariables)
+{
+	struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, className );
+	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+	if( classInfo->nElements == 0 )
+	{
+		if( nVariables != 0 ){
+			classInfo->nElements = nVariables;
+			setChanged();
+		}else{
+			yyerror("Type error: Classess must have at least one class variable");
+		}				
+	}	
+	return NULL;
+}
+	
+struct SymbolInfo* checkClassAtribute( const char* const name )
+{
+	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
+	
+	info->symbol = NULL;
+	info->info = SYM_CLASS_VARIABLE;
+	info->name = (char *)malloc( strlen( name )+1 );
+	strcpy( info->name, name );
+	return info;
+}
+
+int checkClassContentDefinition( struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos)
+{
+	if( classSymbol )
+	{
+		char classVarName[50] = "";
+		strcat(classVarName, classSymbol->name);
+		strcat(classVarName, varName);
+		struct Symbol* classVar = createVariable( SYM_CLASS_VARIABLE, classVarName );
+		insertVariable( classVar, type );
+		struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+		classInfo->elements[pos] = classVar;				
+	}
+	return (pos + 1);	
+}
+
+int createClassVar( const char* const name, const char* const varName, struct Symbol *type)
+{
+	char classVarName[50] = "";
+	strcat(classVarName, name);
+	strcat(classVarName, varName);
+	printf(" name %s varName %s classVar %s\n", name, varName, classVarName);
+	struct Symbol* classVar = createVariable( SYM_VARIABLE, classVarName );
+	insertVariable( classVar, type );					
+}
+
+int checkClassNew(struct Symbol *classSymbol, const char* const varName)
+{
+	int i = 0;
+	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+	struct Symbol * type = NULL;
+	if(classInfo->elements != NULL && classInfo->elements[0]){
+		for(i = 0; i < classInfo->nElements; i++)
+		{
+			type = ((struct Variable*)(classInfo->elements[i]->info))->type;
+			createClassVar(varName, classInfo->elements[i]->name, type);
+		}
+		i = 1;
+	}	
+	return i;
+}
+
+/*                                6. Others                                   */
 
 struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 {
@@ -352,151 +632,6 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	return left;	
 }
 
-/*                              3. Methods                                    */
-
-// Return 0 if call argument with type "type" and position "argument" match the
-// corresponding argument in method definition (*). Otherwise return 1.
-// (*) If the argument does not have a known type we asume the method call is 
-// right and assign the type of the value to the argument.
-int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
-{
-	struct Symbol* argumentSym = searchNArgument(method, argument);
-	struct Symbol* argumentType;
-	//Find the argument symbol
-	if(argumentSym != NULL && argumentSym->info != NULL)
-	{
-		argumentType = ((struct Variable*)(argumentSym->info))->type;
-		//Argument has a known type
-		if(argumentType != NULL)
-		{
-			argumentType = checkSameType(type, argumentType); 
-			if(argumentType != NULL)
-			{
-				return 0;
-			}
-			else
-			{
-				yyerror("Type error: Arguments in method call do not match");
-				return 1;
-			}
-		}
-		else
-		{
-			//If the argument does not have a known type we asume
-			//the method call is right and assign the type of the
-			//value to the argument.
-			((struct Variable*)(argumentSym->info))->type = (void *)type;
-			setChanged();
-			return 0;	
-		}
-	}
-	else
-	{
-	return 1;
-	}
-}	  
-
-// Check if method name is already in symbols' table (if not, insert it).
-// Return a MethodInfo struct, whose "scope" field points to the current 
-// scope's symbol and "result" is an integer which indicates if method was
-// already defined (1) or not (0).
-struct MethodInfo *checkMethodDefinition(const char* const name)
-{
-	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
-	struct Symbol* method = searchTopLevel( SYM_METHOD, name);
-	info->scope = getCurrentScope();
-	if(method == NULL)
-	{
-		insertMethodDefinition(name);
-		info->result = 0;
-	}
-	else
-	{
-		goInScope(((struct Method *)(method->info)));
-		info->result = 1;	
-	}	
-	return info;	
-}
-
-// Return 0 if variable name exists in symbols' table. If not, create and insert
-// it, and then return 1.
-int checkArgumentDefinition(const char* const name)
-{
-	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
-	if( variableStruct == NULL)
-	{
-		variableStruct = createVariable(SYM_VARIABLE, name);
-		insertVariable(variableStruct, NULL);
-		return 0;
-	}
-	else
-		return 1;	
-}
-
-/*                             4. Blocks                                      */
-
-// Search in symbols' table for block "name" with argument "argName". If it is
-// not in the symbols' table, create it and insert it. This functions returns
-// and Method* that points to the current scope's (the block) symbol.
-struct Method *checkBlockDefinition(const char* const name, const char* const argName )
-{
-	struct Method* scope = getCurrentScope();
-	char *blockName = createBlockName(name, argName);
-	struct Symbol* block = searchVariable(SYM_BLOCK, blockName);
-	if(block == NULL)
-	{
-		insertBlockDefinition(blockName, argName);
-	}
-	else
-	{
-		goInScope(((struct Method *)(block->info)));
-	}
-	struct Symbol* variable = searchVariable( SYM_VARIABLE, name);	
-	if(variable != NULL)
-	{	//Variabe.each is defined in symbol table
-		struct Symbol* type = ((struct Variable*)(variable->info))->type;
-		//Get type of variable
-		if( type != NULL )
-		{	//Variable type is known
-			if( ((struct Type*)(type->info))->id == TYPE_ARRAY )
-			{	//Variable's type is array
-				type = getArrayType(variable);
-				if(type != NULL)
-				{	//Array type is known
-					variable = searchVariable( SYM_VARIABLE, argName);
-					//Get block argument and it's type
-					if(variable != NULL && ((struct Variable*)(variable->info))->type == NULL )
-					{	//Argument type is not defined, so set it now
-						((struct Variable*)(variable->info))->type = type;
-						setChanged();
-					}
-				}
-			}
-			else
-			{
-				yyerror("Type error: block can only be used with array variables");
-			}	
-		}
-	}
-	free(blockName);
-	return scope;	
-}
-
-// Generate a name for block whose name is "name" and argument is "argName".
-char *createBlockName(cstr name, cstr argName)
-{
-	printf("create 0\n");
-	char *blockName = (char *)malloc(sizeof(char) * 50);
-	printf("create 1\n");
-	blockName[0] = '\0';
-	printf("create 2\n");
-	strcat(blockName, name);
-	strcat(blockName, "_");
-	strcat(blockName, argName);
-	printf("create 5\n");
-	return blockName;
-}
-	
 
 int isVariable(Symbol *s)
 {
@@ -516,105 +651,6 @@ int isVariable(Symbol *s)
 	{
 		return 2;
 	}
-}
-
-	  
-
-
-
-
-
-
-int checkClassDefinition( struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos)
-{
-	if( classSymbol )
-	{
-		char classVarName[50] = "";
-		strcat(classVarName, classSymbol->name);
-		strcat(classVarName, varName);
-		struct Symbol* classVar = createVariable( SYM_CLASS_VARIABLE, classVarName );
-		insertVariable( classVar, type );
-		struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
-		classInfo->elements[pos] = classVar;				
-	}
-	return (pos + 1);	
-}
-
-int createClassVar( const char* const name, const char* const varName, struct Symbol *type)
-{
-	char classVarName[50] = "";
-	strcat(classVarName, name);
-	strcat(classVarName, varName);
-	printf(" name %s varName %s classVar %s\n", name, varName, classVarName);
-	struct Symbol* classVar = createVariable( SYM_VARIABLE, classVarName );
-	insertVariable( classVar, type );					
-}
-
-int checkClassNew(struct Symbol *classSymbol, const char* const varName)
-{
-	int i = 0;
-	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
-	struct Symbol * type = NULL;
-	if(classInfo->elements != NULL && classInfo->elements[0]){
-		for(i = 0; i < classInfo->nElements; i++)
-		{
-			type = ((struct Variable*)(classInfo->elements[i]->info))->type;
-			createClassVar(varName, classInfo->elements[i]->name, type);
-		}
-		i = 1;
-	}	
-	return i;
-}
-
-void setMethodReturnType(struct Symbol *method, struct Symbol *type)
-{
-	if(method != NULL && method->info != NULL && type != NULL && type->info != NULL )
-	{
-		struct Method *methodInfo = ((struct Method*)(method->info));
-		if( type->symType == SYM_METHOD )
-		{
-			methodInfo->returnType = ((struct Method*)(type->info))->returnType;
-		}
-		else //It's a variable
-		{
-			methodInfo->returnType = ((struct Variable*)(type->info))->type;
-		}	
-	}	
-}
-
-
-
-struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo )
-{
-	struct SymbolInfo* returnInfo = arrayInfo;
-	if( arrayInfo != NULL && arrayInfo->info != -1 && arrayInfo->symbol != NULL){
-		struct Symbol* otherType = checkSameType( type, arrayInfo->symbol);
-		if(otherType == NULL)
-		{
-			yyerror("All elements in array must be the same type");	
-			returnInfo->symbol = NULL;
-			returnInfo->info = -1;						
-		}else
-		{ 
-			returnInfo->symbol = arrayInfo->symbol;
-			returnInfo->info = returnInfo->info + 1;
-		}				
-	}else{	
-		returnInfo->symbol = NULL;
-		returnInfo->info = -1;		
-	}
-	return returnInfo;
-}
-
-struct SymbolInfo* checkClassAtribute( const char* const name )
-{
-	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
-	
-	info->symbol = NULL;
-	info->info = SYM_CLASS_VARIABLE;
-	info->name = (char *)malloc( strlen( name )+1 );
-	strcpy( info->name, name );
-	return info;
 }
 
 struct SymbolInfo* nullSymbolInfo()

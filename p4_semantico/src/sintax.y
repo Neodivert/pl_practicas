@@ -184,44 +184,9 @@ separator :
 Después de ID_CONSTANT: incluir registro de clase con nombre ID_CONSTANT.
 */ 
 class_definition : 
-	CLASS ID_CONSTANT separator 
-		{ 
-			int i = 0;
-			struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, $2 );
-			if( classSymbol == NULL ){
-				classSymbol = createClassSymbol($2);
-				insertSymbol( classSymbol );
-			}
-			
-			struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
-			
-			//Elements were counted but no yet inserted			
-			if( classInfo->nElements != 0 && classInfo->elements == NULL)
-			{
-				currentClass = classSymbol;
-				classInfo->elements = malloc(sizeof( struct Symbol *) * classInfo->nElements );
-				for(i = 0; i < classInfo->nElements; i++){
-					classInfo->elements[i] = NULL;
-				}
-			}
-		}
-		
-		class_content END separator 
-		
-		{
-			currentClass = NULL;
-			struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, $2 );
-			struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
-			if( classInfo->nElements == 0 )
-			{
-				if( $5 != 0 ){
-					classInfo->nElements = $5;
-					setChanged();
-				}else{
-					yyerror("Type error: Classess must have at least one class variable");
-				}				
-			}	
-		}
+	CLASS ID_CONSTANT separator { currentClass = checkClassDefinitonPre($2, currentClass);}
+		class_content 
+	END separator {currentClass = checkClassDefinitonPost( $2, $5 );}
 	|	CLASS error	END separator {yyerror( "Sintax error on class definition" ); yyerrok;}
 	;
 
@@ -230,8 +195,8 @@ Después de cada ID_INSTANCE_VARIABLE: añadir campo de nombre
 ID_INSTANCE_VARIABLE en la clase actual.
 */
 class_content : 
-	ID_INSTANCE_VARIABLE '=' literal  { $$ = checkClassDefinition(currentClass, $1, $3, 0); }
-	| ID_INSTANCE_VARIABLE '=' literal separator class_content { $$ = checkClassDefinition(currentClass, $1, $3, $5); }
+	ID_INSTANCE_VARIABLE '=' literal  { $$ = checkClassContentDefinition(currentClass, $1, $3, 0); }
+	| ID_INSTANCE_VARIABLE '=' literal separator class_content { $$ = checkClassContentDefinition(currentClass, $1, $3, $5); }
 	| separator class_content {$$ = $2;}	
 	| {$$ = 0;}		
 	;

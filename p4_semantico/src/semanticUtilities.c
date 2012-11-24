@@ -205,6 +205,9 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 		if(info == TYPE_ARRAY){
 			variableType = getArrayType(left);
 		}else{
+			if( info == SYM_CLASS_VARIABLE){
+				left = getClassVar( left , left_->name);
+			}
 			variableType = ((struct Variable*)(left->info))->type;
 		}		
 		if(checkSameType( variableType, right) != NULL)
@@ -230,29 +233,60 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	case 1: //It is a variable without a known type
 		printf("--------> En assignment with not known type %s \n", left->name);
 		showSymTable();
-		if(searchVariable(left->symType, left->name) == NULL)
-		{ 
-			//Variable is not in symbolTable, insert it
-			if(right != NULL)
-			{
-				printf("Insertando con tipo %s\n", right->name);
-				insertVariable( left, right );
-			}
+
+		if(info != SYM_CLASS_VARIABLE){
+			if(searchVariable(left->symType, left->name) == NULL)
+			{ 
+				//Variable is not in symbolTable, insert it
+				if(right != NULL)
+				{
+					int type = ((struct Type*)(right->info))->id;
+					if( type == TYPE_CLASS)
+					{
+						struct ClassType *classInfo = ((struct Type*)(right->info))->classInfo;
+						if(classInfo->elements != NULL && classInfo->elements[0])
+						{
+							if( ! searchVariable(SYM_VARIABLE, left->name)){
+								insertVariable( left, right );
+							}	
+							checkClassNew( left, right->name);
+						}else{
+							insertVariable( left, NULL );
+						}
+					}else{
+						insertVariable( left, right );
+					}			
+				}
+				else
+				{
+					insertVariable( left, NULL );
+				}
+			}	
 			else
 			{
-				printf("Insertando con tipo NULL\n");
-				insertVariable( left, NULL );
+				//Variable is in symbolTable, set its type, right might be NULL
+				if(right != NULL)
+				{
+			
+					int type = ((struct Type*)(right->info))->id;
+					if( type == TYPE_CLASS)
+					{
+						struct ClassType *classInfo = ((struct Type*)(right->info))->classInfo;
+						if(classInfo->elements != NULL && classInfo->elements[0])
+						{	
+							((struct Variable *)(left->info))->type = right;											
+							checkClassNew( right, left->name);
+							setChanged();
+						}
+					}else
+					{
+						((struct Variable *)(left->info))->type = right;												
+						setChanged();	
+					}	
+				
+				}
 			}
-		}	
-		else
-		{
-			//Variable is in symbolTable, set its type, right might be NULL
-			if(right != NULL)
-			{
-				((struct Variable *)(left->info))->type = right;												
-				setChanged();
-			}
-		}	
+		}
 		showSymTable();
 		printf("--------> En assignment with not known type end %s \n", left->name);
 		//Generar codigo o no xD
@@ -419,6 +453,32 @@ int checkClassDefinition( struct Symbol *classSymbol, const char* const varName,
 	return (pos + 1);	
 }
 
+int createClassVar( const char* const name, const char* const varName, struct Symbol *type)
+{
+	char classVarName[50] = "";
+	strcat(classVarName, name);
+	strcat(classVarName, varName);
+	printf(" name %s varName %s classVar %s\n", name, varName, classVarName);
+	struct Symbol* classVar = createVariable( SYM_VARIABLE, classVarName );
+	insertVariable( classVar, type );					
+}
+
+int checkClassNew(struct Symbol *classSymbol, const char* const varName)
+{
+	int i = 0;
+	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+	struct Symbol * type = NULL;
+	if(classInfo->elements != NULL && classInfo->elements[0]){
+		for(i = 0; i < classInfo->nElements; i++)
+		{
+			type = ((struct Variable*)(classInfo->elements[i]->info))->type;
+			createClassVar(varName, classInfo->elements[i]->name, type);
+		}
+		i = 1;
+	}	
+	return i;
+}
+
 void setMethodReturnType(struct Symbol *method, struct Symbol *type)
 {
 	if(method != NULL)
@@ -469,10 +529,21 @@ struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arr
 	return returnInfo;
 }
 
+struct SymbolInfo* checkClassAtribute( const char* const name )
+{
+	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
+	
+	info->symbol = NULL;
+	info->info = SYM_CLASS_VARIABLE;
+	info->name = name;
+	return info;
+}
+
 struct SymbolInfo* nullSymbolInfo()
 {
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
 	info->symbol = NULL;
 	info->info = 0;
+	info->name = NULL;
 	
 }

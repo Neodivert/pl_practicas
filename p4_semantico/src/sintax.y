@@ -232,6 +232,7 @@ class_definition :
 			{
 				if( $5 != 0 ){
 					classInfo->nElements = $5;
+					setChanged();
 				}else{
 					yyerror("Type error: Classess must have at least one class variable");
 				}				
@@ -451,7 +452,7 @@ left_side :
 /*Aqui se comprueba si la variable es de tipo struct y efectivamente
 tiene el campo identif, o es de tipo vector y expresion es de tipo integer*/
 atribute :
-	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2); $$ = nullSymbolInfo();}
+	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2); $$ = checkClassAtribute($2);}
 	| '[' expression ']' { $$ = checkIsInteger($2); }
 	| { $$ = nullSymbolInfo();}
 	;	
@@ -466,8 +467,11 @@ right_side :
 	| string {$$ = searchType( TYPE_STRING );}
 	//We save arraySize because otherwise it could be overwritten by literal
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
-	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);
-						$$ = searchType( TYPE_INTEGER );}
+	| ID_CONSTANT NEW 
+		{
+			printf("--------> En assignation right side con %s new \n", $1);
+			$$ = searchTopLevel( SYM_TYPE, $1);	
+		}
 	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
 	;
 			
@@ -601,7 +605,7 @@ int main(int argc, char** argv) {
 		yyin=fopen(argv[1],"r");
 		resetFlex();
 		yyparse();
-		i++;
+		i++;		
 		printf("\n\nIteracion %d\n\n", i);
 	}
 	//Codigo para cuando se sale del bucle

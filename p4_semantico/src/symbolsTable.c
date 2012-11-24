@@ -778,6 +778,26 @@ struct Symbol* getVariableType(int symType, const char* const name, struct Symbo
 	return type;
 }
 
+struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeName)
+{
+	char varName[100] = "";
+	strcat(varName, variable->name);
+	if(variable->info){
+		strcat(varName, ((struct Variable*)(variable->info))->type->name);
+		strcat(varName, "@");
+		strcat(varName, atributeName);
+		printf("--->Buscando clase var con %s \n", varName);
+		struct Symbol *classVar = searchVariable( SYM_VARIABLE, varName);
+		if(classVar){
+			return classVar;
+		}else{
+			return NULL;
+		}	
+	}else{
+		return NULL;
+	}		
+}
+
 /*void setMain()
 {
 	mainMethodNext = symTable;	

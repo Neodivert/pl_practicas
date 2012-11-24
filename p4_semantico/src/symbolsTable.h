@@ -81,6 +81,7 @@ struct SymbolInfo
 {
 	struct Symbol *symbol;
 	int info;
+	const char const *name;
 };
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -169,6 +170,8 @@ const char getChange();
 struct Symbol* getArrayType(struct Symbol* variable);  
 
 struct Symbol* getVariableType(int symType, const char* const name, struct SymbolInfo* symbolInfo);
+
+struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeName);
 
 //void setMain();
 

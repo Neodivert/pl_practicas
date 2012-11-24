@@ -71,7 +71,12 @@ struct SymbolInfo* checkIsInteger(Symbol* s);
 Symbol* checkArray(Symbol* type, int n);
 
 
+
 /*                               3. Methods                                   */
+
+int checkClassDefinition(struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos);
+
+void setMethodReturnType(struct Symbol *method, struct Symbol *type);
 
 // Return 0 if call argument with type "type" and position "argument" match the
 // corresponding argument in method definition (*). Otherwise return 1.
@@ -112,7 +117,7 @@ int isVariable(Symbol *s);
 
 struct SymbolInfo* nullSymbolInfo();
 
-
+struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo );
 
 // Check if a method call has the same number of arguments that the method
 // definition.

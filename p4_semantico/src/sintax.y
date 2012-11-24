@@ -15,7 +15,8 @@ extern unsigned int arraySize;
 
 void yyerror(char* mens);
 
-struct Symbol*currentMethod = NULL; 
+struct Symbol* currentMethod = NULL;
+struct Symbol* currentClass = NULL; 
 int nArguments = 0; 
 int firstParse = 1;
 
@@ -34,7 +35,6 @@ int firstParse = 1;
 %type <symbol> term
 %type <symbol> factor
 %type <symbol> literal
-%type <symbol> array_content
 %type <symbol> right_side
 %type <symbol> simple_method_call
 %type <symbol> method_call_argument
@@ -43,10 +43,12 @@ int firstParse = 1;
 %type <symbol> method_code
 %type <symbolInfo> atribute
 %type <symbolInfo> left_side
+%type <symbolInfo> array_content
 %type <integer> arguments_definition
 %type <integer> more_arguments_definition
 %type <integer> arguments
 %type <integer> more_arguments
+%type <integer> class_content
 %type <string> relational_operator
 
 // Tokens
@@ -110,14 +112,11 @@ code :
 	| assignment
 	;
 
-// Method definition.
-// Semantic actions: 
-// checkMethodDefinition search for a method IDENTIF in symbols' table and 
+// Method definition - Semantic actions:
+// checkMethodDefinition search for a method IDENTIF in symbols' table and
 // create it if didn't exist. This function return an struct MethodInfo with
-// two fields:
-//	- scope : pointer to method's info.
-//  - result : integer which indicate if method was already in symbols' table 
-//    (1) or not (0)
+// a pointer to method's info (scope) and an integer (result) which indicates
+// if method was already in symbols table (1) or not (0).
 method_definition : 
 	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
 		{	if($<methodInfo>3->result == 0){
@@ -126,8 +125,8 @@ method_definition :
 				setNArguments( $4 ); 
 			}
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchMethod($2), $6);			
-			free($<methodInfo>3);
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $6);			
+			free($<methodInfo>3);		
 		}
 	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } separator method_code END separator
 		{
@@ -137,7 +136,7 @@ method_definition :
 				setNArguments( 0 ); 
 			}
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchMethod($2), $5);			
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);			
 			free($<methodInfo>3);			
 		}
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
@@ -159,14 +158,17 @@ method_code :
 	| if_construction method_code {$$ = NULL;} 
 	;
 
-// checkArgumentDefinition insert argument's symbol with name $2 in symbols' 
+// checkArgumentDefinition insert argument's symbol with name $2 in symbols
 // table (if it doesn't exist yet).
-// In $$ we return number of defined arguments (integer).
+// In $$ we return the number of defined arguments (integer).
 arguments_definition : 
 	'(' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition ')' { $$ = 1 + $4; }
 	| '(' ')' {$$ = 0;}
 	;
 
+// checkArgumentDefinition insert argument's symbol with name $2 in symbols
+// table (if it doesn't exist yet).
+// In $$ we return the number of defined arguments (integer).
 more_arguments_definition : 
 	',' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition { printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
 	| { $$ = 0; }
@@ -182,9 +184,43 @@ separator :
 Después de ID_CONSTANT: incluir registro de clase con nombre ID_CONSTANT.
 */ 
 class_definition : 
-	CLASS ID_CONSTANT separator
-		class_content
-	END separator {printf("--------> En class def el identif vale %s\n", $2);}
+	CLASS ID_CONSTANT separator 
+		{ 
+			int i = 0;
+			struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, $2 );
+			if( classSymbol == NULL ){
+				classSymbol = createClassSymbol($2);
+				insertSymbol( classSymbol );
+			}
+			
+			struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+			
+			//Elements were counted but no yet inserted			
+			if( classInfo->nElements != 0 && classInfo->elements == NULL)
+			{
+				currentClass = classSymbol;
+				classInfo->elements = malloc(sizeof( struct Symbol *) * classInfo->nElements );
+				for(i = 0; i < classInfo->nElements; i++){
+					classInfo->elements[i] = NULL;
+				}
+			}
+		}
+		
+		class_content END separator 
+		
+		{
+			currentClass = NULL;
+			struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, $2 );
+			struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+			if( classInfo->nElements == 0 )
+			{
+				if( $5 != 0 ){
+					classInfo->nElements = $5;
+				}else{
+					yyerror("Type error: Classess must have at least one class variable");
+				}				
+			}	
+		}
 	|	CLASS error	END separator {yyerror( "Sintax error on class definition" ); yyerrok;}
 	;
 
@@ -193,13 +229,13 @@ Después de cada ID_INSTANCE_VARIABLE: añadir campo de nombre
 ID_INSTANCE_VARIABLE en la clase actual.
 */
 class_content : 
-	ID_INSTANCE_VARIABLE '=' literal {printf("--------> En class content el identif vale %s\n", $1);}
-	| ID_INSTANCE_VARIABLE '=' literal separator class_content {printf("--------> En class content el identif vale %s\n", $1);}
-	| separator class_content	
-	|		
+	ID_INSTANCE_VARIABLE '=' literal  { $$ = checkClassDefinition(currentClass, $1, $3, 0); }
+	| ID_INSTANCE_VARIABLE '=' literal separator class_content { $$ = checkClassDefinition(currentClass, $1, $3, $5); }
+	| separator class_content {$$ = $2;}	
+	| {$$ = 0;}		
 	;
 
-// In $$ we return symple_method_call return type, or NULL, if we have a 
+// In $$ we return symple_method_call return type, or NULL, if we have a
 // block_call. See method_code.
 method_call : 
 	simple_method_call separator
@@ -209,25 +245,32 @@ method_call :
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
 simple_method_call:  
-        IDENTIF '(' { 
-                                        // Search for a method with name IDENTIF. If found, get its
-                                        // argument's number for futher comprobation.
-                                        currentMethod = searchMethod( $1 );
-                                        if( currentMethod != NULL ){
-                                                nArguments = ((struct Method *)(currentMethod->info))->nArguments;
-                                        }
-                                        $<symbol>$ = currentMethod;
-                                }                        
-                arguments ')' {
-                                          if(currentMethod != NULL && $4 == nArguments){
-                                                  // Correct call to a defined method. OK.
-                                          }else{
-                                                  yyerror("Type error: Wrong amount/undefined of arguments in method call");
-                                          } 
-                                          $$ = searchMethod( $1 );
-                                         }
-        | IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
-        ;
+	IDENTIF '(' { 	printf("--------> En method call el identif vale %s\n", $1);
+					currentMethod = searchTopLevel( SYM_METHOD, $1);
+					printf("--------> En method call despues\n");
+					if(currentMethod != NULL)
+					{
+						printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
+						nArguments = ((struct Method *)(currentMethod->info))->nArguments;
+						printf("+++++Tiene %d argumentos\n", nArguments);
+					}
+					$<symbol>$ = currentMethod;
+				}			
+		arguments ')' {
+					  printf("+++++SE leyeron bien %d argumentos\n", $4);
+					  if(currentMethod != NULL && $4 == nArguments)
+					  {
+					  	//Todo fue bien
+					  }
+					  else
+					  {
+					  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
+					  } 
+					  $$ = searchTopLevel( SYM_METHOD, $1);
+					 }  
+	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
+	;
+
 
 // arguments - semantic actions:
 // Check if every argument in method call match the corresponding argument in
@@ -296,9 +339,9 @@ more_arguments :
 			}	             
 	;
 
-// Block call.
-// Semantic actions: checkBlockDefinition search for block in symbols' table 
-// and create it if doens't exist.
+// Block call - Semantic actions:
+// checkBlockDefinition search for block in symbols' table and create it if
+// doens't exist.
 block_call : 
 	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
 		method_code
@@ -357,21 +400,18 @@ else_part :
 	|
 	;	
 
-/*
-Buscar texto left_side en tabla de símbolos. 
-Si la variable no existe y tiene un tipo definido, entonces se crea una nueva 
-entrada con nombre sacado de left_side y tipo sacado de right side.
-Si ya existe entonces se debe comprobar que los tipos de la variable
-y del right side coincidan.
-*/
+// checkAssignement search left_side in the symbols table.
+// If the variable doens't exist and it has a known type, then a new variable
+// symbol is created with name of right_side and type of left_side.
+// If the variable already existed, check if the types of variable and right
+// side match.
 assignment : 
 	left_side right_side separator { $$ = checkAssignement( $1, $2 ); }
 	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
 	;
 
-/*Aqui comprobamos si la variable existe o no
-si no existe se añade a menos que atribute no sea
-epsilon. En cuyo caso se debe dar un error.*/
+// Here we check if variable already exists. If not, it is added to symbols
+// table, unless attribute is epsilon. In that case, an error must be given.
 left_side :
 	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
 									$2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
@@ -384,19 +424,16 @@ left_side :
 								$$ = $2;}
 	;
 	
-/*Aqui se comprueba si la variable es de tipo struct y efectivamente
-tiene el campo identif, o es de tipo vector y expresion es de tipo integer*/
+// Here we check if variable is of type struct and it actually has the field
+// "identif", or if variable is of type array, and expression is of type
+// integer.
 atribute :
 	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2); $$ = nullSymbolInfo();}
 	| '[' expression ']' { $$ = checkIsInteger($2); }
 	| { $$ = nullSymbolInfo();}
 	;	
 
-/*Si es un array new, nueva variable de tipo array, aunque no sabemos de que tipo es el contenido
-del array, si es id_constant new hay que comprobar si la clase esta definida y ya sabemos que es una
-nueva variable de esa clase. Con [ content ] sabemos que es de tipo array y ademas el tipo de los
-datos del array.
-En resumen hay que devolver el tipo: integer, boolean, clase, etc*/	
+// right_side returns its type (integer, boolean, array, class, etc).	
 right_side :
 	expression
 	| string {$$ = searchType( TYPE_STRING );}
@@ -404,20 +441,18 @@ right_side :
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
 	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);
 						$$ = searchType( TYPE_INTEGER );}
-	| '[' array_content ']' {$$ = searchType( TYPE_INTEGER );}  
+	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
 	;
-			
+
+// Here we check if all the array content has the same type.		
 array_content :   
-	literal
-	| literal ',' array_content {
-						struct Symbol* type = checkSameType($1, $3);
-						if(type == NULL)
-						{
-							yyerror("All elements in array must be the same type");							
-						}
-						$$ = $1;}
+	literal { $$ = nullSymbolInfo(); $$->symbol = $1; $$->info = 1; }
+	| literal ',' array_content { $$ = checkArrayContent($1, $3); }
 	;		      
 
+
+// Return in a string the operators "name". This is useful for showing an error
+// message if an error is detected. 
 relational_operator :
 	EQUAL_EQUAL {strcpy($$, "==");}
 	| LESS_EQUAL {strcpy($$,"<=");}
@@ -427,12 +462,8 @@ relational_operator :
 	| NOT_EQUAL {strcpy($$,"!=");}
 	;
 
-/*En todas las expresiones si se usa el operador, OR
-en este caso, tenemos una expresion logica, pero si no
-entonces es del tipo que sea la expresion del nivel
-inferior, es decir las de nivel inferior son subconjuntos
-de las de nivel superior.
-*/
+// In all the expressions, if an operator is used, current expression becomes
+// its operator's type, otherwise type does not change
 expression :
 	logical_expression //{printf("--------> En expresion el tipo vale %s\n", $1->name);}
 	| logical_expression OR expression {$$ = checkLogicalExpression($1, $3, "or");}

@@ -1,9 +1,6 @@
-j = 4
-def foo(arg1, arg2)
-	x = 2 + arg1
-	y = 3.1 + arg2
-	z = 4
-end	  	
+d = Array.new(4,1)
+a = Array.new(6,1.2)
 
-foo(2,1) 
-a = z + 1.2
+c = [1.1 , 2.1, 1.1] 
+z = 1
+b = z + d[1] + p[2]

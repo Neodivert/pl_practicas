@@ -3,6 +3,7 @@ class Punto
 	@y = 0
 end
 
+a = [1]
 p = Punto.new
 p.x = 2
 p.y = p.x + 1

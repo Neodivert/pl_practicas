@@ -199,6 +199,18 @@ Symbol* createArraySymbol( Symbol* type, unsigned int n )
 	return symbol;
 }
 
+Symbol* createClassSymbol( const char* const name )
+{
+	struct Symbol* symbol = createSymbol(SYM_TYPE, name);
+	symbol->info = (void *)malloc(sizeof(struct Type));
+	struct Type* type = (struct Type*)symbol->info;
+	type->id = TYPE_CLASS;
+	type->classInfo = malloc(sizeof(struct ClassType));
+	type->classInfo->nElements = 0;
+	type->classInfo->elements = NULL;
+	return symbol;	
+}
+
 /*                       2. Specific symbols insertion                        */
 
 // Auxiliar function for inserting the two first symbols in first table:
@@ -297,8 +309,7 @@ void insertBlockDefinition( cstr name, cstr argName  )
 	// Fill and insert the block's symbol.
 	insertMethodBlockDefinition_( symbol );
 
-	// Insert the block's argument.
-	//TODO La variable no es de tipo desconocido, es del tipo del array	
+	// Insert the block's argument, it's type will be set later
 	insertVariable( createVariable(SYM_VARIABLE, argName), NULL );
 }
 
@@ -404,13 +415,13 @@ Symbol* searchVariable( int symType, cstr name )
 }
 
 // Search in symbols table for a method "name".
-Symbol* searchMethod(cstr name )
+struct Symbol* searchTopLevel(int symType, const char* const name )
 {
 	Symbol* s = mainMethodNext;
 	printf("mainMethodNext apunta a %s\n", s->name);
 	while( s != NULL ){
 		printf("symtype = %d, name = %s\n", s->symType, s->name);
-		if( s->symType == SYM_METHOD && (strcmp(s->name, name) == 0)  ){
+		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
 			return s;
 		}
 
@@ -473,7 +484,7 @@ void initializeSymTable()
 void showSymTable_( Symbol* sym, int level )
 {
 	int i = 0;
-
+	int j = 0;
 	while( (sym != NULL) ){
 		// Tabulate current symbol.
 		for( i=0; i<level; i++ ) printf( "\t" );
@@ -489,6 +500,9 @@ void showSymTable_( Symbol* sym, int level )
 			case SYM_VARIABLE:
 				printf( "VARIABLE" );
 			break;
+			case SYM_CLASS_VARIABLE:
+				printf( "CLASS_VAR" );
+			break;			
 			case SYM_CONSTANT:
 				printf( "CONSTANT" );
 			break;		
@@ -525,18 +539,29 @@ void showSymTable_( Symbol* sym, int level )
 		struct ArrayType* arrayInfo;
 		switch( sym->symType ){
 			case SYM_TYPE:
-				if(((struct Type*)(sym->info))->id == TYPE_ARRAY)
+				if( ((struct Type*)(sym->info))->id == TYPE_ARRAY )
 				{
 					struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
 					printf(" - type:[%s] - nElements:[%d]\n", arrayInfo->type->name,arrayInfo->nElements);
 				}else
 				{
+					if( ((struct Type*)(sym->info))->id == TYPE_CLASS )
+					{
+						struct ClassType *classInfo = ((struct Type*)(sym->info))->classInfo;
+						printf(" - elements:[%d]", classInfo->nElements);
+						for( j = 0; j < classInfo->nElements; j++){
+							if(classInfo->elements && classInfo->elements[j]){
+							 printf(" - element: [%d] [%s] ",j, classInfo->elements[j]->name);
+							} 
+						}						
+					}	
 					printf("\n");
 				}
 				break;
 			case SYM_VARIABLE:
 			case SYM_GLOBAL:
 			case SYM_CONSTANT:
+			case SYM_CLASS_VARIABLE:
 				aux = ((struct Variable*)(sym->info))->type;
 				printf( " - type: " );
 				if( aux ){
@@ -635,6 +660,14 @@ void freeSymbol(Symbol* symbol)
 		if ( type->id == TYPE_ARRAY )
 		{
 			free(type->arrayInfo);
+		}
+		else
+		{
+			if ( type->id == TYPE_CLASS )
+			{
+				free(type->classInfo->elements);
+				free(type->classInfo);
+			}
 		}	
 	}	
 	free(symbol->name);

@@ -7,16 +7,12 @@
 // message (using op) and return NULL.
 // (*) If s1 and/or s2 are NULL, this function simply returns NULL.
 Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
-	int t1, t2;
-	printf("art0\n");		
-	if( s1 == NULL || s2 == NULL /*|| s1->info == NULL || s2->info == NULL*/){
+	int t1, t2;		
+	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
 		return NULL; 
 	}	
-	printf("art 1 %d\n", s1->symType);
-	//printf("art 1 %s %s\n", s1->name, s2->name);
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
-	printf("art 2 \n");
 	if((t1 == t2) && (t1 <= TYPE_FLOAT)){
 		// s1 and s2 are both integer or float.
 		return s1;
@@ -35,7 +31,6 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 		yyerror((char *)message);
 		return NULL;
 	}
-	printf("art2\n");
 }	
 
 // Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
@@ -52,7 +47,6 @@ Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	t2 = ((struct Type *)(s2->info))->id;
 	//Factor and term are both integer or float.
 	if((t1 == t2) && (t1 <= TYPE_FLOAT)){
-	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
 		return searchType( TYPE_BOOLEAN );
 	}
 	else
@@ -85,9 +79,7 @@ Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
 	//Both operators are boolean.
-	if((t1 == TYPE_BOOLEAN) && (t2 == TYPE_BOOLEAN))
-	{
-	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
+	if((t1 == TYPE_BOOLEAN) && (t2 == TYPE_BOOLEAN)){
 		return s1;
 	}
 	else
@@ -166,9 +158,7 @@ Symbol* checkSameType(Symbol* s1, Symbol* s2){
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
 	//Both operators are boolean.
-	if(t1 == t2 )
-	{
-	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
+	if(t1 == t2 ){ 
 		return s1;
 	}else
 	{
@@ -246,16 +236,13 @@ Symbol* checkArray(Symbol* type, int n)
 		if(aux == NULL)
 		{
 			//Array type did not exist
-			printf("---->No existia lo inserto con tipo %s\n", type->name);
 			insertArray( type, n );
 			return arraySymbol;
 		}
 		else
 		{
 			//Array type did exist
-			printf("---->Existia me lo cargo \n");
 			freeSymbol(arraySymbol);
-			printf("---->Tiene tipo %s\n", ((struct Type*)(aux->info))->arrayInfo->type->name  );
 			return aux;
 		}	
 	}
@@ -415,15 +402,11 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 // Generate a name for block whose name is "name" and argument is "argName".
 char *createBlockName(cstr name, cstr argName)
 {
-	printf("create 0\n");
 	char *blockName = (char *)malloc(sizeof(char) * 50);
-	printf("create 1\n");
 	blockName[0] = '\0';
-	printf("create 2\n");
 	strcat(blockName, name);
 	strcat(blockName, "_");
 	strcat(blockName, argName);
-	printf("create 5\n");
 	return blockName;
 }
 	
@@ -500,7 +483,6 @@ int createClassVar( const char* const name, const char* const varName, struct Sy
 	char classVarName[50] = "";
 	strcat(classVarName, name);
 	strcat(classVarName, varName);
-	printf(" name %s varName %s classVar %s\n", name, varName, classVarName);
 	struct Symbol* classVar = createVariable( SYM_VARIABLE, classVarName );
 	insertVariable( classVar, type );					
 }
@@ -525,7 +507,6 @@ int checkClassNew(struct Symbol *classSymbol, const char* const varName)
 
 struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 {
-	printf("--------> En assignment \n");
 	struct Symbol* left = left_->symbol;
 	int info = left_->info;
 	struct Symbol* variableType = NULL;
@@ -533,7 +514,6 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	switch(isVariable(left))
 	{
 	case 0: //It is a variable with a known type
-		printf("--------> En assignment with known type %s \n", left->name);
 		if(info == TYPE_ARRAY){
 			variableType = getArrayType(left);
 		}else{
@@ -545,12 +525,9 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 		if(checkSameType( variableType, right) != NULL)
 		{
 			//Left side and right side are the same type
-			//Generar codigo
-			showSymTable();
 		}else
 		{
 			//If right = NULL right side was wrong/unknown and that was already warned
-			showSymTable();
 			if(right != NULL) 
 			{
 				char message[50];
@@ -559,13 +536,9 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 				strcat(message, left->name);
 				yyerror((char *)message);
 			}
-		}	
-		printf("--------> En assignment with known type end %s \n", left->name);									
+		}										
 		break;
 	case 1: //It is a variable without a known type
-		printf("--------> En assignment with not known type %s \n", left->name);
-		showSymTable();
-
 		if(info != SYM_CLASS_VARIABLE){
 			if(searchVariable(left->symType, left->name) == NULL)
 			{ 
@@ -619,12 +592,8 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 				}
 			}
 		}
-		showSymTable();
-		printf("--------> En assignment with not known type end %s \n", left->name);
-		//Generar codigo o no xD
 		break;
 	case 2: //It is not a variable
-		printf("--------> En assignment left side error\n");
 		yyerror("Left side of expression is invalid\n");
 		break;		
 	}

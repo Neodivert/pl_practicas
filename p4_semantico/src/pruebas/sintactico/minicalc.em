@@ -11,47 +11,47 @@
 
 
 
-def error
+def error()
   puts("expresión errónea\n")
-  exit
+  exit()
 end
 
 def numero() 
   resultado = 0
   if (c < '0' or c> '9' ) 
-    error
+    error()
   end
   
   resultado = 10 * resultado + c- '0'
-  c = getc
+  c = getc()
   while (c >= '0' and c<= '9') do 
     resultado = 10 * resultado + c - '0'
-    c = getc
+    c = getc()
   end 
-  resultado
+  resultado = resultado
 end
 
-def factor
+def factor()
   if (c=='(') 
-    c = getchar
-    resultado = expresion
+    c = getchar()
+    resultado = expresion()
     if (c==')') 
-      c = getchar
+      c = getchar()
     else 
-      error
+      error()
     end
-    resultado
+    resultado = resultado
   else 
-   numero
+   numero()
   end
 end
 
-def termino
-  resultado = factor
-  while (c=='*' or c=='/') 
+def termino()
+  resultado = factor()
+  while (c=='*' or c=='/') do
     op = c
-    c = getc
-    aux = factor
+    c = getc()
+    aux = factor()
     if op == '*' 
       resultado = resultado*aux
     else
@@ -60,23 +60,23 @@ def termino
         end
     end
   end
- resultado
+ resultado = resultado
 end
 
-def expresion
+def expresion()
   op= '+'
   if (c=='+' or c=='-') 
     op=c
-    c=getc
+    c=getc()
   end
-  resultado=termino
+  resultado=termino()
   if (op=='-') 
     resultado = -resultado
   end
-  while (c=='+' or c=='-') 
+  while (c=='+' or c=='-') do
     op=c
-    c=getc
-    aux=termino
+    c=getc()
+    aux=termino()
     if op == '+' 
       resultado = resultado+aux
     else
@@ -85,16 +85,16 @@ def expresion
         end
     end
   end
-  resultado
+  resultado = resultado
 end
 
-c = getc
-while (c!='\n') 
-  resultado = expresion
+c = getc()
+while (c!='\n') do
+  resultado = expresion()
   if (c=='\n') 
     puts resultado
-    c=getc
+    c=getc()
   else 
-    error
+    error()
   end   
 end

@@ -173,6 +173,8 @@ struct Symbol* getVariableType(int symType, const char* const name, struct Symbo
 
 struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeName);
 
+struct Symbol* getReturnType( struct Symbol* method);
+
 //void setMain();
 
 #endif

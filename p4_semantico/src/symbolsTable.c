@@ -821,6 +821,15 @@ struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeN
 	}		
 }
 
+struct Symbol* getReturnType( struct Symbol* method)
+{
+	if(method && method->info){
+		return ((struct Method *)(method->info))->returnType;
+	}else{
+		return NULL;
+	}
+}
+
 /*void setMain()
 {
 	mainMethodNext = symTable;	

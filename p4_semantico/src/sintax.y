@@ -123,7 +123,7 @@ No vamos a permitir sobrecarga de metodos.
 */
 method_definition : 
 	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
-		{printf("--------> En method def el identif vale %s\n", $2); 
+		{//printf("--------> En method def el identif vale %s\n", $2); 
 			if($<methodInfo>3->result == 0)
 			{
 				setNArguments( $4 ); 
@@ -133,7 +133,7 @@ method_definition :
 			free($<methodInfo>3);		
 		}
 	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } separator method_code END separator
-		{printf("--------> En method def el identif vale %s\n", $2); 
+		{//printf("--------> En method def el identif vale %s\n", $2); 
 			if($<methodInfo>3->result == 0)
 			{
 				setNArguments( 0 ); 
@@ -177,16 +177,16 @@ Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el metodo actual.
 */
 arguments_definition : 
-	'(' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition ')' {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
+	'(' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition ')' { $$ = 1 + $4; }
 	| '(' ')' {$$ = 0;}
-	//| IDENTIF more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $1);}
+	//| IDENTIF more_arguments_definition {//printf("--------> En argument def el identif vale %s\n", $1);}
 	;
 /*
 Despues de cada IDENTIF:
 Añadir argumento de nombre IDENTIF en el método actual.
 */
 more_arguments_definition : 
-	',' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition {printf("--------> En argument def el identif vale %s\n", $2); $$ = 1 + $4; }
+	',' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition { $$ = 1 + $4; }
 	| { $$ = 0; }
 	;
 
@@ -267,19 +267,19 @@ method_call :
 	;		
 
 simple_method_call:  
-	IDENTIF '(' { 	printf("--------> En method call el identif vale %s\n", $1);
+	IDENTIF '(' { 	//printf("--------> En method call el identif vale %s\n", $1);
 					currentMethod = searchTopLevel( SYM_METHOD, $1);
-					printf("--------> En method call despues\n");
-					if(currentMethod != NULL)
+					//printf("--------> En method call despues\n");
+					if(currentMethod && currentMethod->info )
 					{
-						printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
+						//printf("+++++Encontre el currentmethod %s\n", currentMethod->name);
 						nArguments = ((struct Method *)(currentMethod->info))->nArguments;
-						printf("+++++Tiene %d argumentos\n", nArguments);
+						//printf("+++++Tiene %d argumentos\n", nArguments);
 					}
 					$<symbol>$ = currentMethod;
 				}			
 		arguments ')' {
-					  printf("+++++SE leyeron bien %d argumentos\n", $4);
+					  //printf("+++++SE leyeron bien %d argumentos\n", $4);
 					  if(currentMethod != NULL && $4 == nArguments)
 					  {
 					  	//Todo fue bien
@@ -299,11 +299,11 @@ argumentos esperado
 arguments : 
 	 method_call_argument more_arguments 
 							{ 
-								//printf("+++++En arguments leidos bien %d\n", $2);
+								////printf("+++++En arguments leidos bien %d\n", $2);
 								if(currentMethod != NULL)
 								{
 								  	int result = checkMethodCall(currentMethod, $1, nArguments - $2);
-								  	//printf("+++++El check method call dio %d\n", result);
+								  	////printf("+++++El check method call dio %d\n", result);
 									if(result == 0)
 										$$ = $2 + 1;
 									else
@@ -341,7 +341,7 @@ more_arguments :
 								if(currentMethod != NULL)
 								{
 									int result = checkMethodCall(currentMethod, $2, nArguments);
-									//printf("+++++El check method call dio %d\n", result);
+									////printf("+++++El check method call dio %d\n", result);
 									if(result == 0)
 										$$ = 1;
 									else
@@ -350,11 +350,11 @@ more_arguments :
 							}
 	| ',' method_call_argument more_arguments 
 			{ 
-				//printf("+++++En more arguments leidos bien %d\n", $3);
+				////printf("+++++En more arguments leidos bien %d\n", $3);
 				if(currentMethod != NULL)
 				{
 				  	int result = checkMethodCall(currentMethod, $2, nArguments - $3);
-				  	//printf("+++++El check method call dio %d\n", result);
+				  	////printf("+++++El check method call dio %d\n", result);
 					if(result == 0)
 						$$ = $3 + 1;
 					else
@@ -371,7 +371,7 @@ Después del segundo IDENTIF: incluir como argumento.
 block_call : 
 	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
 		method_code
-	end_block separator {printf("--------> En block call el identif vale %s %s\n", $1, $5); goInScope($<method>7); }
+	end_block separator { goInScope($<method>7); }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
 	;			 
 
@@ -466,7 +466,7 @@ right_side :
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
 	| ID_CONSTANT NEW 
 		{
-			printf("--------> En assignation right side con %s new \n", $1);
+			//printf("--------> En assignation right side con %s new \n", $1);
 			$$ = searchTopLevel( SYM_TYPE, $1);	
 		}
 	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
@@ -493,7 +493,7 @@ inferior, es decir las de nivel inferior son subconjuntos
 de las de nivel superior.
 */
 expression :
-	logical_expression //{printf("--------> En expresion el tipo vale %s\n", $1->name);}
+	logical_expression //{//printf("--------> En expresion el tipo vale %s\n", $1->name);}
 	| logical_expression OR expression {$$ = checkLogicalExpression($1, $3, "or");}
 	;
 logical_expression :
@@ -513,7 +513,7 @@ aritmetic_expression :
 	;
 	
 term :
-	factor //{printf("De factor a term tipo = %s %d \n",$1->name, ((struct Type *)($1->info))->id);}
+	factor //{//printf("De factor a term tipo = %s %d \n",$1->name, ((struct Type *)($1->info))->id);}
 	| factor '*' term {$$ = checkAritmeticExpression($1, $3, "*");}
 	| factor '/' term {$$ = checkAritmeticExpression($1, $3, "/");}
 	;
@@ -528,25 +528,25 @@ En todos los casos hay que devolver el tipo del literal/variable
 //sino buscarlos en la tabla. Ademas los de variables habria que acceder a 
 //la tabla a ver si existe, etc.
 factor :
-	IDENTIF atribute {printf("--------> En factor el identif vale %s\n", $1);
+	IDENTIF atribute {//printf("--------> En factor el identif vale %s\n", $1);
 				$$ = getVariableType( SYM_VARIABLE, $1, $2 );
 				}
-    | ID_CONSTANT atribute {printf("--------> En factor el identif vale %s\n", $1);
+    | ID_CONSTANT atribute {//printf("--------> En factor el identif vale %s\n", $1);
 				$$ = getVariableType( SYM_CONSTANT, $1, $2 );	
 				}
-    | ID_GLOBAL_VARIABLE atribute {printf("--------> En factor el identif vale %s\n", $1);
+    | ID_GLOBAL_VARIABLE atribute {//printf("--------> En factor el identif vale %s\n", $1);
 				$$ = getVariableType( SYM_GLOBAL, $1, $2 );	
 				}
-	| literal {printf("--------> En factor el tipo del literal vale %s %d\n", $1->name, ((struct Type *)($1->info))->id); $$ = $1;}
+	| literal 
 	| NOT factor {$$ = checkNotExpression($2);}
-	| simple_method_call {$$ = ((struct Method*)($1->info))->returnType;}
+	| simple_method_call {$$ = getReturnType($1);}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
 	INTEGER		{ $$ = searchType( TYPE_INTEGER ); }
-	| FLOAT		{printf("Entrando float\n");showSymTable(); printf("Entrando 2 float\n"); $$ = searchType( TYPE_FLOAT ); printf("Saliendo de float\n");}
+	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); }
 	| CHAR		{$$ = searchType( TYPE_CHAR ); }
 	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}
 	;
@@ -563,9 +563,9 @@ substring :
 	;
 	
 substring_part :
-	SUBSTRING {printf("--------> En substring el identif vale %s\n", $1);}
+	SUBSTRING 
 	| string_struct
-	| SEC_SCAPE {printf("--------> En sec scape el identif vale %s\n", $1);}
+	| SEC_SCAPE 
 	;
 	
 // Hay que modificar el lexico, porque por ahora solo permite una variable	
@@ -607,10 +607,10 @@ int main(int argc, char** argv) {
 	}
 	//Codigo para cuando se sale del bucle
 	finishFlex();
-	printf("Termine\n");
+	//printf("Termine\n");
 	showSymTable();
 
-	printf("Termine2\n" );
+	//printf("Termine2\n" );
 
 	// Libera la tabla de simbolos
 	freeSymbTable();

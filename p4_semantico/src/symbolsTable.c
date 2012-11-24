@@ -24,6 +24,8 @@ static Symbol* mainMethod = NULL;
 
 static char change = 0;
 
+extern int compilationState;
+
 /*                                  Functions                                 */
 /******************************************************************************/
 
@@ -486,116 +488,118 @@ void showSymTable_( Symbol* sym, int level )
 {
 	int i = 0;
 	int j = 0;
-	while( (sym != NULL) ){
-		// Tabulate current symbol.
-		for( i=0; i<level; i++ ) printf( "\t" );
+	if(compilationState){
+		while( (sym != NULL) ){
+			// Tabulate current symbol.
+			for( i=0; i<level; i++ ) printf( "\t" );
 
-		// Show current symbol's name.
-		switch( sym->symType ){
-			case SYM_TYPE:
-				printf( "TYPE" );
-			break;
-			case SYM_GLOBAL:
-				printf( "GLOBAL" );	
-			break;			
-			case SYM_VARIABLE:
-				printf( "VARIABLE" );
-			break;
-			case SYM_CLASS_VARIABLE:
-				printf( "CLASS_VAR" );
-			break;			
-			case SYM_CONSTANT:
-				printf( "CONSTANT" );
-			break;		
-			case SYM_METHOD:
-				printf( "METHOD" );
-			break;
-			case SYM_BLOCK:
-				printf( "BLOCK" );
-			break;
-			default:
-				printf( "UKNOWN TYPE" );
-			break;
-		}
-
-		printf( " - [%s]", sym->name );
-
-		// If DEBUG is defined, show previous and next symbol's name.
-		#ifdef DEBUG
-		if( sym->prev ){
-			printf( " - prev: [%s]", sym->prev->name );
-		}else{
-			printf( " - prev: [NULL]" );
-		}
-
-		if( sym->next ){
-			printf( " - next: [%s]", sym->next->name );
-		}else{
-			printf( " - next: [NULL]" );
-		}
-		#endif
-
-		// Show extra info according to the current symbol's type.
-		Symbol* aux;
-		struct ArrayType* arrayInfo;
-		switch( sym->symType ){
-			case SYM_TYPE:
-				if( ((struct Type*)(sym->info))->id == TYPE_ARRAY )
-				{
-					struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
-					printf(" - type:[%s] - nElements:[%d]\n", arrayInfo->type->name,arrayInfo->nElements);
-				}else
-				{
-					if( ((struct Type*)(sym->info))->id == TYPE_CLASS )
-					{
-						struct ClassType *classInfo = ((struct Type*)(sym->info))->classInfo;
-						printf(" - elements:[%d]", classInfo->nElements);
-						for( j = 0; j < classInfo->nElements; j++){
-							if(classInfo->elements && classInfo->elements[j]){
-							 printf(" - element: [%d] [%s] ",j, classInfo->elements[j]->name);
-							} 
-						}						
-					}	
-					printf("\n");
-				}
+			// Show current symbol's name.
+			switch( sym->symType ){
+				case SYM_TYPE:
+					printf( "TYPE" );
 				break;
-			case SYM_VARIABLE:
-			case SYM_GLOBAL:
-			case SYM_CONSTANT:
-			case SYM_CLASS_VARIABLE:
-				aux = ((struct Variable*)(sym->info))->type;
-				printf( " - type: " );
-				if( aux ){
-					printf( "[%s]\n", aux->name );
-				}else{
-					printf( "NULL\n" );
-				}
-			break;
-			case SYM_METHOD:
-				aux = ((struct Method*)(sym->info))->returnType;
-				if(aux == NULL){
-					printf( " return type: [NULL]");
-				}else{
-					printf( " return type: [%s]", aux->name);
-				}	
-			case SYM_BLOCK:
-				aux = ((struct Method*)(sym->info))->localSymbols;
+				case SYM_GLOBAL:
+					printf( "GLOBAL" );	
+				break;			
+				case SYM_VARIABLE:
+					printf( "VARIABLE" );
+				break;
+				case SYM_CLASS_VARIABLE:
+					printf( "CLASS_VAR" );
+				break;			
+				case SYM_CONSTANT:
+					printf( "CONSTANT" );
+				break;		
+				case SYM_METHOD:
+					printf( "METHOD" );
+				break;
+				case SYM_BLOCK:
+					printf( "BLOCK" );
+				break;
+				default:
+					printf( "UKNOWN TYPE" );
+				break;
+			}
 
-				printf( " - nArguments: [%i]", ((struct Method*)(sym->info))->nArguments );
-				if( aux ){
-					printf( " - hijo: [%s]\n", aux->name );
-					showSymTable_( aux, level+1 );
-				}else{
-					printf( " - hijo: [NULL]\n" );
-				}
-			break;
-			default:
-				printf( "\n" );
-			break;
+			printf( " - [%s]", sym->name );
+
+			// If DEBUG is defined, show previous and next symbol's name.
+			#ifdef DEBUG
+			if( sym->prev ){
+				printf( " - prev: [%s]", sym->prev->name );
+			}else{
+				printf( " - prev: [NULL]" );
+			}
+
+			if( sym->next ){
+				printf( " - next: [%s]", sym->next->name );
+			}else{
+				printf( " - next: [NULL]" );
+			}
+			#endif
+
+			// Show extra info according to the current symbol's type.
+			Symbol* aux;
+			struct ArrayType* arrayInfo;
+			switch( sym->symType ){
+				case SYM_TYPE:
+					if( ((struct Type*)(sym->info))->id == TYPE_ARRAY )
+					{
+						struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
+						printf(" - type:[%s] - nElements:[%d]\n", arrayInfo->type->name,arrayInfo->nElements);
+					}else
+					{
+						if( ((struct Type*)(sym->info))->id == TYPE_CLASS )
+						{
+							struct ClassType *classInfo = ((struct Type*)(sym->info))->classInfo;
+							printf(" - elements:[%d]", classInfo->nElements);
+							for( j = 0; j < classInfo->nElements; j++){
+								if(classInfo->elements && classInfo->elements[j]){
+								 printf(" - element: [%d] [%s] ",j, classInfo->elements[j]->name);
+								} 
+							}						
+						}	
+						printf("\n");
+					}
+					break;
+				case SYM_VARIABLE:
+				case SYM_GLOBAL:
+				case SYM_CONSTANT:
+				case SYM_CLASS_VARIABLE:
+					aux = ((struct Variable*)(sym->info))->type;
+					printf( " - type: " );
+					if( aux ){
+						printf( "[%s]\n", aux->name );
+					}else{
+						printf( "NULL\n" );
+					}
+				break;
+				case SYM_METHOD:
+					aux = ((struct Method*)(sym->info))->returnType;
+					if(aux == NULL){
+						printf( " return type: [NULL]");
+					}else{
+						printf( " return type: [%s]", aux->name);
+					}	
+				case SYM_BLOCK:
+					aux = ((struct Method*)(sym->info))->localSymbols;
+
+					printf( " - nArguments: [%i]", ((struct Method*)(sym->info))->nArguments );
+					if( aux ){
+						printf( " - hijo: [%s]\n", aux->name );
+						showSymTable_( aux, level+1 );
+					}else{
+						printf( " - hijo: [NULL]\n" );
+					}
+				break;
+				default:
+					printf( "\n" );
+				break;
+			}
+
+			sym = sym->next;
 		}
-
-		sym = sym->next;
-	}
+	}	
 }
 
 // Show the value of globals variables rilated to symbols' table.

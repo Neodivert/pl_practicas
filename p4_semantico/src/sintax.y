@@ -9,6 +9,11 @@ extern int numlin; /* lexico le da valores */
 //extern int yylex();
 int yydebug=1; /* modo debug si -t */
 
+extern int compilationState; 
+//0 -> Creating and filling Symbol Table
+//1 -> Doing code analisis
+//2 -> Generating code
+
 // Lexical parser fill this value when it finds an integer. We use it when 
 // defining an array to get its size.
 extern unsigned int arraySize;
@@ -18,7 +23,6 @@ void yyerror(char* mens);
 struct Symbol* currentMethod = NULL;
 struct Symbol* currentClass = NULL; 
 int nArguments = 0; 
-int firstParse = 1;
 
 %}
 
@@ -480,13 +484,12 @@ string_struct :
   
 int main(int argc, char** argv) {
 
+	int i = 1;
+	compilationState = 0;
 	initializeSymTable();
 
 	if (argc>1) yyin=fopen(argv[1],"r");
-	yyparse();
-
-	firstParse = 0;
-	int i = 1;
+	yyparse();	
 
   	while(getChange() && i < 6)
   	{ 	
@@ -499,7 +502,16 @@ int main(int argc, char** argv) {
 		i++;		
 		printf("\n\nIteracion %d\n\n", i);
 	}
+	
+	compilationState = 1;
 
+	numlin = 1;
+	fclose (yyin);
+	yyin=fopen(argv[1],"r");
+	resetFlex();
+	yyparse();
+
+	
 	finishFlex();
 	showSymTable();
 	freeSymbTable();
@@ -507,7 +519,7 @@ int main(int argc, char** argv) {
 
 void yyerror(char* mens) {
 	//Syntax error alone gives no information, ignore it
-	if(strcmp(mens,"syntax error") != 0 ){ 
+	if(strcmp(mens,"syntax error") != 0 && compilationState == 1){ 
 		//We printf numlin - 1 because lexical analizer is ahead one or more lines 
 		printf("---------Error on line %i: %s\n",numlin - 1,mens);
 	}	

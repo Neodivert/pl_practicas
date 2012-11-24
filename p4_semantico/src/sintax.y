@@ -488,7 +488,7 @@ int main(int argc, char** argv) {
 	compilationState = 0;
 	initializeSymTable();
 
-	if (argc>1) yyin=fopen(argv[1],"r");
+	if (argc>1)yyin=fopen(argv[1],"r");
 	yyparse();	
 
   	while(getChange() && i < 6)
@@ -500,8 +500,9 @@ int main(int argc, char** argv) {
 		resetFlex();
 		yyparse();
 		i++;		
-		printf("\n\nIteracion %d\n\n", i);
 	}
+	
+	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
 	
 	compilationState = 1;
 
@@ -510,10 +511,11 @@ int main(int argc, char** argv) {
 	yyin=fopen(argv[1],"r");
 	resetFlex();
 	yyparse();
-
 	
 	finishFlex();
-	showSymTable();
+	
+	if (argc>2)showSymTable();
+	
 	freeSymbTable();
 }
 

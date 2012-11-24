@@ -68,7 +68,7 @@ $({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); r
 '\\'				{error("Characters_should_follow_the_pattern_'c'_or_'\\c'");}
 '\\t'|'\\\\'|'\\n'|'\\\'' 	{return CHAR;}
 '.'            		{return CHAR;}
-'..+'				{error("Characters_should_follow_the_pattern_'c'_or_'\\c'");}
+ '.[^']*'                            {error("Characters_should_follow_the_pattern_'c'_or_'\\c'");}
 
 ({letter}|_)({letdig}|_)*                      {strcpy(yylval.string, yytext); return IDENTIF;}
 

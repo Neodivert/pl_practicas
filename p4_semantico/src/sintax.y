@@ -438,21 +438,18 @@ assignment :
 si no existe se añade a menos que atribute no sea
 epsilon. En cuyo caso se debe dar un error.*/
 left_side :
-	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-									$2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
+	ID_GLOBAL_VARIABLE atribute '=' {$2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
 									$$ = $2;}
-	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-							$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
+	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
-	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-								$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
+	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
 								$$ = $2;}
 	;
 	
 /*Aqui se comprueba si la variable es de tipo struct y efectivamente
 tiene el campo identif, o es de tipo vector y expresion es de tipo integer*/
 atribute :
-	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2); $$ = checkClassAtribute($2);}
+	'.' IDENTIF { $$ = checkClassAtribute($2);}
 	| '[' expression ']' { $$ = checkIsInteger($2); }
 	| { $$ = nullSymbolInfo();}
 	;	

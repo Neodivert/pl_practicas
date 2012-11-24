@@ -216,6 +216,7 @@ class_definition :
 			{
 				if( $5 != 0 ){
 					classInfo->nElements = $5;
+					setChanged();
 				}else{
 					yyerror("Type error: Classess must have at least one class variable");
 				}				
@@ -413,14 +414,11 @@ assignment :
 // Here we check if variable already exists. If not, it is added to symbols
 // table, unless attribute is epsilon. In that case, an error must be given.
 left_side :
-	ID_GLOBAL_VARIABLE atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-									$2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
+	ID_GLOBAL_VARIABLE atribute '=' {$2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
 									$$ = $2;}
-	| IDENTIF atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-							$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
+	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
-	| ID_CONSTANT atribute '=' {printf("--------> En assignation left side el identif vale %s\n", $1);
-								$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
+	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
 								$$ = $2;}
 	;
 	
@@ -428,7 +426,7 @@ left_side :
 // "identif", or if variable is of type array, and expression is of type
 // integer.
 atribute :
-	'.' IDENTIF {printf("--------> En assignation left side atribute el identif vale %s\n", $2); $$ = nullSymbolInfo();}
+	'.' IDENTIF { $$ = checkClassAtribute($2);}
 	| '[' expression ']' { $$ = checkIsInteger($2); }
 	| { $$ = nullSymbolInfo();}
 	;	
@@ -439,8 +437,11 @@ right_side :
 	| string {$$ = searchType( TYPE_STRING );}
 	//We save arraySize because otherwise it could be overwritten by literal
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
-	| ID_CONSTANT NEW {printf("--------> En assignation right side el identif vale %s\n", $1);
-						$$ = searchType( TYPE_INTEGER );}
+	| ID_CONSTANT NEW 
+		{
+			printf("--------> En assignation right side con %s new \n", $1);
+			$$ = searchTopLevel( SYM_TYPE, $1);	
+		}
 	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
 	;
 
@@ -574,7 +575,7 @@ int main(int argc, char** argv) {
 		yyin=fopen(argv[1],"r");
 		resetFlex();
 		yyparse();
-		i++;
+		i++;		
 		printf("\n\nIteracion %d\n\n", i);
 	}
 	//Codigo para cuando se sale del bucle

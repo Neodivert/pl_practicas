@@ -774,7 +774,24 @@ Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo)
 		if( symbolInfo->info == TYPE_ARRAY ){
 			type = getArrayType(variable);
 		}else{
-			type = ((struct Variable*)(variable->info))->type;
+			if( symbolInfo->info == SYM_CLASS_VARIABLE ){
+				printf("getVariatipe %s %s\n",variable->name, symbolInfo->name);
+				type = getClassVar(variable, symbolInfo->name);
+				printf("getVariatipe1\n");
+				if(type){
+					if( type->info ){
+						printf("getVariatipe 2\n");
+						type = ((struct Variable*)(type->info))->type;
+					}else{
+						printf("getVariatipe3\n");
+						type = NULL;
+					}	
+				}else{
+					type = NULL;
+				}		
+			}else{
+				type = ((struct Variable*)(variable->info))->type;
+			}	
 		}	
 	}	
 	free(symbolInfo);
@@ -785,6 +802,32 @@ Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo)
 		insertVariable(variable, NULL);
 	}
 	return type;
+}
+
+struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeName)
+{
+	char varName[100] = "";
+	strcat(varName, variable->name);
+	if(variable->info){
+		printf("11\n");
+		if( ((struct Variable*)(variable->info))->type ){
+			strcat(varName, ((struct Variable*)(variable->info))->type->name);
+			printf("22\n");
+			strcat(varName, "@");
+			strcat(varName, atributeName);
+			printf("--->Buscando clase var con %s \n", varName);
+			struct Symbol *classVar = searchVariable( SYM_VARIABLE, varName);
+			if(classVar){
+				return classVar;
+			}else{
+				return NULL;
+			}	
+		}else{
+			return NULL;
+		}		
+	}else{
+		return NULL;
+	}		
 }
 
 /*void setMain()

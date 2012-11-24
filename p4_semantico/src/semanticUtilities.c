@@ -229,6 +229,114 @@ Symbol* checkArray(Symbol* type, int n)
 	}		
 }
 
+struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
+{
+	printf("--------> En assignment \n");
+	struct Symbol* left = left_->symbol;
+	int info = left_->info;
+	struct Symbol* variableType = NULL;
+	
+	switch(isVariable(left))
+	{
+	case 0: //It is a variable with a known type
+		printf("--------> En assignment with known type %s \n", left->name);
+		if(info == TYPE_ARRAY){
+			variableType = getArrayType(left);
+		}else{
+			if( info == SYM_CLASS_VARIABLE){
+				left = getClassVar( left , left_->name);
+			}
+			variableType = ((struct Variable*)(left->info))->type;
+		}		
+		if(checkSameType( variableType, right) != NULL)
+		{
+			//Left side and right side are the same type
+			//Generar codigo
+			showSymTable();
+		}else
+		{
+			//If right = NULL right side was wrong/unknown and that was already warned
+			showSymTable();
+			if(right != NULL) 
+			{
+				char message[50];
+				message[0] = '\0';
+				strcat(message, "Type error: with variable ");
+				strcat(message, left->name);
+				yyerror((char *)message);
+			}
+		}	
+		printf("--------> En assignment with known type end %s \n", left->name);									
+		break;
+	case 1: //It is a variable without a known type
+		printf("--------> En assignment with not known type %s \n", left->name);
+		showSymTable();
+
+		if(info != SYM_CLASS_VARIABLE){
+			if(searchVariable(left->symType, left->name) == NULL)
+			{ 
+				//Variable is not in symbolTable, insert it
+				if(right != NULL)
+				{
+					int type = ((struct Type*)(right->info))->id;
+					if( type == TYPE_CLASS)
+					{
+						struct ClassType *classInfo = ((struct Type*)(right->info))->classInfo;
+						if(classInfo->elements != NULL && classInfo->elements[0])
+						{
+							if( ! searchVariable(SYM_VARIABLE, left->name)){
+								insertVariable( left, right );
+							}	
+							checkClassNew( left, right->name);
+						}else{
+							insertVariable( left, NULL );
+						}
+					}else{
+						insertVariable( left, right );
+					}			
+				}
+				else
+				{
+					insertVariable( left, NULL );
+				}
+			}	
+			else
+			{
+				//Variable is in symbolTable, set its type, right might be NULL
+				if(right != NULL)
+				{
+			
+					int type = ((struct Type*)(right->info))->id;
+					if( type == TYPE_CLASS)
+					{
+						struct ClassType *classInfo = ((struct Type*)(right->info))->classInfo;
+						if(classInfo->elements != NULL && classInfo->elements[0])
+						{	
+							((struct Variable *)(left->info))->type = right;											
+							checkClassNew( right, left->name);
+							setChanged();
+						}
+					}else
+					{
+						((struct Variable *)(left->info))->type = right;												
+						setChanged();	
+					}	
+				
+				}
+			}
+		}
+		showSymTable();
+		printf("--------> En assignment with not known type end %s \n", left->name);
+		//Generar codigo o no xD
+		break;
+	case 2: //It is not a variable
+		printf("--------> En assignment left side error\n");
+		yyerror("Left side of expression is invalid\n");
+		break;		
+	}
+	free(left_);
+	return left;	
+}
 
 /*                              3. Methods                                    */
 
@@ -299,26 +407,6 @@ struct MethodInfo *checkMethodDefinition(const char* const name)
 		info->result = 1;	
 	}	
 	return info;	
-}
-
-// Set method's return type to type of symbols "type"
-void setMethodReturnType(struct Symbol *method, struct Symbol *type)
-{
-	if(method != NULL)
-	{
-		struct Method *methodInfo = ((struct Method*)(method->info));
-		if(type != NULL)
-		{
-			if(type->symType == SYM_METHOD)
-			{
-				methodInfo->returnType = ((struct Method*)(type->info))->returnType;
-			}
-			else //It's a variable
-			{
-				methodInfo->returnType = ((struct Variable*)(type->info))->type;
-			}
-		}	
-	}	
 }
 
 // Return 0 if variable name exists in symbols' table. If not, create and insert
@@ -399,82 +487,7 @@ char *createBlockName(cstr name, cstr argName)
 	printf("create 5\n");
 	return blockName;
 }
-
-
-Symbol* checkAssignement(struct SymbolInfo* left_, Symbol *right)
-{
-	printf("--------> En assignment \n");
-	Symbol* left = left_->symbol;
-	int info = left_->info;
-	Symbol* variableType = NULL;
 	
-	switch(isVariable(left))
-	{
-	case 0: //It is a variable with a known type
-		printf("--------> En assignment with known type %s \n", left->name);
-		if(info == TYPE_ARRAY){
-			variableType = getArrayType(left);
-		}else{
-			variableType = ((struct Variable*)(left->info))->type;
-		}		
-		if(checkSameType( variableType, right) != NULL)
-		{
-			//Left side and right side are the same type
-			//Generar codigo
-			showSymTable();
-		}else
-		{
-			//If right = NULL right side was wrong/unknown and that was already warned
-			showSymTable();
-			if(right != NULL) 
-			{
-				char message[50];
-				message[0] = '\0';
-				strcat(message, "Type error: with variable ");
-				strcat(message, left->name);
-				yyerror((char *)message);
-			}
-		}	
-		printf("--------> En assignment with known type end %s \n", left->name);									
-		break;
-	case 1: //It is a variable without a known type
-		printf("--------> En assignment with not known type %s \n", left->name);
-		showSymTable();
-		if(searchVariable(left->symType, left->name) == NULL)
-		{ 
-			//Variable is not in symbolTable, insert it
-			if(right != NULL)
-			{
-				printf("Insertando con tipo %s\n", right->name);
-				insertVariable( left, right );
-			}
-			else
-			{
-				printf("Insertando con tipo NULL\n");
-				insertVariable( left, NULL );
-			}
-		}	
-		else
-		{
-			//Variable is in symbolTable, set its type, right might be NULL
-			if(right != NULL)
-			{
-				((struct Variable *)(left->info))->type = right;												
-				setChanged();
-			}
-		}	
-		showSymTable();
-		printf("--------> En assignment with not known type end %s \n", left->name);
-		//Generar codigo o no xD
-		break;
-	case 2: //It is not a variable
-		printf("--------> En assignment left side error\n");
-		yyerror("Left side of expression is invalid\n");
-		break;		
-	}
-	free(left_);
-	return left;	
-}	
 
 int isVariable(Symbol *s)
 {
@@ -518,6 +531,50 @@ int checkClassDefinition( struct Symbol *classSymbol, const char* const varName,
 	return (pos + 1);	
 }
 
+int createClassVar( const char* const name, const char* const varName, struct Symbol *type)
+{
+	char classVarName[50] = "";
+	strcat(classVarName, name);
+	strcat(classVarName, varName);
+	printf(" name %s varName %s classVar %s\n", name, varName, classVarName);
+	struct Symbol* classVar = createVariable( SYM_VARIABLE, classVarName );
+	insertVariable( classVar, type );					
+}
+
+int checkClassNew(struct Symbol *classSymbol, const char* const varName)
+{
+	int i = 0;
+	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+	struct Symbol * type = NULL;
+	if(classInfo->elements != NULL && classInfo->elements[0]){
+		for(i = 0; i < classInfo->nElements; i++)
+		{
+			type = ((struct Variable*)(classInfo->elements[i]->info))->type;
+			createClassVar(varName, classInfo->elements[i]->name, type);
+		}
+		i = 1;
+	}	
+	return i;
+}
+
+void setMethodReturnType(struct Symbol *method, struct Symbol *type)
+{
+	if(method != NULL)
+	{
+		struct Method *methodInfo = ((struct Method*)(method->info));
+		if(type != NULL)
+		{
+			if(type->symType == SYM_METHOD)
+			{
+				methodInfo->returnType = ((struct Method*)(type->info))->returnType;
+			}
+			else //It's a variable
+			{
+				methodInfo->returnType = ((struct Variable*)(type->info))->type;
+			}
+		}	
+	}	
+}
 
 
 
@@ -538,10 +595,21 @@ struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arr
 	return returnInfo;
 }
 
+struct SymbolInfo* checkClassAtribute( const char* const name )
+{
+	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
+	
+	info->symbol = NULL;
+	info->info = SYM_CLASS_VARIABLE;
+	info->name = name;
+	return info;
+}
+
 struct SymbolInfo* nullSymbolInfo()
 {
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
 	info->symbol = NULL;
 	info->info = 0;
+	info->name = NULL;
 	
 }

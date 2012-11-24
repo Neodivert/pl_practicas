@@ -76,8 +76,6 @@ Symbol* checkArray(Symbol* type, int n);
 
 int checkClassDefinition(struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos);
 
-void setMethodReturnType(struct Symbol *method, struct Symbol *type);
-
 // Return 0 if call argument with type "type" and position "argument" match the
 // corresponding argument in method definition (*). Otherwise return 1.
 // (*) If the argument does not have a known type we asume the method call is 
@@ -91,7 +89,7 @@ int checkMethodCall(Symbol *method, Symbol *type, int argument);
 struct MethodInfo *checkMethodDefinition(cstr name);
 
 // Set method's return type to type of symbols "type"
-void setMethodReturnType(Symbol *method, Symbol *type);
+void setMethodReturnType( struct Symbol *method, struct Symbol *type);
 
 // Return 0 if variable name exists in symbols' table. If not, create and insert
 // it, and then return 1.
@@ -108,6 +106,8 @@ struct Method * checkBlockDefinition(cstr name, cstr argName);
 // Generate a name for block whose name is "name" and argument is "argName".
 char *createBlockName(cstr name, cstr argName);
 
+int checkClassNew(struct Symbol *classSymbol, const char* const varName);
+
 
 /*                                5. Others                                   */
 
@@ -118,6 +118,8 @@ int isVariable(Symbol *s);
 struct SymbolInfo* nullSymbolInfo();
 
 struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo );
+
+struct SymbolInfo* checkClassAtribute( const char* const name );
 
 // Check if a method call has the same number of arguments that the method
 // definition.

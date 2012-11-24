@@ -500,9 +500,6 @@ Si no existen entonces la variable no esta definida y es un error
 Si es con not entonces factor tiene que ser de tipo logico
 En todos los casos hay que devolver el tipo del literal/variable
 */
-//TODO En realidad aqui y en literal no se deberian de crear los simbolos
-//sino buscarlos en la tabla. Ademas los de variables habria que acceder a 
-//la tabla a ver si existe, etc.
 factor :
 	IDENTIF atribute {//printf("--------> En factor el identif vale %s\n", $1);
 			printf("--------------------------------------Estoy en la linea %d\n", numlin);

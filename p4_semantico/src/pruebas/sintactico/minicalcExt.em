@@ -22,10 +22,10 @@ def numero()
     error()
   end
   
- # resultado = 10 * resultado + c- '0'
+  resultado = 10 * resultado + c- '0'
   c = getc()
   while (c >= '0' and c<= '9') do 
-   # resultado = 10 * resultado + c - '0'
+    resultado = 10 * resultado + c - '0'
     c = getc()
   end 
   resultado = resultado

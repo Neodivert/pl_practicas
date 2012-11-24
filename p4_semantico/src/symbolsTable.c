@@ -455,29 +455,29 @@ Symbol* searchNArgument(Symbol *method, int n)
 // float, etc).
 void initializeSymTable()
 {
-	printf("Antes de main\n");
-	//insertMethodDefinition( "_main" );
 	insertMainPuts();
-	printf("Despues de main\n");
-	showSymTable();
-	//lastDefinedMethod = (struct Method *)(symTable->info);
-	printf("El last method apunta a %s \n",symTable->name); 
-	//insertMethodDefinition( "puts" );
-	//printf("Despues de puts\n");
-	//En set main establecemos el primer hijo de main.
-	//setMain();
-	//TODO Insertar codigo para que funcione el puts
-	//y ademas ponerle un argumento string
+	showSymTable(); 
+			
 	struct Method* scope = getCurrentScope();
-	//printf("----->Scope apunta a %s\n", scope->lastSymbol->name);
-	insertMethodDefinition( "getc" );
-	//TODO Insertar codigo para que funcione el getc
-	goInScope(scope);		
+		insertMethodDefinition( "getc" );			
+	goInScope(scope);
+			
 	insertTypeDefinition( "integer", TYPE_INTEGER );
 	insertTypeDefinition( "float", TYPE_FLOAT );
 	insertTypeDefinition( "string", TYPE_STRING );
 	insertTypeDefinition( "char", TYPE_CHAR );
 	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
+	
+	struct Symbol* method = searchTopLevel(SYM_METHOD, "puts");
+	scope = getCurrentScope();
+	
+	goInScope( ((struct Method*)(method->info)) );	
+		struct Symbol* var = createVariable(SYM_VARIABLE, "input_str");
+		insertVariable(var, searchType(TYPE_STRING));	
+	goInScope(scope);
+		
+	method = searchTopLevel(SYM_METHOD, "getc");
+	((struct Method*)(method->info))->returnType = searchType(TYPE_CHAR);		
 }
 
 // Auxiliar function. Show symbols from sym, and tabulate them according to 
@@ -741,7 +741,12 @@ struct Method* getCurrentScope()
 // Set method as the last defined method.
 void goInScope(struct Method *method)
 {	
-	nextSymIsFirstChild = 0;	
+	
+	if(method->localSymbols){
+		nextSymIsFirstChild = 0;
+	}else{
+		nextSymIsFirstChild = 1;
+	}		
 	lastDefinedMethod = method;	
 }
 	

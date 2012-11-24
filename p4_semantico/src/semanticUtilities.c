@@ -8,11 +8,15 @@
 // (*) If s1 and/or s2 are NULL, this function simply returns NULL.
 Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
-	if( s1 == NULL || s2 == NULL)
+	printf("art0\n");		
+	if( s1 == NULL || s2 == NULL /*|| s1->info == NULL || s2->info == NULL*/){
 		return NULL; 
+	}	
+	printf("art 1 %d\n", s1->symType);
+	//printf("art 1 %s %s\n", s1->name, s2->name);
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
-	
+	printf("art 2 \n");
 	if((t1 == t2) && (t1 <= TYPE_FLOAT)){
 		// s1 and s2 are both integer or float.
 		return s1;
@@ -31,6 +35,7 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 		yyerror((char *)message);
 		return NULL;
 	}
+	printf("art2\n");
 }	
 
 // Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
@@ -40,8 +45,9 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 // (*) If s1 and/or s2 are NULL, this function simply returns NULL.
 Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
-	if( s1 == NULL || s2 == NULL)
-		return NULL; 	
+	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
+		return NULL; 
+	}		
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
 	//Factor and term are both integer or float.
@@ -73,8 +79,9 @@ Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 // (*) If s1 and/or s2 are NULL, this function simply returns NULL.
 Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
-	if( s1 == NULL || s2 == NULL)
-		return NULL; 	
+	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
+		return NULL; 
+	} 	
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
 	//Both operators are boolean.
@@ -106,8 +113,9 @@ Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 // (*) If s is NULL, this function simply returns NULL.
 Symbol* checkNotExpression(Symbol* s){
 	int t;
-	if( s == NULL )
-		return NULL; 	
+	if( s == NULL || s->info == NULL ){
+		return NULL; 
+	}	
 	t = ((struct Type *)(s->info))->id;
 	//Operand is boolean.
 	if(t == TYPE_BOOLEAN)
@@ -131,8 +139,9 @@ Symbol* checkNotExpression(Symbol* s){
 // (*) If s is NULL, this function simply returns NULL.
 Symbol* checkIsBoolean(Symbol* s){
 	int t;
-	if( s == NULL )
-		return NULL; 	
+	if( s == NULL || s->info == NULL ){
+		return NULL; 
+	} 	
 	t = ((struct Type *)(s->info))->id;
 	//Operand is boolean.
 	if(t == TYPE_BOOLEAN)
@@ -150,8 +159,9 @@ Symbol* checkIsBoolean(Symbol* s){
 // Otherwise return NULL.
 Symbol* checkSameType(Symbol* s1, Symbol* s2){
 	int t1, t2;
-	if( s1 == NULL || s2 == NULL)
-		return NULL;
+	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
+		return NULL; 
+	}
 		 
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
@@ -180,8 +190,9 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 {
 	int t;
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
-	if( s == NULL )
+	if( s == NULL || s->info == NULL){
 		return NULL; 	
+	}	
 	t = ((struct Type *)(s->info))->id;
 	//Operand is boolean.
 	if(t == TYPE_INTEGER)
@@ -206,24 +217,27 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 // function also create it and insert it).
 Symbol* checkArray(Symbol* type, int n)
 {
-	if( n >= 0)
+	if( n >= 0 && type != NULL )
 	{
 		Symbol *arraySymbol = createArraySymbol( type, n );
 		Symbol *aux = searchVariable(SYM_TYPE, arraySymbol->name);
 		if(aux == NULL)
 		{
 			//Array type did not exist
+			printf("---->No existia lo inserto con tipo %s\n", type->name);
 			insertArray( type, n );
 			return arraySymbol;
 		}
 		else
 		{
 			//Array type did exist
+			printf("---->Existia me lo cargo \n");
 			freeSymbol(arraySymbol);
+			printf("---->Tiene tipo %s\n", ((struct Type*)(aux->info))->arrayInfo->type->name  );
 			return aux;
 		}	
 	}
-	else //Array size is invalid
+	else //Array size is invalid or type is not correct
 	{
 		return NULL;
 	}		
@@ -276,7 +290,7 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 			if(searchVariable(left->symType, left->name) == NULL)
 			{ 
 				//Variable is not in symbolTable, insert it
-				if(right != NULL)
+				if(right != NULL && right->info != NULL)
 				{
 					int type = ((struct Type*)(right->info))->id;
 					if( type == TYPE_CLASS)
@@ -303,7 +317,7 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 			else
 			{
 				//Variable is in symbolTable, set its type, right might be NULL
-				if(right != NULL)
+				if(right != NULL && right->info != NULL)
 				{
 			
 					int type = ((struct Type*)(right->info))->id;
@@ -334,7 +348,7 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 		yyerror("Left side of expression is invalid\n");
 		break;		
 	}
-	free(left_);
+	freeSymbolInfo(left_);
 	return left;	
 }
 
@@ -348,11 +362,9 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 {
 	struct Symbol* argumentSym = searchNArgument(method, argument);
 	struct Symbol* argumentType;
-	//printf("+++++ En check method call %d\n", argument);
 	//Find the argument symbol
-	if(argumentSym != NULL)
+	if(argumentSym != NULL && argumentSym->info != NULL)
 	{
-		//printf("+++++ Encontre el argument %s\n", aux->name);
 		argumentType = ((struct Variable*)(argumentSym->info))->type;
 		//Argument has a known type
 		if(argumentType != NULL)
@@ -360,7 +372,6 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 			argumentType = checkSameType(type, argumentType); 
 			if(argumentType != NULL)
 			{
-				//printf("+++++ Son del mismo tipo\n");
 				return 0;
 			}
 			else
@@ -370,7 +381,7 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 			}
 		}
 		else
-		{//printf("+++++ No se sabe el tipo del argumento\n");
+		{
 			//If the argument does not have a known type we asume
 			//the method call is right and assign the type of the
 			//value to the argument.
@@ -381,8 +392,6 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 	}
 	else
 	{
-	//yyerror("Type error: Wrong amount of arguments in method call");
-	//printf("+++++No se encontro el argumento\n");
 	return 1;
 	}
 }	  
@@ -518,7 +527,7 @@ int isVariable(Symbol *s)
 
 int checkClassDefinition( struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos)
 {
-	if( classSymbol)
+	if( classSymbol )
 	{
 		char classVarName[50] = "";
 		strcat(classVarName, classSymbol->name);
@@ -559,19 +568,16 @@ int checkClassNew(struct Symbol *classSymbol, const char* const varName)
 
 void setMethodReturnType(struct Symbol *method, struct Symbol *type)
 {
-	if(method != NULL)
+	if(method != NULL && method->info != NULL && type != NULL && type->info != NULL )
 	{
 		struct Method *methodInfo = ((struct Method*)(method->info));
-		if(type != NULL)
+		if( type->symType == SYM_METHOD )
 		{
-			if(type->symType == SYM_METHOD)
-			{
-				methodInfo->returnType = ((struct Method*)(type->info))->returnType;
-			}
-			else //It's a variable
-			{
-				methodInfo->returnType = ((struct Variable*)(type->info))->type;
-			}
+			methodInfo->returnType = ((struct Method*)(type->info))->returnType;
+		}
+		else //It's a variable
+		{
+			methodInfo->returnType = ((struct Variable*)(type->info))->type;
 		}	
 	}	
 }
@@ -581,17 +587,22 @@ void setMethodReturnType(struct Symbol *method, struct Symbol *type)
 struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo )
 {
 	struct SymbolInfo* returnInfo = arrayInfo;
-	if( arrayInfo->info != -1 ){
+	if( arrayInfo != NULL && arrayInfo->info != -1 && arrayInfo->symbol != NULL){
 		struct Symbol* otherType = checkSameType( type, arrayInfo->symbol);
 		if(otherType == NULL)
 		{
 			yyerror("All elements in array must be the same type");	
+			returnInfo->symbol = NULL;
 			returnInfo->info = -1;						
 		}else
 		{ 
+			returnInfo->symbol = arrayInfo->symbol;
 			returnInfo->info = returnInfo->info + 1;
-		}		
-	}	
+		}				
+	}else{	
+		returnInfo->symbol = NULL;
+		returnInfo->info = -1;		
+	}
 	return returnInfo;
 }
 
@@ -601,7 +612,8 @@ struct SymbolInfo* checkClassAtribute( const char* const name )
 	
 	info->symbol = NULL;
 	info->info = SYM_CLASS_VARIABLE;
-	info->name = name;
+	info->name = (char *)malloc( strlen( name )+1 );
+	strcpy( info->name, name );
 	return info;
 }
 

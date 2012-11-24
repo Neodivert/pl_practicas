@@ -131,9 +131,10 @@ Symbol* createVariable( int symType, cstr name)
 Symbol* getCreateVariable( int symType, cstr name, struct SymbolInfo* atribute)
 {
 	Symbol* variableStruct = searchVariable( symType, name );
-	if(atribute == NULL)
+	if(atribute == NULL )
 	{
 		yyerror("Atribute should never be null");
+		return NULL;
 	}
 	
 	if( atribute->info == 0)//No atribute info 
@@ -702,6 +703,11 @@ void freeSymbTable(){
 	freeSymbTable_( sym );
 }
 
+void freeSymbolInfo(struct SymbolInfo* symbol)
+{
+	free(symbol->name);
+	free(symbol);	
+}
 
 /*                          5. Global "change" management                     */
 
@@ -752,27 +758,47 @@ void setNArguments( int n ){
 // NULL.
 Symbol* getArrayType(Symbol* variable)
 {
-	Symbol* array = ((struct Variable*)(variable->info))->type;
-	if( array == NULL){
-		return NULL;
-	}else{
-		if(array->info == NULL){
+	if( variable != NULL && variable->info != NULL)
+	{
+		Symbol* array = ((struct Variable*)(variable->info))->type;
+		if(array != NULL && array->info != NULL ){	
+			if( ((struct Type*)(array->info))->id  == TYPE_ARRAY ){			
+				return ((struct Type*)(array->info))->arrayInfo->type;	
+			}else{
+				return NULL;
+			}		
+		}else{
 			return NULL;
-		}else{	
-			return ((struct Type*)(array->info))->arrayInfo->type;
-		}
+		}	
+	}else{
+		return NULL;
 	}		
 }
 
 Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo)
 {
 	Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 
+	
+	printf("En get create inicio\n");
+	if(variable)
+		printf("   No es aki %s\n", variable->name);
+	else
+		printf("    Era null\n");
+			
 	Symbol* type = NULL;
 	if(variable == NULL){
 		type = NULL;
 	}else{
 		if( symbolInfo->info == TYPE_ARRAY ){
 			type = getArrayType(variable);
+
+
+						/*printf("++++++++++++++++En get create type array\n");
+						if(type)
+							printf("++++++++++++No es aki %s\n", type->name);
+						else
+							printf("++++++++++++++Era null\n");	*/
+			
 		}else{
 			if( symbolInfo->info == SYM_CLASS_VARIABLE ){
 				printf("getVariatipe %s %s\n",variable->name, symbolInfo->name);
@@ -788,19 +814,42 @@ Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo)
 					}	
 				}else{
 					type = NULL;
-				}		
+				}	
+				
+							printf("++++++++++++++++En get create sym \n");
+						if(type)
+							printf("++++++++++++No es aki %s\n", type->name);
+						else
+							printf("++++++++++++++Era null\n");				
+				
+					
 			}else{
-				type = ((struct Variable*)(variable->info))->type;
+				if(variable->info != NULL){
+					printf("   Var econtrada %d\n", variable->symType);
+					type = ((struct Variable*)(variable->info))->type;
+					
+						printf("++++++++++++++++En get create type normal\n");
+						if(type)
+							printf("++++++++++++No es aki %s\n", type->name);
+						else
+							printf("++++++++++++++Era null\n");	
+					
+					if(type != NULL)
+						printf("   El tipo es %s\n",type->name);
+				}else{
+					type = NULL;
+				}		
 			}	
 		}	
 	}	
-	free(symbolInfo);
+	freeSymbolInfo(symbolInfo);
 	//This is only call on right side of expression so insert variable here
 	//if it does not exits on symbol table
 	printf("Antes de insertar\n");
 	if(searchVariable(symType, name) == NULL){
 		insertVariable(variable, NULL);
 	}
+	
 	return type;
 }
 
@@ -809,10 +858,8 @@ struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeN
 	char varName[100] = "";
 	strcat(varName, variable->name);
 	if(variable->info){
-		printf("11\n");
 		if( ((struct Variable*)(variable->info))->type ){
 			strcat(varName, ((struct Variable*)(variable->info))->type->name);
-			printf("22\n");
 			strcat(varName, "@");
 			strcat(varName, atributeName);
 			printf("--->Buscando clase var con %s \n", varName);

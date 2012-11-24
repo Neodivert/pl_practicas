@@ -125,7 +125,7 @@ method_definition :
 				setNArguments( $4 ); 
 			}
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $6);			
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $6);		
 			free($<methodInfo>3);		
 		}
 	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } separator method_code END separator
@@ -136,7 +136,7 @@ method_definition :
 				setNArguments( 0 ); 
 			}
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);			
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);		
 			free($<methodInfo>3);			
 		}
 	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
@@ -279,6 +279,7 @@ simple_method_call:
 arguments : 
 	 method_call_argument more_arguments 
 							{ 
+							printf("llege0\n");
 								if(currentMethod != NULL){
 								  	int result = checkMethodCall(currentMethod, $1, nArguments - $2);
 									if(result == 0)
@@ -290,6 +291,7 @@ arguments :
 								}		
 							}		 
 	| method_call_argument  {
+		printf("llege\n");
 								if(currentMethod != NULL){	
 								 	int result = checkMethodCall(currentMethod, $1, nArguments);
 									if(result == 0){
@@ -300,6 +302,7 @@ arguments :
 										$$ = -1;
 									}
 								}
+								
 						   }
 	| {$$ = 0;}
 	;
@@ -502,7 +505,8 @@ En todos los casos hay que devolver el tipo del literal/variable
 //la tabla a ver si existe, etc.
 factor :
 	IDENTIF atribute {//printf("--------> En factor el identif vale %s\n", $1);
-				$$ = getVariableType( SYM_VARIABLE, $1, $2 );
+			printf("--------------------------------------Estoy en la linea %d\n", numlin);
+				$$ = getVariableType( SYM_VARIABLE, $1, $2 );	
 				}
     | ID_CONSTANT atribute {//printf("--------> En factor el identif vale %s\n", $1);
 				$$ = getVariableType( SYM_CONSTANT, $1, $2 );	

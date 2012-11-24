@@ -85,7 +85,7 @@ struct SymbolInfo
 {
 	Symbol *symbol;
 	int info;
-	const char const *name;
+	char *name;
 };
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -164,6 +164,9 @@ void freeSymbol(Symbol*);
 
 // Free the entire symbol tree.
 void freeSymbTable();
+
+// Free the memory allocated for a symbol info.
+void freeSymbolInfo(struct SymbolInfo* symbol);
 
 
 /*                         5. Global "change" management                      */

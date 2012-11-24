@@ -1,19 +1,24 @@
 #include "semanticUtilities.h"
 
-struct Symbol* checkAritmeticExpression(struct Symbol* s1, struct Symbol* s2, char *op){
+/*                                  1. Expressions                            */
+
+// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. If 
+// previous condition is satisfied, return s1. Otherwise, generate an error 
+// message (using op) and return NULL.
+// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL)
 		return NULL; 
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
-	//Factor and term are both integer or float.
-	if((t1 == t2) && (t1 <= TYPE_FLOAT))
-	{
-	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
+	
+	if((t1 == t2) && (t1 <= TYPE_FLOAT)){
+		// s1 and s2 are both integer or float.
 		return s1;
-	}
-	else
-	{
+	}else{
+		// s1 and s2 are either, unlike types, or both different than integer and float
+		// Generate error message
 		char message[50];
 		message[0] = '\0';
 		strcat(message, "Type error: ");
@@ -28,7 +33,12 @@ struct Symbol* checkAritmeticExpression(struct Symbol* s1, struct Symbol* s2, ch
 	}
 }	
 
-struct Symbol* checkRelationalExpression(struct Symbol* s1, struct Symbol* s2, char *op){
+// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
+// previous condition is satisfied, search for boolean type in symbols' table
+// and return it. Otherwise, generate an error message (using op) and return 
+// NULL. 
+// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL)
 		return NULL; 	
@@ -57,7 +67,11 @@ struct Symbol* checkRelationalExpression(struct Symbol* s1, struct Symbol* s2, c
 	
 }
 
-struct Symbol* checkLogicalExpression(struct Symbol* s1, struct Symbol* s2, char *op){
+// Check if subexpressions types s1 and s2 are both BOOLEAN. If previous 
+// condition is satisfied, return s1. Otherwise, generate an error message 
+// (using op) and return NULL.
+// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL)
 		return NULL; 	
@@ -85,7 +99,12 @@ struct Symbol* checkLogicalExpression(struct Symbol* s1, struct Symbol* s2, char
 	}
 }
 
-struct Symbol* checkNotExpression(struct Symbol* s){
+// Check if expression's type s is TYPE_BOOLEAN (so its allowed in a NOT 
+// expression).
+// If s is of type TYPE_BOOLEAN, return NULL. Otherwise show an error message
+// and return NULL.
+// (*) If s is NULL, this function simply returns NULL.
+Symbol* checkNotExpression(Symbol* s){
 	int t;
 	if( s == NULL )
 		return NULL; 	
@@ -107,7 +126,10 @@ struct Symbol* checkNotExpression(struct Symbol* s){
 	} 
 }
 
-struct Symbol* checkIsBoolean(struct Symbol* s){
+// Check if type s is an boolean. If previous  condition is satisfied, return s.
+// Otherwise, generate an error message and return NULL (*).
+// (*) If s is NULL, this function simply returns NULL.
+Symbol* checkIsBoolean(Symbol* s){
 	int t;
 	if( s == NULL )
 		return NULL; 	
@@ -124,7 +146,37 @@ struct Symbol* checkIsBoolean(struct Symbol* s){
 	}	
 }
 
-struct SymbolInfo* checkIsInteger(struct Symbol* s)
+// Return s1 if both subexpressions types s1 and s2 are of the same time.
+// Otherwise return NULL.
+Symbol* checkSameType(Symbol* s1, Symbol* s2){
+	int t1, t2;
+	if( s1 == NULL || s2 == NULL)
+		return NULL;
+		 
+	t1 = ((struct Type *)(s1->info))->id;
+	t2 = ((struct Type *)(s2->info))->id;
+	//Both operators are boolean.
+	if(t1 == t2 )
+	{
+	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
+		return s1;
+	}else
+	{
+		return NULL;
+	}
+}	
+
+
+/*                               2. Arrays                                    */
+
+// Check if expression's type s is integer.
+// Return a SymbolInfo struct, whose "info" field is set to TYPE_ARRAY, and 
+// "symbol" field...
+// - points to s if s is a TYPE_INTEGER.
+// - points to null otherwise (in this case, an error message is shown too.
+// This function is used to verify that an array index is actually a integer.
+// (*) If s is NULL, this function simply returns NULL.
+struct SymbolInfo* checkIsInteger(Symbol* s)
 {
 	int t;
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
@@ -147,31 +199,17 @@ struct SymbolInfo* checkIsInteger(struct Symbol* s)
 	}	
 }	
 
-
-struct Symbol* checkSameType(struct Symbol* s1, struct Symbol* s2){
-	int t1, t2;
-	if( s1 == NULL || s2 == NULL)
-		return NULL;
-		 
-	t1 = ((struct Type *)(s1->info))->id;
-	t2 = ((struct Type *)(s2->info))->id;
-	//Both operators are boolean.
-	if(t1 == t2 )
-	{
-	//printf("Son del mismo tipo float o integer %d %d\n", t1, t2); 
-		return s1;
-	}else
-	{
-		return NULL;
-	}
-}	
-
-struct Symbol* checkArray(Symbol* type, int n)
+// Search in the symbols' table for an type array of size "n" and whose elements
+// are of type "type".
+// If n < 0 (invalid size), return NULL.
+// Otherwise, return the array's type symbol (if array wasn't found, this 
+// function also create it and insert it).
+Symbol* checkArray(Symbol* type, int n)
 {
 	if( n >= 0)
 	{
-		struct Symbol *arraySymbol = createArraySymbol( type, n );
-		struct Symbol *aux = searchVariable(SYM_TYPE, arraySymbol->name);
+		Symbol *arraySymbol = createArraySymbol( type, n );
+		Symbol *aux = searchVariable(SYM_TYPE, arraySymbol->name);
 		if(aux == NULL)
 		{
 			//Array type did not exist
@@ -185,7 +223,7 @@ struct Symbol* checkArray(Symbol* type, int n)
 			return aux;
 		}	
 	}
-	else //Array size is valid
+	else //Array size is invalid
 	{
 		return NULL;
 	}		
@@ -298,28 +336,14 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	}
 	free(left_);
 	return left;	
-}	
-
-int isVariable(struct Symbol *s)
-{
-	if(s == NULL || s->info == NULL)
-	{
-		return 2;
-	}
-	if(s->symType == SYM_VARIABLE || s->symType == SYM_GLOBAL
-		|| s->symType == SYM_CONSTANT)
-	{	
-		if(((struct Variable *)(s->info))->type == NULL)
-			return 1;
-		else
-			return 0;		
-	}
-	else
-	{
-		return 2;
-	}
 }
 
+/*                              3. Methods                                    */
+
+// Return 0 if call argument with type "type" and position "argument" match the
+// corresponding argument in method definition (*). Otherwise return 1.
+// (*) If the argument does not have a known type we asume the method call is 
+// right and assign the type of the value to the argument.
 int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 {
 	struct Symbol* argumentSym = searchNArgument(method, argument);
@@ -363,6 +387,10 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 	}
 }	  
 
+// Check if method name is already in symbols' table (if not, insert it).
+// Return a MethodInfo struct, whose "scope" field points to the current 
+// scope's symbol and "result" is an integer which indicates if method was
+// already defined (1) or not (0).
 struct MethodInfo *checkMethodDefinition(const char* const name)
 {
 	struct MethodInfo *info = malloc( sizeof( struct MethodInfo ) );
@@ -381,6 +409,26 @@ struct MethodInfo *checkMethodDefinition(const char* const name)
 	return info;	
 }
 
+// Return 0 if variable name exists in symbols' table. If not, create and insert
+// it, and then return 1.
+int checkArgumentDefinition(const char* const name)
+{
+	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
+	if( variableStruct == NULL)
+	{
+		variableStruct = createVariable(SYM_VARIABLE, name);
+		insertVariable(variableStruct, NULL);
+		return 0;
+	}
+	else
+		return 1;	
+}
+
+/*                             4. Blocks                                      */
+
+// Search in symbols' table for block "name" with argument "argName". If it is
+// not in the symbols' table, create it and insert it. This functions returns
+// and Method* that points to the current scope's (the block) symbol.
 struct Method *checkBlockDefinition(const char* const name, const char* const argName )
 {
 	struct Method* scope = getCurrentScope();
@@ -425,18 +473,48 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 	return scope;	
 }
 
-int checkArgumentDefinition(const char* const name)
+// Generate a name for block whose name is "name" and argument is "argName".
+char *createBlockName(cstr name, cstr argName)
 {
-	struct Symbol* variableStruct = searchVariable( SYM_VARIABLE, name );
-	if( variableStruct == NULL)
+	printf("create 0\n");
+	char *blockName = (char *)malloc(sizeof(char) * 50);
+	printf("create 1\n");
+	blockName[0] = '\0';
+	printf("create 2\n");
+	strcat(blockName, name);
+	strcat(blockName, "_");
+	strcat(blockName, argName);
+	printf("create 5\n");
+	return blockName;
+}
+	
+
+int isVariable(Symbol *s)
+{
+	if(s == NULL || s->info == NULL)
 	{
-		variableStruct = createVariable(SYM_VARIABLE, name);
-		insertVariable(variableStruct, NULL);
-		return 0;
+		return 2;
+	}
+	if(s->symType == SYM_VARIABLE || s->symType == SYM_GLOBAL
+		|| s->symType == SYM_CONSTANT)
+	{	
+		if(((struct Variable *)(s->info))->type == NULL)
+			return 1;
+		else
+			return 0;		
 	}
 	else
-		return 1;	
+	{
+		return 2;
+	}
 }
+
+	  
+
+
+
+
+
 
 int checkClassDefinition( struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos)
 {
@@ -498,19 +576,7 @@ void setMethodReturnType(struct Symbol *method, struct Symbol *type)
 	}	
 }
 
-char *createBlockName(const char* const name, const char* const argName)
-{
-	printf("create 0\n");
-	char *blockName = (char *)malloc(sizeof(char) * 50);
-	printf("create 1\n");
-	blockName[0] = '\0';
-	printf("create 2\n");
-	strcat(blockName, name);
-	strcat(blockName, "_");
-	strcat(blockName, argName);
-	printf("create 5\n");
-	return blockName;
-}
+
 
 struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo )
 {

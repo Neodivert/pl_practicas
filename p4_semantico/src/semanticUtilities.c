@@ -307,6 +307,7 @@ struct MethodInfo *checkMethodDefinition(const char* const name)
 	info->scope = getCurrentScope();
 	if(method == NULL)
 	{
+		if(compilationState==1) yyerror("Error, Method not defined");
 		insertMethodDefinition(name);
 		info->result = 0;
 	}

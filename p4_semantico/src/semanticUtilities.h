@@ -6,6 +6,7 @@
 #include <string.h>
 #include "symbolsTable.h"
 #include "sintax.tab.h"
+extern int compilationState; 
 
 struct MethodInfo
 {

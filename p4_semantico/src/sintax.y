@@ -20,7 +20,7 @@ extern unsigned int arraySize;
 
 void yyerror(char* mens);
 
-struct Symbol* currentMethod = NULL;
+struct Symbol* currentMethodCall = NULL;
 struct Symbol* currentClass = NULL; 
 int nArguments = 0; 
 
@@ -122,13 +122,14 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
+	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); printf("Inseratndo %s en la tabla\n", $2); } arguments_definition separator method_code END separator 
 		{	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
 				setNArguments( $4 ); 
-			}
-			goInScope($<methodInfo>3->scope);
+			} 
+			goInScope( $<methodInfo>3->scope );
+			
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $6);		
 			free($<methodInfo>3);		
 		}
@@ -143,7 +144,8 @@ method_definition :
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);		
 			free($<methodInfo>3);			
 		}
-	| DEF error END separator {yyerror( "Sintax error on method definition" ); yyerrok;}
+	| DEF error END separator { yyerror( "Sintax error on method definition" ); yyerrok;}
+	| DEF IDENTIF error END separator { goInScope(getParentScope()); yyerror( "Sintax error on method definition" ); yyerrok;}
 	;
 
 // An Emerald's method return a value if its last sentence is an assignment or
@@ -208,14 +210,14 @@ method_call :
 // method.
 simple_method_call:  
 	IDENTIF '(' { 	
-					currentMethod = searchTopLevel( SYM_METHOD, $1);					
-					if(currentMethod && currentMethod->info ){						
-						nArguments = ((struct Method *)(currentMethod->info))->nArguments;						
+					currentMethodCall = searchTopLevel( SYM_METHOD, $1);					
+					if(currentMethodCall && currentMethodCall->info ){						
+						nArguments = ((struct Method *)(currentMethodCall->info))->nArguments;						
 					}
-					$<symbol>$ = currentMethod;
+					$<symbol>$ = currentMethodCall;
 				}			
 		arguments ')' {
-						  if( !(currentMethod != NULL && $4 == nArguments) ){
+						  if( !(currentMethodCall != NULL && $4 == nArguments) ){
 						  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
 						  } 
 						  $$ = searchTopLevel( SYM_METHOD, $1);
@@ -230,8 +232,8 @@ simple_method_call:
 arguments : 
 	 method_call_argument more_arguments 
 							{ 
-								if(currentMethod != NULL){
-								  	int result = checkMethodCall(currentMethod, $1, nArguments - $2);
+								if(currentMethodCall != NULL){
+								  	int result = checkMethodCall(currentMethodCall, $1, nArguments - $2);
 									if(result == 0){
 										// Valid argument, count it.
 										$$ = $2 + 1;
@@ -242,8 +244,8 @@ arguments :
 								}		
 							}		 
 	| method_call_argument  {
-								if(currentMethod != NULL){	
-								 	int result = checkMethodCall(currentMethod, $1, nArguments);
+								if(currentMethodCall != NULL){	
+								 	int result = checkMethodCall(currentMethodCall, $1, nArguments);
 									if(result == 0){
 										// Valid argument, count it.
 										$$ = nArguments;
@@ -268,9 +270,9 @@ method_call_argument :
 // method definition.
 more_arguments : 
 	',' method_call_argument {  
-								if(currentMethod != NULL)
+								if(currentMethodCall != NULL)
 								{
-									int result = checkMethodCall(currentMethod, $2, nArguments);
+									int result = checkMethodCall(currentMethodCall, $2, nArguments);
 									if(result == 0){
 										$$ = 1;
 									}else{
@@ -280,9 +282,9 @@ more_arguments :
 							}
 	| ',' method_call_argument more_arguments 
 			{ 
-				if(currentMethod != NULL)
+				if(currentMethodCall != NULL)
 				{
-				  	int result = checkMethodCall(currentMethod, $2, nArguments - $3);
+				  	int result = checkMethodCall(currentMethodCall, $2, nArguments - $3);
 					if(result == 0){
 						$$ = $3 + 1;
 					}else{
@@ -300,6 +302,7 @@ block_call :
 		method_code
 	end_block separator { goInScope($<method>7); }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
+	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on each definition" ); yyerrok;}
 	;			 
 
 start_block:
@@ -366,7 +369,7 @@ assignment :
 // Here we check if variable already exists. If not, it is added to symbols
 // table, unless attribute is epsilon. In that case, an error must be given.
 left_side :
-	ID_GLOBAL_VARIABLE atribute '=' {$2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
+	ID_GLOBAL_VARIABLE atribute '=' { $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
 									$$ = $2;}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
@@ -487,6 +490,7 @@ int main(int argc, char** argv) {
 	int i = 1;
 	compilationState = 0;
 	initializeSymTable();
+	struct Method *mainScope = getCurrentScope();
 
 	if (argc>1)yyin=fopen(argv[1],"r");
 	yyparse();	
@@ -497,6 +501,12 @@ int main(int argc, char** argv) {
   		numlin = 1;
 		fclose (yyin);
 		yyin=fopen(argv[1],"r");
+		
+		//In case something went really wrong
+		//set current scope to main again
+		//This should not be necessary
+		goInScope(mainScope);
+		
 		yyparse();
 		i++;		
 	}
@@ -508,6 +518,9 @@ int main(int argc, char** argv) {
 	numlin = 1;
 	fclose (yyin);
 	yyin=fopen(argv[1],"r");
+	
+	goInScope(mainScope);
+	
 	yyparse();
 	
 	if (argc>2)showSymTable();

@@ -189,6 +189,9 @@ struct Method* getCurrentScope();
 // Set method as the last defined method
 void goInScope( struct Method *method );
 
+// Get the parent scope in actual position
+struct Method *getParentScope();
+
 // Set the last defined method's number of arguments to n. 
 void setNArguments( int n );
 

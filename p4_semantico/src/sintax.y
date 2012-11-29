@@ -497,7 +497,6 @@ int main(int argc, char** argv) {
   		numlin = 1;
 		fclose (yyin);
 		yyin=fopen(argv[1],"r");
-		resetFlex();
 		yyparse();
 		i++;		
 	}
@@ -509,10 +508,7 @@ int main(int argc, char** argv) {
 	numlin = 1;
 	fclose (yyin);
 	yyin=fopen(argv[1],"r");
-	resetFlex();
 	yyparse();
-	
-	finishFlex();
 	
 	if (argc>2)showSymTable();
 	

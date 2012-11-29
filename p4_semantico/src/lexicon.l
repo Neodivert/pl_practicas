@@ -92,14 +92,3 @@ void error(char* mens) {
 	}	
 }
 
-void resetFlex()
-{
-	yypush_buffer_state(yy_create_buffer( yyin, YY_BUF_SIZE ));
-}		
-
-void finishFlex()
-{
-	yyterminate();
-}
-
-

@@ -1,0 +1,2 @@
+/*This file intends to keep the defeinitions of the procedures and functions that will used in
+the code generation. Also the global variables and data structures*/

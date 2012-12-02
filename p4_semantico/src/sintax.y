@@ -315,7 +315,8 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE expression DO separator
+	WHILE {if(CompilationState){$$=ne(); fprintf(codeF,"L %d:\n", $$)}}
+	expression DO separator
 		method_code 
 	END separator {checkIsBoolean($2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}

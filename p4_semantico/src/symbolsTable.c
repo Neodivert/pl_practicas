@@ -697,11 +697,6 @@ struct Method *getParentScope()
 	}	
 	
 	while( s != NULL && ! s->firstChild){
-		//If prev symbol is a method it could be the parent or the brother.
-		//If it is the parent we found the scope
-		//TODO Esto no esta bien, solo busca hasta el actual no hasta el padre
-		//Cambiar la condicion por s->prev->next != s
-		printf("Buscando en %s\n",s->name);
 		s = s->prev;		
 	}
 	

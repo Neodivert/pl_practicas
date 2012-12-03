@@ -9,6 +9,7 @@ extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
 //extern int yylex();
 int yydebug=1; /* modo debug si -t */
+int yyout; /*fichero compilado*/
 
 extern int compilationState; 
 //0 -> Creating and filling Symbol Table
@@ -316,10 +317,10 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {if(CompilationState){$$=ne(); fprintf(codeF,"L %d:\n", $$);}}
-	expression DO {if(CompilationState){$$=ne(); fprintf(codeF,"\tIF(!R%d) GT(%d);\n",$3,$$);}}
+	WHILE {if(CompilationState){$$=ne(); fprintf(yyout,"L %d:\n", $$);}}
+	expression DO {if(CompilationState){$$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$3,$$);}}
 	separator
-		method_code {fprinf(codeF,"\tGT(%d);\nL %d:\n",$2,$5);}
+		method_code {fprinf(yyout,"\tGT(%d);\nL %d:\n",$2,$5);}
 	END separator {checkIsBoolean($2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
@@ -508,18 +509,45 @@ int main(int argc, char** argv) {
 	
 	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
 	
+        fclose (yyin);
+	numlin = 1;
+
+        // Starting code analisis
 	compilationState = 1;
 
-	numlin = 1;
-	fclose (yyin);
-	yyin=fopen(argv[1],"r");
+	yyin=fopen(argv[1],"r"); //Source file
+
 	resetFlex();
 	yyparse();
-	
 	finishFlex();
-	
+
+	fclose (yyin);
+
 	if (argc>2)showSymTable();
+
 	
+	// Starting code generation
+	compilationState = 2;
+
+	// Peparing name of compiled file
+	char aux[51];
+        char *ptr;
+        strcpy(aux, argv[1]);
+        ptr= strtok(aux ,".");
+        strcpy(aux, ptr);
+	strcat(aux, ".q.c");
+
+	yyin=fopen(argv[1],"r"); //Source file
+	yyout=fopen(aux,"w");	 //Compiled file
+
+	resetFlex();
+	yyparse();
+	finishFlex();
+		
+	fclose (yyin);
+	fclose (yyout);
+
+	// We free symbol table
 	freeSymbTable();
 }
 

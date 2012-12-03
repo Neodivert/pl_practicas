@@ -3,6 +3,7 @@
 #include <string.h>
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
+#include "codegenutils.h"
 
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */

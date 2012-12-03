@@ -688,28 +688,32 @@ struct Method *getParentScope()
 		return lastDefinedMethod;
 	}
 	
-	struct Symbol *s = lastDefinedMethod->lastSymbol;
-	int currentMethodFound = 0;
+	struct Symbol *s = NULL;
+	//If localSymbol is defined, in prev is current method
+	if(lastDefinedMethod->localSymbols){
+		s = lastDefinedMethod->localSymbols->prev;	
+	}else{ //Otherwise current lastSymbol points current method
+		s = lastDefinedMethod->lastSymbol;
+	}	
 	
-	while( s != NULL){
+	while( s != NULL && ! s->firstChild){
 		//If prev symbol is a method it could be the parent or the brother.
 		//If it is the parent we found the scope
 		//TODO Esto no esta bien, solo busca hasta el actual no hasta el padre
 		//Cambiar la condicion por s->prev->next != s
-		if(s->symType == SYM_METHOD && s->info &&((struct Method *)(s->info))->localSymbols == lastDefinedMethod->localSymbols){
-			//First time is just current scope, no parent scope
-			if(currentMethodFound){
-				return ((struct Method*)(s->info));
-			}else{
-				currentMethodFound = 1;
-			}	
-		}	
+		printf("Buscando en %s\n",s->name);
 		s = s->prev;		
 	}
 	
-	if(s == NULL){
-		return lastDefinedMethod;
+	
+	
+	if(s == NULL || s->prev == NULL){
+		printf("Devolviendo last defined method\n");
+		lastDefinedMethod = (struct Method *)(mainMethod->info);
+	}else{
+		lastDefinedMethod = (struct Method *)(s->prev->info);
 	}
+	return lastDefinedMethod;
 }
 	
 // Set the last defined method's number of arguments to n. 

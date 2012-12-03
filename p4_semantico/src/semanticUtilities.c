@@ -307,6 +307,10 @@ struct MethodInfo *checkMethodDefinition(const char* const name)
 	info->scope = getCurrentScope();
 	if(method == NULL)
 	{
+		if(compilationState==1){
+			yyerror("Error, Method not defined");
+			yyerrork;
+		}
 		insertMethodDefinition(name);
 		info->result = 0;
 	}
@@ -362,6 +366,10 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 	struct Symbol* block = searchVariable(SYM_BLOCK, blockName);
 	if(block == NULL)
 	{
+		if (compilationState == 0){
+			yyerror("Error, Undefined Block");
+			yyerrok;
+		}
 		insertBlockDefinition(blockName, argName);
 	}
 	else

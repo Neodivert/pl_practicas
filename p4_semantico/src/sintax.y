@@ -3,11 +3,13 @@
 #include <string.h>
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
+#include "codegenutils.h"
 
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
 //extern int yylex();
 int yydebug=1; /* modo debug si -t */
+int yyout; /*fichero compilado*/
 
 extern int compilationState; 
 //0 -> Creating and filling Symbol Table
@@ -318,8 +320,10 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE expression DO separator
-		method_code 
+	WHILE {if(CompilationState){$$=ne(); fprintf(yyout,"L %d:\n", $$);}}
+	expression DO {if(CompilationState){$$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$3,$$);}}
+	separator
+		method_code {fprinf(yyout,"\tGT(%d);\nL %d:\n",$2,$5);}
 	END separator {checkIsBoolean($2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
@@ -327,9 +331,9 @@ loop :
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 
-	IF expression after_if
-		method_code
-		else_part	
+	IF expression after_if {if(CompilationState){$$ = ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$2,$$);}}
+		method_code //{$$ = ne(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
+		else_part {if(CompilationState==2){if($6!=0){fprintf("L %d:\n",$4)}}}//El else_part deberá crear su propio código
 	END separator
 				{checkIsBoolean($2);}
 	| IF expression after_if
@@ -351,9 +355,10 @@ after_if :
 	;
 	
 else_part : 
-	ELSE separator method_code
+	ELSE {if(CompilationState==2){$$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $$, $-1);}}
+	separator method_code {fprintf("L %d:\n",$2)}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
-	|
+	| {$$ = 0;}
 	;	
 
 // checkAssignement search left_side in the symbols table.
@@ -513,18 +518,45 @@ int main(int argc, char** argv) {
 	
 	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
 	
+        fclose (yyin);
+	numlin = 1;
+
+        // Starting code analisis
 	compilationState = 1;
 
-	numlin = 1;
-	fclose (yyin);
-	yyin=fopen(argv[1],"r");
-	
-	goInScope(mainScope);
-	
+	yyin=fopen(argv[1],"r"); //Source file
+
+	goInScope(mainScope);	
+
 	yyparse();
-	
+	finishFlex();
+
+	fclose (yyin);
+
 	if (argc>2)showSymTable();
+
 	
+	// Starting code generation
+	compilationState = 2;
+
+	// Peparing name of compiled file
+	char aux[51];
+        char *ptr;
+        strcpy(aux, argv[1]);
+        ptr= strtok(aux ,".");
+        strcpy(aux, ptr);
+	strcat(aux, ".q.c");
+
+	yyin=fopen(argv[1],"r"); //Source file
+	yyout=fopen(aux,"w");	 //Compiled file
+
+	yyparse();
+	finishFlex();
+		
+	fclose (yyin);
+	fclose (yyout);
+
+	// We free symbol table
 	freeSymbTable();
 }
 
@@ -535,4 +567,5 @@ void yyerror(char* mens) {
 		printf("---------Error on line %i: %s\n",numlin - 1,mens);
 	}	
 }
+//EL COMENTARIO DEFINITIVO
 

@@ -703,7 +703,6 @@ struct Method *getParentScope()
 	
 	
 	if(s == NULL || s->prev == NULL){
-		printf("Devolviendo last defined method\n");
 		lastDefinedMethod = (struct Method *)(mainMethod->info);
 	}else{
 		lastDefinedMethod = (struct Method *)(s->prev->info);

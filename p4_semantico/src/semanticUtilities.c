@@ -41,7 +41,8 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
-		return NULL; 
+		FS return NULL; EFS
+		AN return NULL; EAN 
 	}		
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;

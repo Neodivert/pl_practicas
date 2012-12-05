@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
 
@@ -10,15 +11,12 @@ extern int numlin; /* lexico le da valores */
 int yydebug=1; /* modo debug si -t */
 
 extern int compilationState; 
-//0 -> Creating and filling Symbol Table
-//1 -> Doing code analisis
-//2 -> Generating code
 
 // Lexical parser fill this value when it finds an integer. We use it when 
 // defining an array to get its size.
 extern unsigned int arraySize;
 
-void yyerror(char* mens);
+void yyerror(char *format, ...);
 
 struct Symbol* currentMethodCall = NULL;
 struct Symbol* currentClass = NULL; 
@@ -487,7 +485,7 @@ string_struct :
   
 int main(int argc, char** argv) {
 
-	int i = 1;
+	int i = 1;	
 	compilationState = 0;
 	initializeSymTable();
 	struct Method *mainScope = getCurrentScope();
@@ -523,12 +521,47 @@ int main(int argc, char** argv) {
 	
 	yyparse();
 	
+	compilationState = 2;
+	
 	if (argc>2)showSymTable();
 	
 	freeSymbTable();
 }
 
-void yyerror(char* mens) {
+void yyerror((char *format, ...)) {
+
+	va_list p; 
+	char *szarg; 
+	int iarg; 
+	int i;
+	float farg;
+
+	va_start(p, format); 
+	/* analizamos la cadena de formato para saber el número y 
+	  tipo de cada parámetro */ 
+	for(i = 0; i < strlen(format); i++) { 
+	  switch(format[i]) { 
+		 case 'c': /* Cadena de caracteres */ 
+		    szarg = va_arg(p, char*); 
+		    printf("%c", szarg);
+		    break; 
+		 case 'i': /* Entero */ 
+		    iarg = va_arg(p, int); 
+		    printf("%i", iarg);
+		    break; 
+		 case 'd': /* Entero */ 
+		    iarg = va_arg(p, int); 
+		    printf("%d", iarg);
+		    break;   
+		 case 'f': /* Entero */ 
+		    farg = va_arg(p, float); 
+		    printf("%f", farg); 
+		    break; 		     
+	  } 
+	} 
+	va_end(p); 
+	cout << endl; 
+   
 	//Syntax error alone gives no information, ignore it
 	if(strcmp(mens,"syntax error") != 0 && compilationState == 1){ 
 		//We printf numlin - 1 because lexical analizer is ahead one or more lines 

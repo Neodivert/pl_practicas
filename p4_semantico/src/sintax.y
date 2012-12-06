@@ -16,7 +16,7 @@ extern int compilationState;
 // defining an array to get its size.
 extern unsigned int arraySize;
 
-void yyerror(char *format, ...);
+void yyerror(char* fmt, ...);
 
 struct Symbol* currentMethodCall = NULL;
 struct Symbol* currentClass = NULL; 
@@ -120,7 +120,7 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); printf("Inseratndo %s en la tabla\n", $2); } arguments_definition separator method_code END separator 
+	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
 		{	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
@@ -143,7 +143,7 @@ method_definition :
 			free($<methodInfo>3);			
 		}
 	| DEF error END separator { yyerror( "Sintax error on method definition" ); yyerrok;}
-	| DEF IDENTIF error END separator { goInScope(getParentScope()); yyerror( "Sintax error on method definition" ); yyerrok;}
+	| DEF IDENTIF error END separator { goInScope(getParentScope()); yyerror( "Sintax error on method definition %s",$2); yyerrok;}
 	;
 
 // An Emerald's method return a value if its last sentence is an assignment or
@@ -187,7 +187,8 @@ class_definition :
 	CLASS ID_CONSTANT separator { currentClass = checkClassDefinitonPre($2, currentClass);}
 		class_content 
 	END separator {currentClass = checkClassDefinitonPost( $2, $5 );}
-	|	CLASS error	END separator {yyerror( "Sintax error on class definition" ); yyerrok;}
+	| CLASS error END separator {yyerror( "Sintax error on class definition"); yyerrok;}
+	| CLASS ID_CONSTANT error END separator {yyerror( "Sintax error on class definition %s", $2); yyerrok;}
 	;
 
 class_content : 
@@ -216,11 +217,11 @@ simple_method_call:
 				}			
 		arguments ')' {
 						  if( !(currentMethodCall != NULL && $4 == nArguments) ){
-						  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
+						  	yyerror("Type error: Wrong amount/undefined of arguments in method call %s", $1);
 						  } 
 						  $$ = searchTopLevel( SYM_METHOD, $1);
 					 }  
-	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
+	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
 	;
 
 
@@ -299,8 +300,8 @@ block_call :
 	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
 		method_code
 	end_block separator { goInScope($<method>7); }
-	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
-	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on each definition" ); yyerrok;}
+	| IDENTIF EACH error END separator {yyerror( "Sintax error on %s.each definition", $1 ); yyerrok;}
+	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}
 	;			 
 
 start_block:
@@ -361,7 +362,7 @@ else_part :
 // side match.
 assignment : 
 	left_side right_side separator { $$ = checkAssignement( $1, $2 ); }
-	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
+	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
 
 // Here we check if variable already exists. If not, it is added to symbols
@@ -528,44 +529,58 @@ int main(int argc, char** argv) {
 	freeSymbTable();
 }
 
-void yyerror((char *format, ...)) {
-
-	va_list p; 
-	char *szarg; 
-	int iarg; 
-	int i;
-	float farg;
-
-	va_start(p, format); 
-	/* analizamos la cadena de formato para saber el número y 
-	  tipo de cada parámetro */ 
-	for(i = 0; i < strlen(format); i++) { 
-	  switch(format[i]) { 
-		 case 'c': /* Cadena de caracteres */ 
-		    szarg = va_arg(p, char*); 
-		    printf("%c", szarg);
-		    break; 
-		 case 'i': /* Entero */ 
-		    iarg = va_arg(p, int); 
-		    printf("%i", iarg);
-		    break; 
-		 case 'd': /* Entero */ 
-		    iarg = va_arg(p, int); 
-		    printf("%d", iarg);
-		    break;   
-		 case 'f': /* Entero */ 
-		    farg = va_arg(p, float); 
-		    printf("%f", farg); 
-		    break; 		     
-	  } 
-	} 
-	va_end(p); 
-	cout << endl; 
-   
+void yyerror(char* fmt, ...)
+{
+    va_list args;
 	//Syntax error alone gives no information, ignore it
-	if(strcmp(mens,"syntax error") != 0 && compilationState == 1){ 
+	if(strcmp(fmt,"syntax error") != 0 && compilationState == 1){
 		//We printf numlin - 1 because lexical analizer is ahead one or more lines 
-		printf("---------Error on line %i: %s\n",numlin - 1,mens);
+		printf("---------Error on line %i: ",numlin - 1);       
+		va_start(args,fmt);	 
+		vprintf(fmt,args);
+		va_end(args);
+		printf("\n");
 	}	
 }
+/*
+	//Syntax error alone gives no information, ignore it
+	if(strcmp(mens,"syntax error") != 0 && compilationState == 1){ 
+
+		//We printf numlin - 1 because lexical analizer is ahead one or more lines 
+		printf("---------Error on line %i:",numlin - 1);
+		
+		va_start(p, format); 
+		is_argument = 0;
+		// Go throught format string to find out other arguments 
+		for(i = 0; i < strlen(format); i++) {
+			if(format[i] == '%'){
+				
+			} 
+				switch(format[i]) { 
+					case 's': /* String 
+						szarg = va_arg(p, char*); 
+						printf("%s", szarg);
+						break; 	  
+					case 'c': /* Char  
+						carg = va_arg(p, char); 
+						printf("%c", carg);
+						break; 
+					case 'i': /* Int  
+						iarg = va_arg(p, int); 
+						printf("%i", iarg);
+						break; 
+					case 'd': /* Int 
+						iarg = va_arg(p, int); 
+						printf("%d", iarg);
+						break;   
+					case 'f': /* Float 
+						farg = va_arg(p, float); 
+						printf("%f", farg); 
+						break; 		     
+				} 
+		} 
+		va_end(p); 
+		printf("\n"); 
+	}	*/
+
 

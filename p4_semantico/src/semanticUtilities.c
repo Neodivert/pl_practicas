@@ -18,17 +18,7 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 		return s1;
 	}else{
 		// s1 and s2 are either, unlike types, or both different than integer and float
-		// Generate error message
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: ");
-		strcat(message, s1->name);
-		strcat(message, " ");
-		strcat(message, op);
-		strcat(message, " ");
-		strcat(message, s2->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: %s %s %s is not permited", s1->name, op, s2->name);
 		return NULL;
 	}
 }	
@@ -52,16 +42,7 @@ Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	}
 	else
 	{
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: ");
-		strcat(message, s1->name);
-		strcat(message, " ");
-		strcat(message, op);
-		strcat(message, " ");
-		strcat(message, s2->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: %s %s %s is not permited", s1->name, op, s2->name);
 		return NULL;
 	}
 	//Relational expression returns a boolean value
@@ -85,16 +66,7 @@ Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	}
 	else
 	{
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: ");
-		strcat(message, s1->name);
-		strcat(message, " ");
-		strcat(message, op);
-		strcat(message, " ");
-		strcat(message, s2->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: %s %s %s is not permited", s1->name, op, s2->name);
 		return NULL;
 	}
 }
@@ -117,12 +89,7 @@ Symbol* checkNotExpression(Symbol* s){
 	}
 	else
 	{
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: not applied on ");
-		strcat(message, s->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: not applied on %s is not permitted", s->name);
 		return NULL;
 	} 
 }
@@ -185,7 +152,7 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 		return NULL; 	
 	}	
 	t = ((struct Type *)(s->info))->id;
-	//Operand is boolean.
+	//Operand is integer.
 	if(t == TYPE_INTEGER)
 	{
 		info->symbol = s;
@@ -194,7 +161,7 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 	}	
 	else
 	{	
-		yyerror("Type error: expression between [] must be integer");
+		yyerror("Type error: expression between [] must be integer but is %s", s->name);
 		info->symbol = NULL;
 		info->info = TYPE_ARRAY; 		
 		return info;
@@ -293,7 +260,7 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 	}
 	else
 	{
-	return 1;
+		return 1;
 	}
 }	  
 
@@ -392,7 +359,7 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 			}
 			else
 			{
-				yyerror("Type error: block can only be used with array variables");
+				yyerror("Type error: variable %s ,block can only be used with array variables", name);
 			}	
 		}
 	}
@@ -447,7 +414,7 @@ struct Symbol* checkClassDefinitonPost(const char * const className, int nVariab
 			classInfo->nElements = nVariables;
 			setChanged();
 		}else{
-			yyerror("Type error: Classess must have at least one class variable");
+			yyerror("Type error: Class %s must have at least one class variable", className);
 		}				
 	}	
 	return NULL;
@@ -511,7 +478,6 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	struct Symbol* left = left_->symbol;
 	int info = left_->info;
 	struct Symbol* variableType = NULL;
-	
 	switch(isVariable(left))
 	{
 	case 0: //It is a variable with a known type
@@ -521,23 +487,28 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 			if( info == SYM_CLASS_VARIABLE){
 				left = getClassVar( left , left_->name);
 			}
-			variableType = ((struct Variable*)(left->info))->type;
-		}		
+			if(left && left->info){
+				variableType = ((struct Variable*)(left->info))->type;
+			}else{
+				//Variable is class type, but class or attribute does not exists
+				variableType = NULL;
+			}	
+		}	
 		if(checkSameType( variableType, right) != NULL)
 		{
 			//Left side and right side are the same type
 		}else
 		{
-			//If right = NULL right side was wrong/unknown and that was already warned
+			//If right = NULL, right side was wrong/unknown and that was already warned
 			if(right != NULL) 
 			{
-				char message[50];
-				message[0] = '\0';
-				strcat(message, "Type error: with variable ");
-				strcat(message, left->name);
-				yyerror((char *)message);
+				if(variableType){
+					yyerror("Type error: variable %s is %s but left side is %s", left->name, variableType->name, right->name);
+				}else{
+					yyerror("Type error: variable %s is missused", left_->symbol->name);
+				}	
 			}
-		}										
+		}									
 		break;
 	case 1: //It is a variable without a known type
 		if(info != SYM_CLASS_VARIABLE){

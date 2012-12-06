@@ -134,7 +134,7 @@ Symbol* getCreateVariable( int symType, cstr name, struct SymbolInfo* atribute)
 				if( ((struct Type*)(variable->type)) != NULL ){
 					if(((struct Type*)(variable->type->info))->id != TYPE_ARRAY)
 					{
-						yyerror("Type error: [] operator can not be applied on variable");
+						yyerror("Type error: [] operator can not be applied on variable %s", name);
 					}
 				}	
 			}	
@@ -785,7 +785,7 @@ struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeN
 {
 	char varName[100] = "";
 	strcat(varName, variable->name);
-	if(variable->info){
+	if(variable && variable->info){
 		if( ((struct Variable*)(variable->info))->type ){
 			strcat(varName, ((struct Variable*)(variable->info))->type->name);
 			strcat(varName, "@");

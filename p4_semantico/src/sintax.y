@@ -494,7 +494,7 @@ int main(int argc, char** argv) {
 	if (argc>1)yyin=fopen(argv[1],"r");
 	yyparse();	
 
-  	while(getChange() && i < 6)
+  	while(getChange() && i < 20)
   	{ 	
   		resetChange();
   		numlin = 1;
@@ -542,45 +542,4 @@ void yyerror(char* fmt, ...)
 		printf("\n");
 	}	
 }
-/*
-	//Syntax error alone gives no information, ignore it
-	if(strcmp(mens,"syntax error") != 0 && compilationState == 1){ 
-
-		//We printf numlin - 1 because lexical analizer is ahead one or more lines 
-		printf("---------Error on line %i:",numlin - 1);
-		
-		va_start(p, format); 
-		is_argument = 0;
-		// Go throught format string to find out other arguments 
-		for(i = 0; i < strlen(format); i++) {
-			if(format[i] == '%'){
-				
-			} 
-				switch(format[i]) { 
-					case 's': /* String 
-						szarg = va_arg(p, char*); 
-						printf("%s", szarg);
-						break; 	  
-					case 'c': /* Char  
-						carg = va_arg(p, char); 
-						printf("%c", carg);
-						break; 
-					case 'i': /* Int  
-						iarg = va_arg(p, int); 
-						printf("%i", iarg);
-						break; 
-					case 'd': /* Int 
-						iarg = va_arg(p, int); 
-						printf("%d", iarg);
-						break;   
-					case 'f': /* Float 
-						farg = va_arg(p, float); 
-						printf("%f", farg); 
-						break; 		     
-				} 
-		} 
-		va_end(p); 
-		printf("\n"); 
-	}	*/
-
 

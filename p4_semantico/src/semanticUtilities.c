@@ -143,13 +143,15 @@ Symbol* checkSameType(Symbol* s1, Symbol* s2){
 // - points to s if s is a TYPE_INTEGER.
 // - points to null otherwise (in this case, an error message is shown too.
 // This function is used to verify that an array index is actually a integer.
-// (*) If s is NULL, this function simply returns NULL.
 struct SymbolInfo* checkIsInteger(Symbol* s)
 {
 	int t;
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
 	if( s == NULL || s->info == NULL){
-		return NULL; 	
+		info->symbol = NULL;
+		info->info = TYPE_ARRAY; 	
+		info->name = NULL;	
+		return info;
 	}	
 	t = ((struct Type *)(s->info))->id;
 	//Operand is integer.
@@ -157,13 +159,15 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 	{
 		info->symbol = s;
 		info->info = TYPE_ARRAY; 
+		info->name = NULL;
 		return info;
 	}	
 	else
 	{	
 		yyerror("Type error: expression between [] must be integer but is %s", s->name);
 		info->symbol = NULL;
-		info->info = TYPE_ARRAY; 		
+		info->info = TYPE_ARRAY; 
+		info->name = NULL;		
 		return info;
 	}	
 }	
@@ -511,7 +515,9 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 		}									
 		break;
 	case 1: //It is a variable without a known type
-		if(info != SYM_CLASS_VARIABLE){
+		//If the variable was used with [] or . do not insert it yet
+		//since its type is complex
+		if(info != SYM_CLASS_VARIABLE && info != TYPE_ARRAY){
 			if(searchVariable(left->symType, left->name) == NULL)
 			{ 
 				//Variable is not in symbolTable, insert it

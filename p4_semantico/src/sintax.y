@@ -11,7 +11,7 @@ extern int numlin; /* lexico le da valores */
 int yydebug=1; /* modo debug si -t */
 
 extern int compilationState; 
-
+int errors = 0;
 // Lexical parser fill this value when it finds an integer. We use it when 
 // defining an array to get its size.
 extern unsigned int arraySize;
@@ -215,12 +215,7 @@ simple_method_call:
 					}
 					$<symbol>$ = currentMethodCall;
 				}			
-		arguments ')' {
-						  if( !(currentMethodCall != NULL && $4 == nArguments) ){
-						  	yyerror("Type error: Wrong or undefined amount of arguments in method call %s", $1);
-						  } 
-						  $$ = searchTopLevel( SYM_METHOD, $1);
-					 }  
+		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
 	;
 
@@ -232,7 +227,7 @@ arguments :
 	 method_call_argument more_arguments 
 							{ 
 								if(currentMethodCall != NULL){
-								  	int result = checkMethodCall(currentMethodCall, $1, nArguments - $2);
+								  	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments - $2);
 									if(result == 0){
 										// Valid argument, count it.
 										$$ = $2 + 1;
@@ -244,7 +239,7 @@ arguments :
 							}		 
 	| method_call_argument  {
 								if(currentMethodCall != NULL){	
-								 	int result = checkMethodCall(currentMethodCall, $1, nArguments);
+								 	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments);
 									if(result == 0){
 										// Valid argument, count it.
 										$$ = nArguments;
@@ -271,7 +266,7 @@ more_arguments :
 	',' method_call_argument {  
 								if(currentMethodCall != NULL)
 								{
-									int result = checkMethodCall(currentMethodCall, $2, nArguments);
+									int result = checkMethodCallArguments(currentMethodCall, $2, nArguments);
 									if(result == 0){
 										$$ = 1;
 									}else{
@@ -283,7 +278,7 @@ more_arguments :
 			{ 
 				if(currentMethodCall != NULL)
 				{
-				  	int result = checkMethodCall(currentMethodCall, $2, nArguments - $3);
+				  	int result = checkMethodCallArguments(currentMethodCall, $2, nArguments - $3);
 					if(result == 0){
 						$$ = $3 + 1;
 					}else{
@@ -491,6 +486,7 @@ int main(int argc, char** argv) {
 	initializeSymTable();
 	struct Method *mainScope = getCurrentScope();
 
+	//Filling symbol table
 	if (argc>1)yyin=fopen(argv[1],"r");
 	yyparse();	
 
@@ -510,10 +506,12 @@ int main(int argc, char** argv) {
 		i++;		
 	}
 	
+	//Symbol table is filled, go once more to check errors
 	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
 	
 	compilationState = 1;
 
+	errors = 0;
 	numlin = 1;
 	fclose (yyin);
 	yyin=fopen(argv[1],"r");
@@ -526,20 +524,35 @@ int main(int argc, char** argv) {
 	
 	if (argc>2)showSymTable();
 	
+	//If no errors then go to code generation
+	if(!errors){
+		printf("Generando codigo\n");
+		numlin = 1;
+		fclose (yyin);
+		yyin=fopen(argv[1],"r");
+	
+		goInScope(mainScope);
+	
+		yyparse();	
+	} 
+	
 	freeSymbTable();
 }
 
 void yyerror(char* fmt, ...)
 {
-    va_list args;
-	//Syntax error alone gives no information, ignore it
-	if(strcmp(fmt,"syntax error") != 0 && compilationState == 1){
-		//We printf numlin - 1 because lexical analizer is ahead one or more lines 
-		printf("---------Error on line %i: ",numlin - 1);       
-		va_start(args,fmt);	 
-		vprintf(fmt,args);
-		va_end(args);
-		printf("\n");
-	}	
+	AN
+		errors = 1;
+		va_list args;
+		//Syntax error alone gives no information, ignore it
+		if(strcmp(fmt,"syntax error") != 0){
+			//We printf numlin - 1 because lexical analizer is ahead one or more lines 
+			printf("---------Error on line %i: ",numlin - 1);       
+			va_start(args,fmt);	 
+			vprintf(fmt,args);
+			va_end(args);
+			printf("\n");
+		}	
+	EAN
 }
 

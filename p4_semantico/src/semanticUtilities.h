@@ -78,7 +78,10 @@ Symbol* checkArray(Symbol* type, int n);
 // corresponding argument in method definition (*). Otherwise return 1.
 // (*) If the argument does not have a known type we asume the method call is 
 // right and assign the type of the value to the argument.
-int checkMethodCall(Symbol *method, Symbol *type, int argument);
+int checkMethodCallArguments(Symbol *method, Symbol *type, int argument);
+
+//Check is method exist and was call with the right amount of arguments
+struct Symbol* checkMethodCall(cstr name, int methodArguments, int currentNArguments, Symbol *method);
 
 // Check if method name is already in symbols' table (if not, insert it).
 // Return a MethodInfo struct, whose "scope" field points to the current 

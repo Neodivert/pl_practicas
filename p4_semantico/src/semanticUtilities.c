@@ -31,8 +31,7 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
-		FS return NULL; EFS
-		AN return NULL; EAN 
+		return NULL;
 	}		
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
@@ -230,7 +229,7 @@ Symbol* checkArray(Symbol* type, int n)
 // corresponding argument in method definition (*). Otherwise return 1.
 // (*) If the argument does not have a known type we asume the method call is 
 // right and assign the type of the value to the argument.
-int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
+int checkMethodCallArguments(struct Symbol *method, struct Symbol *type, int argument)
 {
 	struct Symbol* argumentSym = searchNArgument(method, argument);
 	struct Symbol* argumentType;
@@ -270,6 +269,20 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 		return 1;
 	}
 }	  
+
+struct Symbol* checkMethodCall(cstr name, int methodArguments, int currentNArguments, Symbol *method)
+{
+	AN
+		if(method){
+			if(currentNArguments != methodArguments){
+				yyerror("Type error: Wrong amount or undefined type arguments in method call %s", name);
+			}	
+		}else{
+			yyerror("Type error: Method %s is not defined", name);
+		}
+	EAN  
+	return searchTopLevel( SYM_METHOD, name);
+}
 
 // Check if method name is already in symbols' table (if not, insert it).
 // Return a MethodInfo struct, whose "scope" field points to the current 
@@ -570,6 +583,10 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 						setChanged();	
 					}	
 				
+				}else{
+					AN
+						yyerror("Type Error: Could not stablish variable %s type", left->name);
+					EAN
 				}
 			}
 		}

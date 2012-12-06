@@ -258,7 +258,10 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 			//the method call is right and assign the type of the
 			//value to the argument.
 			((struct Variable*)(argumentSym->info))->type = (void *)type;
-			setChanged();
+			//If type != NULL then there was a real change
+			if(type){
+				setChanged();
+			}	
 			return 0;	
 		}
 	}

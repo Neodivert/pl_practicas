@@ -329,22 +329,27 @@ Symbol* searchType( int typeId )
 Symbol* searchVariable( int symType, cstr name )
 {
 	Symbol* s;
-	if(symType == SYM_GLOBAL){
+	if(symType == SYM_GLOBAL){	
 		s = ((struct Method*)(mainMethod->info))->lastSymbol;
-	}else{
+		while( s != NULL){
+			if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
+				return s;
+			}
+			s = s->prev;		
+		}				
+	}else{	
 		s = lastDefinedMethod->lastSymbol;
-	}
-		
-	while( s != NULL){
-		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
-			return s;
-		}
-		//If prev symbol is a method it could be the parent or the brother.
-		//If it is the parent stop the search 	
-		if(s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == lastDefinedMethod->localSymbols){
-			return NULL;
-		}	
-		s = s->prev;		
+		while( s != NULL){
+			if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
+				return s;
+			}
+			//If prev symbol is a method it could be the parent or the brother.
+			//If it is the parent stop the search 	
+			if(s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == lastDefinedMethod->localSymbols){
+				return NULL;
+			}	
+			s = s->prev;		
+		}			
 	}
 	return NULL;
 }
@@ -740,8 +745,7 @@ Symbol* getArrayType(Symbol* variable)
 
 Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo)
 {
-	Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 
-			
+	Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 			
 	Symbol* type = NULL;
 	if(variable == NULL){
 		type = NULL;

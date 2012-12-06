@@ -217,7 +217,7 @@ simple_method_call:
 				}			
 		arguments ')' {
 						  if( !(currentMethodCall != NULL && $4 == nArguments) ){
-						  	yyerror("Type error: Wrong amount/undefined of arguments in method call %s", $1);
+						  	yyerror("Type error: Wrong or undefined amount of arguments in method call %s", $1);
 						  } 
 						  $$ = searchTopLevel( SYM_METHOD, $1);
 					 }  

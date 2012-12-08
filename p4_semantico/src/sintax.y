@@ -514,10 +514,10 @@ int main(int argc, char** argv) {
 	//Symbol table is filled, go once more to check errors
 	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
 	
-        fclose (yyin);
+    fclose (yyin);
 	numlin = 1;
 
-        // Starting code analisis
+    // Starting code analysis
 	compilationState = 1;
 
 	errors = 0;
@@ -532,42 +532,29 @@ int main(int argc, char** argv) {
 	if (argc>2)showSymTable();
 
 	
-<<<<<<< HEAD
-	// Starting code generation
-	compilationState = 2;
-
-	// Peparing name of compiled file
-	char aux[51];
-        char *ptr;
-        strcpy(aux, argv[1]);
-        ptr= strtok(aux ,".");
-        strcpy(aux, ptr);
-	strcat(aux, ".q.c");
-
-	yyin=fopen(argv[1],"r"); //Source file
-	yyout=fopen(aux,"w");	 //Compiled file
-
-	yyparse();
-	finishFlex();
-		
-	fclose (yyin);
-	fclose (yyout);
-
-	// We free symbol table
-=======
-	//If no errors then go to code generation
-	if(!errors){
-		printf("Generando codigo\n");
+	if(!errors)
+	{
+		// Starting code generation
+		compilationState = 2;
 		numlin = 1;
-		fclose (yyin);
-		yyin=fopen(argv[1],"r");
-	
+		// Peparing name of compiled file
+		char aux[51];
+	    char *ptr;
+	    strcpy(aux, argv[1]);
+	    ptr= strtok(aux ,".");
+	    strcpy(aux, ptr);
+		strcat(aux, ".q.c");
+
+		yyin=fopen(argv[1],"r"); //Source file
+		yyout=fopen(aux,"w");	 //Compiled file
+
 		goInScope(mainScope);
-	
-		yyparse();	
-	} 
-	
->>>>>>> master
+		yyparse();
+		
+		fclose (yyout);
+	}
+	fclose (yyin);
+
 	freeSymbTable();
 }
 

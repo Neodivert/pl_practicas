@@ -134,7 +134,7 @@ Symbol* getCreateVariable( int symType, cstr name, struct SymbolInfo* atribute)
 				if( ((struct Type*)(variable->type)) != NULL ){
 					if(((struct Type*)(variable->type->info))->id != TYPE_ARRAY)
 					{
-						yyerror("Type error: [] operator can not be applied on variable");
+						yyerror("Type error: [] operator can not be applied on variable %s", name);
 					}
 				}	
 			}	
@@ -329,22 +329,27 @@ Symbol* searchType( int typeId )
 Symbol* searchVariable( int symType, cstr name )
 {
 	Symbol* s;
-	if(symType == SYM_GLOBAL){
+	if(symType == SYM_GLOBAL){	
 		s = ((struct Method*)(mainMethod->info))->lastSymbol;
-	}else{
+		while( s != NULL){
+			if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
+				return s;
+			}
+			s = s->prev;		
+		}				
+	}else{	
 		s = lastDefinedMethod->lastSymbol;
-	}
-		
-	while( s != NULL){
-		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
-			return s;
-		}
-		//If prev symbol is a method it could be the parent or the brother.
-		//If it is the parent stop the search 	
-		if(s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == lastDefinedMethod->localSymbols){
-			return NULL;
-		}	
-		s = s->prev;		
+		while( s != NULL){
+			if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
+				return s;
+			}
+			//If prev symbol is a method it could be the parent or the brother.
+			//If it is the parent stop the search 	
+			if(s->symType == SYM_METHOD && ((struct Method *)(s->info))->localSymbols == lastDefinedMethod->localSymbols){
+				return NULL;
+			}	
+			s = s->prev;		
+		}			
 	}
 	return NULL;
 }
@@ -414,117 +419,115 @@ void showSymTable_( Symbol* sym, int level )
 {
 	int i = 0;
 	int j = 0;
-	if(compilationState){
-		while( (sym != NULL) ){
-			// Tabulate current symbol.
-			for( i=0; i<level; i++ ) printf( "\t" );
+	while( (sym != NULL) ){
+		// Tabulate current symbol.
+		for( i=0; i<level; i++ ) printf( "\t" );
 
-			// Show current symbol's name.
-			switch( sym->symType ){
-				case SYM_TYPE:
-					printf( "TYPE" );
-				break;
-				case SYM_GLOBAL:
-					printf( "GLOBAL" );	
-				break;			
-				case SYM_VARIABLE:
-					printf( "VARIABLE" );
-				break;
-				case SYM_CLASS_VARIABLE:
-					printf( "CLASS_VAR" );
-				break;			
-				case SYM_CONSTANT:
-					printf( "CONSTANT" );
-				break;		
-				case SYM_METHOD:
-					printf( "METHOD" );
-				break;
-				case SYM_BLOCK:
-					printf( "BLOCK" );
-				break;
-				default:
-					printf( "UKNOWN TYPE" );
-				break;
-			}
-
-			printf( " - [%s]", sym->name );
-
-			// If DEBUG is defined, show previous and next symbol's name.
-			#ifdef DEBUG
-			if( sym->prev ){
-				printf( " - prev: [%s]", sym->prev->name );
-			}else{
-				printf( " - prev: [NULL]" );
-			}
-
-			if( sym->next ){
-				printf( " - next: [%s]", sym->next->name );
-			}else{
-				printf( " - next: [NULL]" );
-			}
-			#endif
-
-			// Show extra info according to the current symbol's type.
-			Symbol* aux;
-			struct ArrayType* arrayInfo;
-			switch( sym->symType ){
-				case SYM_TYPE:
-					if( ((struct Type*)(sym->info))->id == TYPE_ARRAY )
-					{
-						struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
-						printf(" - type:[%s] - nElements:[%d]\n", arrayInfo->type->name,arrayInfo->nElements);
-					}else
-					{
-						if( ((struct Type*)(sym->info))->id == TYPE_CLASS )
-						{
-							struct ClassType *classInfo = ((struct Type*)(sym->info))->classInfo;
-							printf(" - elements:[%d]", classInfo->nElements);
-							for( j = 0; j < classInfo->nElements; j++){
-								if(classInfo->elements && classInfo->elements[j]){
-								 printf(" - element: [%d] [%s] ",j, classInfo->elements[j]->name);
-								} 
-							}						
-						}	
-						printf("\n");
-					}
-					break;
-				case SYM_VARIABLE:
-				case SYM_GLOBAL:
-				case SYM_CONSTANT:
-				case SYM_CLASS_VARIABLE:
-					aux = ((struct Variable*)(sym->info))->type;
-					printf( " - type: " );
-					if( aux ){
-						printf( "[%s]\n", aux->name );
-					}else{
-						printf( "NULL\n" );
-					}
-				break;
-				case SYM_METHOD:
-					aux = ((struct Method*)(sym->info))->returnType;
-					if(aux == NULL){
-						printf( " return type: [NULL]");
-					}else{
-						printf( " return type: [%s]", aux->name);
-					}	
-				case SYM_BLOCK:
-					aux = ((struct Method*)(sym->info))->localSymbols;
-
-					printf( " - nArguments: [%i]", ((struct Method*)(sym->info))->nArguments );
-					if( aux ){
-						printf( " - hijo: [%s]\n", aux->name );
-						showSymTable_( aux, level+1 );
-					}else{
-						printf( " - hijo: [NULL]\n" );
-					}
-				break;
-				default:
-					printf( "\n" );
-				break;
-			}
-
-			sym = sym->next;
+		// Show current symbol's name.
+		switch( sym->symType ){
+			case SYM_TYPE:
+				printf( "TYPE" );
+			break;
+			case SYM_GLOBAL:
+				printf( "GLOBAL" );	
+			break;			
+			case SYM_VARIABLE:
+				printf( "VARIABLE" );
+			break;
+			case SYM_CLASS_VARIABLE:
+				printf( "CLASS_VAR" );
+			break;			
+			case SYM_CONSTANT:
+				printf( "CONSTANT" );
+			break;		
+			case SYM_METHOD:
+				printf( "METHOD" );
+			break;
+			case SYM_BLOCK:
+				printf( "BLOCK" );
+			break;
+			default:
+				printf( "UKNOWN TYPE" );
+			break;
 		}
+
+		printf( " - [%s]", sym->name );
+
+		// If DEBUG is defined, show previous and next symbol's name.
+		#ifdef DEBUG
+		if( sym->prev ){
+			printf( " - prev: [%s]", sym->prev->name );
+		}else{
+			printf( " - prev: [NULL]" );
+		}
+
+		if( sym->next ){
+			printf( " - next: [%s]", sym->next->name );
+		}else{
+			printf( " - next: [NULL]" );
+		}
+		#endif
+
+		// Show extra info according to the current symbol's type.
+		Symbol* aux;
+		struct ArrayType* arrayInfo;
+		switch( sym->symType ){
+			case SYM_TYPE:
+				if( ((struct Type*)(sym->info))->id == TYPE_ARRAY )
+				{
+					struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
+					printf(" - type:[%s] - nElements:[%d]\n", arrayInfo->type->name,arrayInfo->nElements);
+				}else
+				{
+					if( ((struct Type*)(sym->info))->id == TYPE_CLASS )
+					{
+						struct ClassType *classInfo = ((struct Type*)(sym->info))->classInfo;
+						printf(" - elements:[%d]", classInfo->nElements);
+						for( j = 0; j < classInfo->nElements; j++){
+							if(classInfo->elements && classInfo->elements[j]){
+							 printf(" - element: [%d] [%s] ",j, classInfo->elements[j]->name);
+							} 
+						}						
+					}	
+					printf("\n");
+				}
+				break;
+			case SYM_VARIABLE:
+			case SYM_GLOBAL:
+			case SYM_CONSTANT:
+			case SYM_CLASS_VARIABLE:
+				aux = ((struct Variable*)(sym->info))->type;
+				printf( " - type: " );
+				if( aux ){
+					printf( "[%s]\n", aux->name );
+				}else{
+					printf( "NULL\n" );
+				}
+			break;
+			case SYM_METHOD:
+				aux = ((struct Method*)(sym->info))->returnType;
+				if(aux == NULL){
+					printf( " return type: [NULL]");
+				}else{
+					printf( " return type: [%s]", aux->name);
+				}	
+			case SYM_BLOCK:
+				aux = ((struct Method*)(sym->info))->localSymbols;
+
+				printf( " - nArguments: [%i]", ((struct Method*)(sym->info))->nArguments );
+				if( aux ){
+					printf( " - hijo: [%s]\n", aux->name );
+					showSymTable_( aux, level+1 );
+				}else{
+					printf( " - hijo: [NULL]\n" );
+				}
+			break;
+			default:
+				printf( "\n" );
+			break;
+		}
+
+		sym = sym->next;
 	}	
 }
 
@@ -703,7 +706,6 @@ struct Method *getParentScope()
 	
 	
 	if(s == NULL || s->prev == NULL){
-		printf("Devolviendo last defined method\n");
 		lastDefinedMethod = (struct Method *)(mainMethod->info);
 	}else{
 		lastDefinedMethod = (struct Method *)(s->prev->info);
@@ -743,8 +745,7 @@ Symbol* getArrayType(Symbol* variable)
 
 Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo)
 {
-	Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 
-			
+	Symbol* variable = getCreateVariable( symType, name, symbolInfo ); 			
 	Symbol* type = NULL;
 	if(variable == NULL){
 		type = NULL;
@@ -786,7 +787,7 @@ struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeN
 {
 	char varName[100] = "";
 	strcat(varName, variable->name);
-	if(variable->info){
+	if(variable && variable->info){
 		if( ((struct Variable*)(variable->info))->type ){
 			strcat(varName, ((struct Variable*)(variable->info))->type->name);
 			strcat(varName, "@");

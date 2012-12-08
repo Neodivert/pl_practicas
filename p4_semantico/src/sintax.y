@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
 #include "codegenutils.h"
@@ -12,15 +13,12 @@ int yydebug=1; /* modo debug si -t */
 int yyout; /*fichero compilado*/
 
 extern int compilationState; 
-//0 -> Creating and filling Symbol Table
-//1 -> Doing code analisis
-//2 -> Generating code
-
+int errors = 0;
 // Lexical parser fill this value when it finds an integer. We use it when 
 // defining an array to get its size.
 extern unsigned int arraySize;
 
-void yyerror(char* mens);
+void yyerror(char* fmt, ...);
 
 struct Symbol* currentMethodCall = NULL;
 struct Symbol* currentClass = NULL; 
@@ -124,7 +122,7 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); printf("Inseratndo %s en la tabla\n", $2); } arguments_definition separator method_code END separator 
+	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition separator method_code END separator 
 		{	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
@@ -147,7 +145,7 @@ method_definition :
 			free($<methodInfo>3);			
 		}
 	| DEF error END separator { yyerror( "Sintax error on method definition" ); yyerrok;}
-	| DEF IDENTIF error END separator { goInScope(getParentScope()); yyerror( "Sintax error on method definition" ); yyerrok;}
+	| DEF IDENTIF error END separator { goInScope(getParentScope()); yyerror( "Sintax error on method definition %s",$2); yyerrok;}
 	;
 
 // An Emerald's method return a value if its last sentence is an assignment or
@@ -191,7 +189,8 @@ class_definition :
 	CLASS ID_CONSTANT separator { currentClass = checkClassDefinitonPre($2, currentClass);}
 		class_content 
 	END separator {currentClass = checkClassDefinitonPost( $2, $5 );}
-	|	CLASS error	END separator {yyerror( "Sintax error on class definition" ); yyerrok;}
+	| CLASS error END separator {yyerror( "Sintax error on class definition"); yyerrok;}
+	| CLASS ID_CONSTANT error END separator {yyerror( "Sintax error on class definition %s", $2); yyerrok;}
 	;
 
 class_content : 
@@ -218,13 +217,8 @@ simple_method_call:
 					}
 					$<symbol>$ = currentMethodCall;
 				}			
-		arguments ')' {
-						  if( !(currentMethodCall != NULL && $4 == nArguments) ){
-						  	yyerror("Type error: Wrong amount/undefined of arguments in method call");
-						  } 
-						  $$ = searchTopLevel( SYM_METHOD, $1);
-					 }  
-	| IDENTIF  error separator {yyerror( "Sintax error on method call" ); yyerrok;}
+		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); }  
+	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
 	;
 
 
@@ -235,7 +229,7 @@ arguments :
 	 method_call_argument more_arguments 
 							{ 
 								if(currentMethodCall != NULL){
-								  	int result = checkMethodCall(currentMethodCall, $1, nArguments - $2);
+								  	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments - $2);
 									if(result == 0){
 										// Valid argument, count it.
 										$$ = $2 + 1;
@@ -247,7 +241,7 @@ arguments :
 							}		 
 	| method_call_argument  {
 								if(currentMethodCall != NULL){	
-								 	int result = checkMethodCall(currentMethodCall, $1, nArguments);
+								 	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments);
 									if(result == 0){
 										// Valid argument, count it.
 										$$ = nArguments;
@@ -274,7 +268,7 @@ more_arguments :
 	',' method_call_argument {  
 								if(currentMethodCall != NULL)
 								{
-									int result = checkMethodCall(currentMethodCall, $2, nArguments);
+									int result = checkMethodCallArguments(currentMethodCall, $2, nArguments);
 									if(result == 0){
 										$$ = 1;
 									}else{
@@ -286,7 +280,7 @@ more_arguments :
 			{ 
 				if(currentMethodCall != NULL)
 				{
-				  	int result = checkMethodCall(currentMethodCall, $2, nArguments - $3);
+				  	int result = checkMethodCallArguments(currentMethodCall, $2, nArguments - $3);
 					if(result == 0){
 						$$ = $3 + 1;
 					}else{
@@ -303,8 +297,8 @@ block_call :
 	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
 		method_code
 	end_block separator { goInScope($<method>7); }
-	| IDENTIF EACH error END separator {yyerror( "Sintax error on each definition" ); yyerrok;}
-	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on each definition" ); yyerrok;}
+	| IDENTIF EACH error END separator {yyerror( "Sintax error on %s.each definition", $1 ); yyerrok;}
+	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}
 	;			 
 
 start_block:
@@ -368,7 +362,7 @@ else_part :
 // side match.
 assignment : 
 	left_side right_side separator { $$ = checkAssignement( $1, $2 ); }
-	| left_side error separator {yyerror( "Sintax error on local variable assignment" ); yyerrok;}
+	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
 
 // Here we check if variable already exists. If not, it is added to symbols
@@ -492,15 +486,16 @@ string_struct :
   
 int main(int argc, char** argv) {
 
-	int i = 1;
+	int i = 1;	
 	compilationState = 0;
 	initializeSymTable();
 	struct Method *mainScope = getCurrentScope();
 
+	//Filling symbol table
 	if (argc>1)yyin=fopen(argv[1],"r");
 	yyparse();	
 
-  	while(getChange() && i < 6)
+  	while(getChange() && i < 20)
   	{ 	
   		resetChange();
   		numlin = 1;
@@ -516,6 +511,7 @@ int main(int argc, char** argv) {
 		i++;		
 	}
 	
+	//Symbol table is filled, go once more to check errors
 	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
 	
         fclose (yyin);
@@ -524,18 +520,19 @@ int main(int argc, char** argv) {
         // Starting code analisis
 	compilationState = 1;
 
-	yyin=fopen(argv[1],"r"); //Source file
-
-	goInScope(mainScope);	
-
-	yyparse();
-	finishFlex();
-
+	errors = 0;
+	numlin = 1;
 	fclose (yyin);
-
+	yyin=fopen(argv[1],"r");
+	
+	goInScope(mainScope);
+	
+	yyparse();
+	
 	if (argc>2)showSymTable();
 
 	
+<<<<<<< HEAD
 	// Starting code generation
 	compilationState = 2;
 
@@ -557,15 +554,38 @@ int main(int argc, char** argv) {
 	fclose (yyout);
 
 	// We free symbol table
+=======
+	//If no errors then go to code generation
+	if(!errors){
+		printf("Generando codigo\n");
+		numlin = 1;
+		fclose (yyin);
+		yyin=fopen(argv[1],"r");
+	
+		goInScope(mainScope);
+	
+		yyparse();	
+	} 
+	
+>>>>>>> master
 	freeSymbTable();
 }
 
-void yyerror(char* mens) {
-	//Syntax error alone gives no information, ignore it
-	if(strcmp(mens,"syntax error") != 0 && compilationState == 1){ 
-		//We printf numlin - 1 because lexical analizer is ahead one or more lines 
-		printf("---------Error on line %i: %s\n",numlin - 1,mens);
-	}	
+void yyerror(char* fmt, ...)
+{
+	AN
+		errors = 1;
+		va_list args;
+		//Syntax error alone gives no information, ignore it
+		if(strcmp(fmt,"syntax error") != 0){
+			//We printf numlin - 1 because lexical analizer is ahead one or more lines 
+			printf("---------Error on line %i: ",numlin - 1);       
+			va_start(args,fmt);	 
+			vprintf(fmt,args);
+			va_end(args);
+			printf("\n");
+		}	
+	EAN
 }
 //EL COMENTARIO DEFINITIVO
 

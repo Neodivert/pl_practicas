@@ -6,6 +6,20 @@
 
 static const int MAX_SIZE = 30;
 
+extern int compilationState; 
+
+#define FS if( compilationState == 0 ){
+#define EFS }
+
+#define AN if( compilationState == 1 ){
+#define EAN }
+
+#define GC if( compilationState == 2 ){
+#define EGC }
+
+//0 -> Creating and filling Symbol Table
+//1 -> Doing code analisis
+//2 -> Generating code
 
 /*                                   Constants                                */
 /******************************************************************************/

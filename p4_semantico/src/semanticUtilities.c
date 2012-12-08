@@ -18,17 +18,7 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 		return s1;
 	}else{
 		// s1 and s2 are either, unlike types, or both different than integer and float
-		// Generate error message
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: ");
-		strcat(message, s1->name);
-		strcat(message, " ");
-		strcat(message, op);
-		strcat(message, " ");
-		strcat(message, s2->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: %s %s %s is not permited", s1->name, op, s2->name);
 		return NULL;
 	}
 }	
@@ -41,7 +31,7 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
-		return NULL; 
+		return NULL;
 	}		
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
@@ -51,16 +41,7 @@ Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	}
 	else
 	{
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: ");
-		strcat(message, s1->name);
-		strcat(message, " ");
-		strcat(message, op);
-		strcat(message, " ");
-		strcat(message, s2->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: %s %s %s is not permited", s1->name, op, s2->name);
 		return NULL;
 	}
 	//Relational expression returns a boolean value
@@ -84,16 +65,7 @@ Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	}
 	else
 	{
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: ");
-		strcat(message, s1->name);
-		strcat(message, " ");
-		strcat(message, op);
-		strcat(message, " ");
-		strcat(message, s2->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: %s %s %s is not permited", s1->name, op, s2->name);
 		return NULL;
 	}
 }
@@ -116,12 +88,7 @@ Symbol* checkNotExpression(Symbol* s){
 	}
 	else
 	{
-		char message[50];
-		message[0] = '\0';
-		strcat(message, "Type error: not applied on ");
-		strcat(message, s->name);
-		strcat(message, " is not permitted");
-		yyerror((char *)message);
+		yyerror("Type error: not applied on %s is not permitted", s->name);
 		return NULL;
 	} 
 }
@@ -175,27 +142,31 @@ Symbol* checkSameType(Symbol* s1, Symbol* s2){
 // - points to s if s is a TYPE_INTEGER.
 // - points to null otherwise (in this case, an error message is shown too.
 // This function is used to verify that an array index is actually a integer.
-// (*) If s is NULL, this function simply returns NULL.
 struct SymbolInfo* checkIsInteger(Symbol* s)
 {
 	int t;
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
 	if( s == NULL || s->info == NULL){
-		return NULL; 	
+		info->symbol = NULL;
+		info->info = TYPE_ARRAY; 	
+		info->name = NULL;	
+		return info;
 	}	
 	t = ((struct Type *)(s->info))->id;
-	//Operand is boolean.
+	//Operand is integer.
 	if(t == TYPE_INTEGER)
 	{
 		info->symbol = s;
 		info->info = TYPE_ARRAY; 
+		info->name = NULL;
 		return info;
 	}	
 	else
 	{	
-		yyerror("Type error: expression between [] must be integer");
+		yyerror("Type error: expression between [] must be integer but is %s", s->name);
 		info->symbol = NULL;
-		info->info = TYPE_ARRAY; 		
+		info->info = TYPE_ARRAY; 
+		info->name = NULL;		
 		return info;
 	}	
 }	
@@ -258,7 +229,7 @@ Symbol* checkArray(Symbol* type, int n)
 // corresponding argument in method definition (*). Otherwise return 1.
 // (*) If the argument does not have a known type we asume the method call is 
 // right and assign the type of the value to the argument.
-int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
+int checkMethodCallArguments(struct Symbol *method, struct Symbol *type, int argument)
 {
 	struct Symbol* argumentSym = searchNArgument(method, argument);
 	struct Symbol* argumentType;
@@ -286,15 +257,32 @@ int checkMethodCall(struct Symbol *method, struct Symbol *type, int argument)
 			//the method call is right and assign the type of the
 			//value to the argument.
 			((struct Variable*)(argumentSym->info))->type = (void *)type;
-			setChanged();
+			//If type != NULL then there was a real change
+			if(type){
+				setChanged();
+			}	
 			return 0;	
 		}
 	}
 	else
 	{
-	return 1;
+		return 1;
 	}
 }	  
+
+struct Symbol* checkMethodCall(cstr name, int methodArguments, int currentNArguments, Symbol *method)
+{
+	AN
+		if(method){
+			if(currentNArguments != methodArguments){
+				yyerror("Type error: Wrong amount or undefined type arguments in method call %s", name);
+			}	
+		}else{
+			yyerror("Type error: Method %s is not defined", name);
+		}
+	EAN  
+	return searchTopLevel( SYM_METHOD, name);
+}
 
 // Check if method name is already in symbols' table (if not, insert it).
 // Return a MethodInfo struct, whose "scope" field points to the current 
@@ -399,7 +387,7 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 			}
 			else
 			{
-				yyerror("Type error: block can only be used with array variables");
+				yyerror("Type error: variable %s ,block can only be used with array variables", name);
 			}	
 		}
 	}
@@ -454,7 +442,7 @@ struct Symbol* checkClassDefinitonPost(const char * const className, int nVariab
 			classInfo->nElements = nVariables;
 			setChanged();
 		}else{
-			yyerror("Type error: Classess must have at least one class variable");
+			yyerror("Type error: Class %s must have at least one class variable", className);
 		}				
 	}	
 	return NULL;
@@ -518,7 +506,6 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	struct Symbol* left = left_->symbol;
 	int info = left_->info;
 	struct Symbol* variableType = NULL;
-	
 	switch(isVariable(left))
 	{
 	case 0: //It is a variable with a known type
@@ -528,26 +515,33 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 			if( info == SYM_CLASS_VARIABLE){
 				left = getClassVar( left , left_->name);
 			}
-			variableType = ((struct Variable*)(left->info))->type;
-		}		
+			if(left && left->info){
+				variableType = ((struct Variable*)(left->info))->type;
+			}else{
+				//Variable is class type, but class or attribute does not exists
+				variableType = NULL;
+			}	
+		}	
 		if(checkSameType( variableType, right) != NULL)
 		{
 			//Left side and right side are the same type
 		}else
 		{
-			//If right = NULL right side was wrong/unknown and that was already warned
+			//If right = NULL, right side was wrong/unknown and that was already warned
 			if(right != NULL) 
 			{
-				char message[50];
-				message[0] = '\0';
-				strcat(message, "Type error: with variable ");
-				strcat(message, left->name);
-				yyerror((char *)message);
+				if(variableType){
+					yyerror("Type error: variable %s is %s but left side is %s", left->name, variableType->name, right->name);
+				}else{
+					yyerror("Type error: variable %s is missused", left_->symbol->name);
+				}	
 			}
-		}										
+		}									
 		break;
 	case 1: //It is a variable without a known type
-		if(info != SYM_CLASS_VARIABLE){
+		//If the variable was used with [] or . do not insert it yet
+		//since its type is complex
+		if(info != SYM_CLASS_VARIABLE && info != TYPE_ARRAY){
 			if(searchVariable(left->symType, left->name) == NULL)
 			{ 
 				//Variable is not in symbolTable, insert it
@@ -597,6 +591,10 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 						setChanged();	
 					}	
 				
+				}else{
+					AN
+						yyerror("Type Error: Could not stablish variable %s type", left->name);
+					EAN
 				}
 			}
 		}

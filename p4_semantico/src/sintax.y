@@ -349,7 +349,7 @@ after_if :
 	;
 	
 else_part : 
-	ELSE {if(compilationState==2)separator {$<int>$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $<int>$, $<int>-1);}}
+	ELSE separator {if(compilationState==2){$<int>$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $<int>$, $<int>-1);}}
 	method_code {fprintf("L %d:\n",$<int>2);}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
 	| {$<int>$ = 0;}

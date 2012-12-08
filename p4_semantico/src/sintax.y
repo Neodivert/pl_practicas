@@ -314,20 +314,20 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {if(CompilationState){$$=ne(); fprintf(yyout,"L %d:\n", $$);}}
-	expression DO {if(CompilationState){$$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$3,$$);}}
+	WHILE {if(CompilationState){$<int>$=ne(); fprintf(yyout,"L %d:\n", $<int>$);}}
+	expression DO {if(CompilationState){$<int>$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<int>3,$<int>$);}}
 	separator
-		method_code {fprinf(yyout,"\tGT(%d);\nL %d:\n",$2,$5);}
-	END separator {checkIsBoolean($2);}
+		method_code {fprinf(yyout,"\tGT(%d);\nL %d:\n",$<int>2,$<int>5);}
+	END separator {checkIsBoolean($<int>2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 
-	IF expression after_if {if(CompilationState){$$ = ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$2,$$);}}
+	IF expression after_if {if(CompilationState){$<int>$ = ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$2,$<int>$);}}
 		method_code //{$$ = ne(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
-		else_part {if(CompilationState==2){if($6!=0){fprintf("L %d:\n",$4)}}}//El else_part deberá crear su propio código
+		else_part {if(CompilationState==2){if($<int>6!=0){fprintf("L %d:\n",$<int>4)}}}//El else_part deberá crear su propio código
 	END separator
 				{checkIsBoolean($2);}
 	| IF expression after_if
@@ -349,10 +349,10 @@ after_if :
 	;
 	
 else_part : 
-	ELSE {if(CompilationState==2){$$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $$, $-1);}}
-	separator method_code {fprintf("L %d:\n",$2)}
+	ELSE {if(CompilationState==2){$<int>$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $<int>$, $<int>-1);}}
+	separator method_code {fprintf("L %d:\n",$<int>2);}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
-	| {$$ = 0;}
+	| {$<int>$ = 0;}
 	;	
 
 // checkAssignement search left_side in the symbols table.

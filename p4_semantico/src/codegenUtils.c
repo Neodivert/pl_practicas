@@ -85,16 +85,16 @@ int free_reg(int i, int type)
     if (i > 7) return -2;
     if ((type != 0) && (type != 1)) return -3;
 
-    if ((type == 0 && (NRegs<8))
+    if ((type == 0) && (NRegs<8))
 	{
         Registers[i]=0;
 		NRegs--;
     }
 
-	else if ((type == 1 && (NRegs<7))
+	else if ((type == 1) && (NRegs<7))
 	{
 
-    	if ((i % 2) == 1)) return -4;
+    	if ((i % 2) == 1) return -4;
 
     	Registers[i]=0;
         Registers[i+1]=0;

@@ -317,7 +317,7 @@ loop :
 	WHILE {if(compilationState){$<integer>$=ne(); fprintf(yyout,"L %d:\n", $<integer>$);}}
 	expression DO {if(compilationState){$<integer>$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);}}
 	separator
-		method_code {fprinf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5);}
+		method_code {fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5);}
 	END separator {checkIsBoolean($<symbol>2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;

@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
-#include "codegenUtils.h"
+#include "codeGenUtils.h"
 
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */

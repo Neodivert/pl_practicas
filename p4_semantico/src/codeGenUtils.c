@@ -1,4 +1,4 @@
-#include "codegenUtils.h"
+#include "codeGenUtils.h"
 
 /*This file intends to keep the implementation of the functions and procedures
 needed for the code generation part*/
@@ -7,6 +7,8 @@ needed for the code generation part*/
 int Registers[8] = {0,0,0,0,0,0,0,0};
 int NRegs = 8;
 int NEtiquetas = 0;
+unsigned int topDirMem = Z;
+
 /**************************************************************************/
 /*Registers a new label and returns the identifier*/
 /**************************************************************************/

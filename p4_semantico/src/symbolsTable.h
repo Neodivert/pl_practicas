@@ -8,8 +8,8 @@ static const int MAX_SIZE = 30;
 
 extern int compilationState; 
 
-#define FS if( compilationState == 0 ){
-#define EFS }
+//#define FS if( compilationState == 0 ){
+//#define EFS }
 
 #define AN if( compilationState == 1 ){
 #define EAN }

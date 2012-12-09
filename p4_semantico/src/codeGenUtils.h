@@ -1,6 +1,6 @@
 /*This file intends to keep the defeinitions of the procedures and functions that will used in
 the code generation. Also the global variables and data structures*/
-
+#include "Q.h"
 /*gc creates the code line that the code generation part passes*/
 //gc(char *str);
 

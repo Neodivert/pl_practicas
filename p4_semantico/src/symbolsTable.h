@@ -82,6 +82,7 @@ struct ClassType{
 
 struct Variable {
    	Symbol* type;
+	int address;
 };
 
 struct Method {

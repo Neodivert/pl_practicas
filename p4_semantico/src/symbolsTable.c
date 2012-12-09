@@ -102,6 +102,7 @@ Symbol* createVariable( int symType, cstr name)
 	Symbol* variableStruct = createSymbol( symType, name );
 	variableStruct->info = (void *)malloc( sizeof( struct Variable ) );
 	((struct Variable *)(variableStruct->info))->type = NULL;
+	((struct Variable *)(variableStruct->info))->address = 0;
 	return variableStruct;
 }
 

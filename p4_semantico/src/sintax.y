@@ -4,13 +4,13 @@
 #include <stdarg.h>
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
-#include "codegenutils.h"
+#include "codegenUtils.h"
 
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
 //extern int yylex();
 int yydebug=1; /* modo debug si -t */
-int yyout; /*fichero compilado*/
+FILE *yyout; /*fichero compilado*/
 
 extern int compilationState; 
 int errors = 0;
@@ -314,20 +314,20 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {if(CompilationState){$$=ne(); fprintf(yyout,"L %d:\n", $$);}}
-	expression DO {if(CompilationState){$$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$3,$$);}}
+	WHILE {if(compilationState){$<integer>$=ne(); fprintf(yyout,"L %d:\n", $<integer>$);}}
+	expression DO {if(compilationState){$<integer>$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);}}
 	separator
-		method_code {fprinf(yyout,"\tGT(%d);\nL %d:\n",$2,$5);}
-	END separator {checkIsBoolean($2);}
+		method_code {fprinf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5);}
+	END separator {checkIsBoolean($<symbol>2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 
-	IF expression after_if {if(CompilationState){$$ = ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$2,$$);}}
+	IF expression after_if {if(compilationState){$<integer>$ = ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);}}
 		method_code //{$$ = ne(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
-		else_part {if(CompilationState==2){if($6!=0){fprintf("L %d:\n",$4)}}}//El else_part deberá crear su propio código
+		else_part {if(compilationState==2){if($<integer>6!=0){fprintf(yyout,"L %d:\n",$<integer>4);}};}//El else_part deberá crear su propio código
 	END separator
 				{checkIsBoolean($2);}
 	| IF expression after_if
@@ -349,10 +349,10 @@ after_if :
 	;
 	
 else_part : 
-	ELSE {if(CompilationState==2){$$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $$, $-1);}}
-	separator method_code {fprintf("L %d:\n",$2)}
+	ELSE separator {if(compilationState==2){$<integer>$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);}}
+	method_code {fprintf(yyout,"L %d:\n",$<integer>2);}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
-	| {$$ = 0;}
+	| {$<integer>$ = 0;}
 	;	
 
 // checkAssignement search left_side in the symbols table.

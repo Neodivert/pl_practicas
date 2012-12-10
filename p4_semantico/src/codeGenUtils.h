@@ -21,9 +21,9 @@ int freeRegister(int i, int type);
 int variableCodeGeneration;
 
 /*Generates code for variable storage*/
-void getAllGlobs();
+void getAllGlobals();
 
 /*Returns the actual address for storage in memory*/
 /*Also asigns it to the corresponding field in the symbols table*/
-unsigned int retDir(cstr id);
+unsigned int returnAddress(cstr id);
 

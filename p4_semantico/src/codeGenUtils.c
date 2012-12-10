@@ -7,7 +7,7 @@ needed for the code generation part*/
 int registers[8] = {0,0,0,0,0,0,0,0};
 int nRegisters = 8;
 int nLabels = 0;
-unsigned int topDirMem = Z;
+unsigned int topAddress = Z;
 
 /**************************************************************************/
 /*registers a new label and returns the identifier			  */
@@ -116,14 +116,19 @@ int variableCodeGeneration;
 /**************************************************************************/
 /*Searchs all the global variables
 /**************************************************************************/
-void getAllGlobs()
+
+void getAllGlobals()
 {
-	struct Symbol* currentG = NULL;
-	do
+	struct Variable* currentGlobal = NULL;
+	currentGlobal = nextGlobalVariablePointer();
+	int size = ((struct Type*)(currentGlobal->type->info))->size;
+	while(currentGlobal!=NULL)
 	{
-		currentG = nextGlobVarPtr();
+		currentGlobal->address = topAddress;
+		topAddress = topAddress - size;		
+		currentGlobal = nextGlobalVariablePointer();
+		size = ((struct Type*)(currentGlobal->type->info))->size;			
 	}
-	while()
 }
 
 
@@ -132,10 +137,10 @@ void getAllGlobs()
 /*Also asigns it to the corresponding field in the symbols table*/
 /**************************************************************************/
 
-unsigned int retDir(int symType,cstr id)
+unsigned int returnAddress(int symbolType,cstr id)
 {
-	searchVariable(symType, id);
-	return topDirMem;
+	searchVariable(symbolType, id);
+	return topAddress;
 }
 
 

@@ -23,6 +23,8 @@ static Symbol* mainMethodNext = NULL;
 static Symbol* mainMethod = NULL;
 
 //Pointer for method tracking in the initial registration of global variables
+struct Symbol* currentGlobalVariable = NULL;
+
 static char change = 0;
 
 extern int compilationState;
@@ -385,6 +387,24 @@ Symbol* searchNArgument(Symbol *method, int n)
 	return argument;
 }
 
+//Searchs for the next Global Variable record in the current global variable registration
+//without knowing the name
+struct Variable* nextGlobalVariablePointer()
+{
+	struct Variable* aux = NULL;
+	while (currentGlobalVariable != NULL)
+	{
+		if(currentGlobalVariable->symType == SYM_GLOBAL)
+		{
+			aux = currentGlobalVariable;
+			currentGlobalVariable = currentGlobalVariable->next;
+			return ((struct Variable*)(aux->info));
+		}				
+		currentGlobalVariable = currentGlobalVariable->next;		
+	}
+	return NULL;
+}
+
 /*                       4. Symbols table management                          */
 
 // Insert a "main method" and the basic methods (I/O) and types (integer, 
@@ -413,6 +433,9 @@ void initializeSymTable()
 		
 	method = searchTopLevel(SYM_METHOD, "getc");
 	((struct Method*)(method->info))->returnType = searchType(TYPE_CHAR);		
+
+	currentGlobalVariable = mainMethodNext;	
+
 }
 
 // Auxiliar function. Show symbols from sym, and tabulate them according to 

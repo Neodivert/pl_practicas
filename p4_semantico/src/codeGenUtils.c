@@ -106,8 +106,61 @@ int freeRegister(int i, int type)
     return 0;
 }
 
+
 /**************************************************************************/
 /*Code generation for variables						  */
 /**************************************************************************/
 int variableCodeGeneration;
+
+
+/**************************************************************************/
+/*Searchs all the global variables
+/**************************************************************************/
+void getAllGlobs()
+{
+	struct Symbol* currentG = NULL;
+	do
+	{
+		currentG = nextGlobVarPtr();
+	}
+	while()
+}
+
+
+/**************************************************************************/
+/*Returns the actual address for storage in memory*/
+/*Also asigns it to the corresponding field in the symbols table*/
+/**************************************************************************/
+
+unsigned int retDir(int symType,cstr id)
+{
+	searchVariable(symType, id);
+	return topDirMem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> Stashed changes
 

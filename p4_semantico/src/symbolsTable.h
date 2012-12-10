@@ -164,6 +164,11 @@ struct Symbol* searchTopLevel(int symType, const char* const name );
 // Search in symbols table for the n-th argument of method "method".
 Symbol* searchNArgument(Symbol *method, int n);
 
+//Searchs for the next Global Variable record in the current global variable registration
+//without knowing the name
+struct Symbol* nextGlobVarPtr();
+
+
 
 /*                           4. Symbols table management                      */
 

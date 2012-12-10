@@ -22,6 +22,7 @@ static Symbol* symTable = NULL;
 static Symbol* mainMethodNext = NULL;
 static Symbol* mainMethod = NULL;
 
+//Pointer for method tracking in the initial registration of global variables
 static char change = 0;
 
 extern int compilationState;

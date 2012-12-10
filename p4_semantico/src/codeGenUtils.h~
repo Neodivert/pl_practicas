@@ -17,4 +17,4 @@ int freeRegisters();
 int freeRegister(int i, int type);
 
 /*Code generation for variables*/
-int variableCodeGeneration;
+variableCodeGeneration;

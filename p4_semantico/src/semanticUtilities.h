@@ -100,8 +100,8 @@ int checkArgumentDefinition(cstr name);
 /*                                 4. Blocks                                  */
 
 // Search in symbols' table for block "name" with argument "argName". If it is
-// not in the symbols' table, create it and insert it. This functions returns
-// and Method* that points to the current scope's (the block) symbol.
+// not in the symbols' table, create and insert it. This functions returns and
+// Method* that points to the current scope's (the block) symbol.
 struct Method * checkBlockDefinition(cstr name, cstr argName);
 
 // Generate a name for block whose name is "name" and argument is "argName".
@@ -109,9 +109,14 @@ char *createBlockName(cstr name, cstr argName);
 
 /*                                 5. Classes                                  */
 
+// Search class "className" in symbols' table. If not found, create and insert
+// it.
 struct Symbol* checkClassDefinitonPre(const char * const className, struct Symbol *currentClass);
 
+// Search class "className" in symbols' table. If found, set its number of 
+// arguments to "nVariables". If the class has no fields, call to yyerror.
 struct Symbol* checkClassDefinitonPost(const char * const className, int nVariables);
+
 
 int checkClassNew(struct Symbol *classSymbol, const char* const varName);
 

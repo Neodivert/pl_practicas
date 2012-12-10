@@ -403,16 +403,23 @@ char *createBlockName(cstr name, cstr argName)
 struct Symbol* checkClassDefinitonPre(const char * const className, struct Symbol *currentClass)
 {
 	int i = 0;
-	struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, className );
+	
+	// In newClass we'll return the class "className" (created or found here).
 	struct Symbol *newClass = currentClass;
+	
+	// Search class "className" in symbols' table.
+	struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, className );
+	
+	// If not found, create the class symbol and insert it in symbols¡ table.
 	if( classSymbol == NULL ){
 		classSymbol = createClassSymbol(className);
 		insertSymbol( classSymbol );
 	}
 	
+	// Get the class' info (number of elements and the pointers to them).
 	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
 	
-	//Elements were counted but no yet inserted			
+	// Elements were counted but no yet inserted			
 	if( classInfo->nElements != 0 && classInfo->elements == NULL)
 	{
 		newClass = classSymbol;
@@ -426,10 +433,13 @@ struct Symbol* checkClassDefinitonPre(const char * const className, struct Symbo
 
 struct Symbol* checkClassDefinitonPost(const char * const className, int nVariables)
 {
+	// Search class "className" and its info in symbols' table.
 	struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, className );
 	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+	
 	if( classInfo->nElements == 0 )
 	{
+		// Class' fields weren't counted yet. Let's count them.
 		if( nVariables != 0 ){
 			classInfo->nElements = nVariables;
 			setChanged();
@@ -475,6 +485,8 @@ int createClassVar( const char* const name, const char* const varName, struct Sy
 	insertVariable( classVar, type );					
 }
 
+
+// Create a instance "varName" from class' symbol "classSymbol"
 int checkClassNew(struct Symbol *classSymbol, const char* const varName)
 {
 	int i = 0;

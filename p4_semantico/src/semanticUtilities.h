@@ -15,40 +15,50 @@ struct MethodInfo
 
 /*                                  1. Expressions                            */
 
-// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. If 
-// previous condition is satisfied, return s1. Otherwise, generate an error 
-// message (using op) and return NULL.
-// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. 
+// Return value:
+//	s1 - if s1 and s2 are both INTEGER or FLOAT.
+// 	NULL - if s1 and s2 are different types (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op);
 
-// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
-// previous condition is satisfied, search for boolean type in symbols' table
-// and return it. Otherwise, generate an error message (using op) and return 
-// NULL. 
-// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. 
+// Return value:
+// boolean type symbol - if s1 and s2 are both INTEGER or FLOAT.
+// 	NULL - if s1 and s2 are different types (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op);
 
-// Check if subexpressions types s1 and s2 are both BOOLEAN. If previous 
-// condition is satisfied, return s1. Otherwise, generate an error message 
-// (using op) and return NULL.
-// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+// Check if subexpressions types s1 and s2 are both BOOLEAN.
+// Return value:
+//	s1 - if s1 and s2 are both BOOLEAN.
+// 	NULL - if s1 and s2 are different types (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op);
 
-// Check if expression's type s is TYPE_BOOLEAN (so its allowed in a NOT 
-// expression).
-// If s is of type TYPE_BOOLEAN, return NULL. Otherwise show an error message
-// and return NULL.
-// (*) If s is NULL, this function simply returns NULL.
+// Check if expression's type s is TYPE_BOOLEAN (so its allowed in a NOT expr.)
+// Return value:
+//	s - if s is TYPE_BOOLEAN
+//	NULL - otherwise (*)
+// (*) If s is non-NULL, this function also generates an error message.
 Symbol* checkNotExpression(Symbol* s);
 
-// Check if type s is an boolean. If previous  condition is satisfied, return s.
-// Otherwise, generate an error message and return NULL (*).
-// (*) If s is NULL, this function simply returns NULL.
+// Check if type s is an boolean. 
+// Return value:
+//	s - if s is an boolean.
+//	NULL - otherwise.
+// (*) If s is non-NULL, this function also generates an error message.
 Symbol* checkIsBoolean(Symbol* s);
 
-// Return s1 if both subexpressions types s1 and s2 are of the same time.
-// Otherwise return NULL.
-// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+// Check if both subexpressions types s1 and s2 are equal.
+// Return value:
+//	s1 - if s1 and s2 are the same type.
+// 	NULL - otherwise. (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkSameType(Symbol* s1, Symbol* s2);
 
 
@@ -111,29 +121,47 @@ char *createBlockName(cstr name, cstr argName);
 
 // Search class "className" in symbols' table. If not found, create and insert
 // it.
+// Return value: A pointer to the class' symbol.
 struct Symbol* checkClassDefinitonPre(const char * const className, struct Symbol *currentClass);
 
 // Search class "className" in symbols' table. If found, set its number of 
 // arguments to "nVariables". If the class has no fields, call to yyerror.
 struct Symbol* checkClassDefinitonPost(const char * const className, int nVariables);
 
-
+// Create a instance "varName" from class' symbol "classSymbol".
+// Return value: 1 if successful, 0 if error.
 int checkClassNew(struct Symbol *classSymbol, const char* const varName);
 
+// Make effective an assigment "varName = literal" in the definition of class 
+// "classSymbol" 
+// Other arguments:
+// 	type - type of literal.
+// 	pos - position of assignment "varName = literal" in class definition.
+// Return value: position of assigment + 1.
 int checkClassContentDefinition(struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos);
 
+// Create and return an auxiliar SymbolInfo struct for variable "name" with a
+// null symbol pointer, the symbol's type (SYM_CLASS_VARIABLE) and the var 
+// name. 
+struct SymbolInfo* checkClassAtribute( const char* const name );
 
 /*                                6. Others                                   */
 
 Symbol* checkAssignement(struct SymbolInfo* left_, Symbol *right);
 
+// Is s a variable?
+// Return value: an integer with value:
+//	0 - s is a variable with a known type.
+//	1 - s is a variable with a uknown type.
+// 	2 - s ins't a variable.
 int isVariable(Symbol *s);
 
+// Return a empty SymbolInfo struct (all its fields are NULL or 0).
 struct SymbolInfo* nullSymbolInfo();
 
 struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo );
 
-struct SymbolInfo* checkClassAtribute( const char* const name );
+
 
 // Check if a method call has the same number of arguments that the method
 // definition.

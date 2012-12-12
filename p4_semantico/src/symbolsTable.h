@@ -91,8 +91,6 @@ struct Method {
 	Symbol *returnType;
 };
 
-
-
 typedef const char* const cstr;
 
 struct SymbolInfo

@@ -2,10 +2,12 @@
 
 /*                                  1. Expressions                            */
 
-// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. If 
-// previous condition is satisfied, return s1. Otherwise, generate an error 
-// message (using op) and return NULL.
-// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. 
+// Return value:
+//	s1 - if s1 and s2 are both INTEGER or FLOAT.
+// 	NULL - if s1 and s2 are different types (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;		
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
@@ -23,11 +25,12 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 	}
 }	
 
-// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. If 
-// previous condition is satisfied, search for boolean type in symbols' table
-// and return it. Otherwise, generate an error message (using op) and return 
-// NULL. 
-// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. 
+// Return value:
+// boolean type symbol - if s1 and s2 are both INTEGER or FLOAT.
+// 	NULL - if s1 and s2 are different types (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
@@ -48,10 +51,12 @@ Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	
 }
 
-// Check if subexpressions types s1 and s2 are both BOOLEAN. If previous 
-// condition is satisfied, return s1. Otherwise, generate an error message 
-// (using op) and return NULL.
-// (*) If s1 and/or s2 are NULL, this function simply returns NULL.
+// Check if subexpressions types s1 and s2 are both BOOLEAN.
+// Return value:
+//	s1 - if s1 and s2 are both BOOLEAN.
+// 	NULL - if s1 and s2 are different types (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
@@ -70,11 +75,11 @@ Symbol* checkLogicalExpression(Symbol* s1, Symbol* s2, char *op){
 	}
 }
 
-// Check if expression's type s is TYPE_BOOLEAN (so its allowed in a NOT 
-// expression).
-// If s is of type TYPE_BOOLEAN, return NULL. Otherwise show an error message
-// and return NULL.
-// (*) If s is NULL, this function simply returns NULL.
+// Check if expression's type s is TYPE_BOOLEAN (so its allowed in a NOT expr.)
+// Return value:
+//	s - if s is TYPE_BOOLEAN
+//	NULL - otherwise (*)
+// (*) If s is non-NULL, this function also generates an error message.
 Symbol* checkNotExpression(Symbol* s){
 	int t;
 	if( s == NULL || s->info == NULL ){
@@ -93,9 +98,11 @@ Symbol* checkNotExpression(Symbol* s){
 	} 
 }
 
-// Check if type s is an boolean. If previous  condition is satisfied, return s.
-// Otherwise, generate an error message and return NULL (*).
-// (*) If s is NULL, this function simply returns NULL.
+// Check if type s is an boolean. 
+// Return value:
+//	s - if s is an boolean.
+//	NULL - otherwise.
+// (*) If s is non-NULL, this function also generates an error message.
 Symbol* checkIsBoolean(Symbol* s){
 	int t;
 	if( s == NULL || s->info == NULL ){
@@ -114,8 +121,12 @@ Symbol* checkIsBoolean(Symbol* s){
 	}	
 }
 
-// Return s1 if both subexpressions types s1 and s2 are of the same time.
-// Otherwise return NULL.
+// Check if both subexpressions types s1 and s2 are equal.
+// Return value:
+//	s1 - if s1 and s2 are the same type.
+// 	NULL - otherwise. (*)
+// (*) If s1 and s2 are both non-NULL, this function also generates an error 
+// message).
 Symbol* checkSameType(Symbol* s1, Symbol* s2){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
@@ -171,27 +182,7 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 	}	
 }	
 
-struct SymbolInfo* checkArrayContent(struct Symbol* type, struct SymbolInfo* arrayInfo )
-{
-	struct SymbolInfo* returnInfo = arrayInfo;
-	if( arrayInfo != NULL && arrayInfo->info != -1 && arrayInfo->symbol != NULL){
-		struct Symbol* otherType = checkSameType( type, arrayInfo->symbol);
-		if(otherType == NULL)
-		{
-			yyerror("All elements in array must be the same type");	
-			returnInfo->symbol = NULL;
-			returnInfo->info = -1;						
-		}else
-		{ 
-			returnInfo->symbol = arrayInfo->symbol;
-			returnInfo->info = returnInfo->info + 1;
-		}				
-	}else{	
-		returnInfo->symbol = NULL;
-		returnInfo->info = -1;		
-	}
-	return returnInfo;
-}
+
 
 // Search in the symbols' table for an type array of size "n" and whose elements
 // are of type "type".
@@ -449,7 +440,60 @@ struct Symbol* checkClassDefinitonPost(const char * const className, int nVariab
 	}	
 	return NULL;
 }
-	
+
+// Create a instance "varName" from class' symbol "classSymbol".
+// Return value: 1 if successful, 0 otherwise.
+int checkClassNew( struct Symbol *classSymbol, const char* const varName )
+{
+	int i = 0;
+
+	// Access to the class' info.
+	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+	struct Symbol * type = NULL;
+
+	// This loop create all the instance's variables and insert them in 
+	// symbols' table.
+	if(classInfo->elements != NULL && classInfo->elements[0]){
+		for(i = 0; i < classInfo->nElements; i++)
+		{
+			type = ((struct Variable*)(classInfo->elements[i]->info))->type;
+			createClassVar(varName, classInfo->elements[i]->name, type);
+		}
+		i = 1;
+	}	
+	return i;
+}
+
+// Make effective an assigment "varName = literal" in the definition of class 
+// "classSymbol" 
+// Other arguments:
+// 	type - type of literal.
+// 	pos - position of assignment "varName = literal" in class definition.
+// Return value: position of assigment + 1.
+int checkClassContentDefinition( struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos)
+{
+	if( classSymbol )
+	{
+		// Generate the variable full name.
+		char classVarName[50] = "";
+		strcat(classVarName, classSymbol->name);
+		strcat(classVarName, varName);
+
+		// Create and insert the variable in symbols' table.
+		struct Symbol* classVar = createVariable( SYM_CLASS_VARIABLE, classVarName );
+		insertVariable( classVar, type );
+
+		// Update de class' vector of pointers to its children with a pointer
+		// to the new var.
+		struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
+		classInfo->elements[pos] = classVar;				
+	}
+	return (pos + 1);	
+}
+
+// Create and return an auxiliar SymbolInfo struct for variable "name" with a
+// null symbol pointer, the symbol's type (SYM_CLASS_VARIABLE) and the var 
+// name.
 struct SymbolInfo* checkClassAtribute( const char* const name )
 {
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
@@ -461,21 +505,7 @@ struct SymbolInfo* checkClassAtribute( const char* const name )
 	return info;
 }
 
-int checkClassContentDefinition( struct Symbol *classSymbol, const char* const varName, struct Symbol *type, int pos)
-{
-	if( classSymbol )
-	{
-		char classVarName[50] = "";
-		strcat(classVarName, classSymbol->name);
-		strcat(classVarName, varName);
-		struct Symbol* classVar = createVariable( SYM_CLASS_VARIABLE, classVarName );
-		insertVariable( classVar, type );
-		struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
-		classInfo->elements[pos] = classVar;				
-	}
-	return (pos + 1);	
-}
-
+// Create a attribute "varName" for class "name" and with type "type".
 int createClassVar( const char* const name, const char* const varName, struct Symbol *type)
 {
 	char classVarName[50] = "";
@@ -485,23 +515,6 @@ int createClassVar( const char* const name, const char* const varName, struct Sy
 	insertVariable( classVar, type );					
 }
 
-
-// Create a instance "varName" from class' symbol "classSymbol"
-int checkClassNew(struct Symbol *classSymbol, const char* const varName)
-{
-	int i = 0;
-	struct ClassType *classInfo = ((struct Type*)(classSymbol->info))->classInfo;
-	struct Symbol * type = NULL;
-	if(classInfo->elements != NULL && classInfo->elements[0]){
-		for(i = 0; i < classInfo->nElements; i++)
-		{
-			type = ((struct Variable*)(classInfo->elements[i]->info))->type;
-			createClassVar(varName, classInfo->elements[i]->name, type);
-		}
-		i = 1;
-	}	
-	return i;
-}
 
 /*                                6. Others                                   */
 
@@ -611,7 +624,11 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 	return left;	
 }
 
-
+// Is s a variable?
+// Return value: an integer with value:
+//	0 - s is a variable with a known type.
+//	1 - s is a variable with a uknown type.
+// 	2 - s ins't a variable.
 int isVariable(Symbol *s)
 {
 	if(s == NULL || s->info == NULL)
@@ -632,11 +649,46 @@ int isVariable(Symbol *s)
 	}
 }
 
+// Return a empty SymbolInfo struct (all its fields are NULL or 0).
 struct SymbolInfo* nullSymbolInfo()
 {
 	struct SymbolInfo* info = malloc(sizeof(struct SymbolInfo));
 	info->symbol = NULL;
 	info->info = 0;
 	info->name = NULL;
-	
+}
+
+// Check if all the array content has the same type. "type" refers to the type 
+// of the current element (this function is invoked once for each element),
+// while "arrayInfo" informs about the type of the rest of elements in the 
+// array.
+// Return value : an auxiliar SymbolInfo with different info if the current 
+// element and the following elements in the array (from current element to the 
+// end) have the same type or not.
+// 	If all elements have the same type: 
+//		info = size of array (from current element to the end), 
+//		symbol = type of elements.
+//	If not:
+//		info = -1,
+//		symbol = NULL.
+struct SymbolInfo* checkArrayContent( struct Symbol* type, struct SymbolInfo* arrayInfo )
+{
+	struct SymbolInfo* returnInfo = arrayInfo;
+	if( arrayInfo != NULL && arrayInfo->info != -1 && arrayInfo->symbol != NULL){
+		struct Symbol* otherType = checkSameType( type, arrayInfo->symbol);
+		if(otherType == NULL)
+		{
+			yyerror("All elements in array must be the same type");	
+			returnInfo->symbol = NULL;
+			returnInfo->info = -1;						
+		}else
+		{ 
+			returnInfo->symbol = arrayInfo->symbol;
+			returnInfo->info = returnInfo->info + 1;
+		}				
+	}else{	
+		returnInfo->symbol = NULL;
+		returnInfo->info = -1;		
+	}
+	return returnInfo;
 }

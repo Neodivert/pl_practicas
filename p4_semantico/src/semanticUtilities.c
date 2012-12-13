@@ -592,7 +592,7 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 								insertVariable( left, right );
 							}	
 							// Create instance variables for the class
-							checkClassNew( left, right->name);
+							checkClassNew( right, left->name );
 						}else{
 							// Class was wrong or not yet fully defined
 							insertVariable( left, NULL );
@@ -624,7 +624,7 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 						{	
 							// Class is well defined
 							((struct Variable *)(left->info))->type = right;											
-							checkClassNew( right, left->name);
+							checkClassNew( right, left->name );
 							setChanged();
 						}
 					}else

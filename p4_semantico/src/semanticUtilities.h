@@ -147,6 +147,12 @@ struct SymbolInfo* checkClassAtribute( const char* const name );
 
 /*                                6. Others                                   */
 
+// Search variable in left_ in symbol table:
+// If found and without known type -> assing type
+// If found and with known type -> check right is the same type
+// If not found -> insert in symbol table with right's type    
+// It returns left_ struct symbol, in other words var = exp
+// it returns var struct symbol
 Symbol* checkAssignement(struct SymbolInfo* left_, Symbol *right);
 
 // Is s a variable?

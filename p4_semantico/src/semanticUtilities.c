@@ -518,97 +518,124 @@ int createClassVar( const char* const name, const char* const varName, struct Sy
 
 /*                                6. Others                                   */
 
+// Search variable in left_ in symbol table:
+// If found and without known type -> assing type
+// If found and with known type -> check right is the same type
+// If not found -> insert in symbol table with right's type 
 struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 {
 	struct Symbol* left = left_->symbol;
 	int info = left_->info;
 	struct Symbol* variableType = NULL;
+	// Check if left is a variable and it's type
 	switch(isVariable(left))
 	{
-	case 0: //It is a variable with a known type
+	case 0: // It is a variable with a known type, variable is in symbol table
 		if(info == TYPE_ARRAY){
+			// Left side is var[] so get type array's elements
 			variableType = getArrayType(left);
 		}else{
 			if( info == SYM_CLASS_VARIABLE){
+				// Left side is var.atribute so get atribute's type 
 				left = getClassVar( left , left_->name);
 			}
 			if(left && left->info){
+				// Variable is simple or atribute, get its type from  
+				// variable struct
 				variableType = ((struct Variable*)(left->info))->type;
 			}else{
-				//Variable is class type, but class or attribute does not exists
+				// Variable is class type, but class or attribute does not exists
 				variableType = NULL;
 			}	
 		}	
+		// We got variable type, now check is left type and right type are the same
 		if(checkSameType( variableType, right) != NULL)
 		{
-			//Left side and right side are the same type
+			// Left side and right side are the same type
 		}else
 		{
-			//If right = NULL, right side was wrong/unknown and that was already warned
+			// If right == NULL, right side was wrong/unknown and that was already warned
 			if(right != NULL) 
 			{
 				if(variableType){
+					// Trying to do a assignement with not compatible types
 					yyerror("Type error: variable %s is %s but left side is %s", left->name, variableType->name, right->name);
 				}else{
+					// Operator [] or . was used on a variable that has a simple
+					// type
 					yyerror("Type error: variable %s is missused", left_->symbol->name);
 				}	
 			}
 		}									
 		break;
-	case 1: //It is a variable without a known type
-		//If the variable was used with [] or . do not insert it yet
-		//since its type is complex
+	case 1: // It is a variable without a known type, variable might be in symbol table
+		// If the variable was used with [] or . do not insert it yet
+		// since its type is complex, and that case is not handle here 
 		if(info != SYM_CLASS_VARIABLE && info != TYPE_ARRAY){
+			// Search variable in symbol table
 			if(searchVariable(left->symType, left->name) == NULL)
 			{ 
-				//Variable is not in symbolTable, insert it
+				// Variable is not in symbolTable
+				// Check right's type
 				if(right != NULL && right->info != NULL)
 				{
 					int type = ((struct Type*)(right->info))->id;
 					if( type == TYPE_CLASS)
 					{
+						// Right's type is class, get class information
 						struct ClassType *classInfo = ((struct Type*)(right->info))->classInfo;
 						if(classInfo->elements != NULL && classInfo->elements[0])
 						{
+							// Class is well defined
 							if( ! searchVariable(SYM_VARIABLE, left->name)){
+								// If variable is not in symbol table then insert it
 								insertVariable( left, right );
 							}	
+							// Create instance variables for the class
 							checkClassNew( left, right->name);
 						}else{
+							// Class was wrong or not yet fully defined
 							insertVariable( left, NULL );
 						}
 					}else{
+						// Right's type is not class, so insert variable normally 
 						insertVariable( left, right );
 					}			
 				}
 				else
 				{
+					// Right's type is wrong/unknown, so insert variable with
+					// NULL type
 					insertVariable( left, NULL );
 				}
 			}	
 			else
 			{
-				//Variable is in symbolTable, set its type, right might be NULL
+				// Variable is in symbolTable, set its type, right might be NULL
 				if(right != NULL && right->info != NULL)
 				{
-			
+					// Right's type is known			
 					int type = ((struct Type*)(right->info))->id;
 					if( type == TYPE_CLASS)
 					{
+						// Right's type is class, get class information
 						struct ClassType *classInfo = ((struct Type*)(right->info))->classInfo;
 						if(classInfo->elements != NULL && classInfo->elements[0])
 						{	
+							// Class is well defined
 							((struct Variable *)(left->info))->type = right;											
 							checkClassNew( right, left->name);
 							setChanged();
 						}
 					}else
 					{
+						// Variable had an unknow type and now is known so set it
 						((struct Variable *)(left->info))->type = right;												
 						setChanged();	
-					}	
-				
+					}					
 				}else{
+					// Right is NULL, in analysis this means that we could
+					// not find out which type the variable must be  
 					AN
 						yyerror("Type Error: Could not stablish variable %s type", left->name);
 					EAN
@@ -616,11 +643,12 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 			}
 		}
 		break;
-	case 2: //It is not a variable
+	case 2: // It is not a variable
 		yyerror("Left side of expression is invalid\n");
 		break;		
 	}
 	freeSymbolInfo(left_);
+	// Return variable struct symbol
 	return left;	
 }
 

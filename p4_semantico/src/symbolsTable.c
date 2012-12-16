@@ -216,6 +216,7 @@ void insertMainPuts()
 	putsSymbol->next = NULL;
 	((struct Method *)(putsSymbol->info))->localSymbols = NULL;
 	((struct Method *)(putsSymbol->info))->lastSymbol = putsSymbol;
+	((struct Method *)(putsSymbol->info))->label = newLabel();
 	
 	lastDefinedMethod = ((struct Method *)(mainSymbol->info));		
 	mainMethod = mainSymbol;
@@ -239,6 +240,7 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 	((struct Method *)(symbol->info))->localSymbols = NULL;
 	((struct Method *)(symbol->info))->lastSymbol = symbol;
 	((struct Method *)(symbol->info))->returnType = NULL;
+	((struct Method *)(symbol->info))->label = newLabel();
 	
 	//lastDefinedMethod->lastSymbol = symbol;
 	// Insert method's symbol in table.
@@ -419,6 +421,10 @@ void initializeSymTable()
 	struct Method* scope = getCurrentScope();
 		insertMethodDefinition( "getc" );			
 	goInScope(scope);
+
+	scope = getCurrentScope();
+		insertMethodDefinition( "exit" );			
+	goInScope(scope);
 			
 	insertTypeDefinition( "integer", TYPE_INTEGER );
 	insertTypeDefinition( "float", TYPE_FLOAT );
@@ -533,11 +539,12 @@ void showSymTable_( Symbol* sym, int level )
 				}
 			break;
 			case SYM_METHOD:
+				printf("- label [%i]", ((struct Method*)(sym->info))->label);
 				aux = ((struct Method*)(sym->info))->returnType;
 				if(aux == NULL){
-					printf( " return type: [NULL]");
+					printf( " - return type: [NULL]]");
 				}else{
-					printf( " return type: [%s]", aux->name);
+					printf( " - return type: [%s]", aux->name);
 				}	
 			case SYM_BLOCK:
 				aux = ((struct Method*)(sym->info))->localSymbols;

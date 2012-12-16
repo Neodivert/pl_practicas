@@ -318,7 +318,7 @@ loop :
 	expression DO {if(compilationState){$<integer>$=newLabel(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);}}
 	separator
 		method_code {fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5);}
-	END separator {checkIsBoolean($<symbol>2);}
+	END separator {checkIsBoolean($3);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
@@ -574,7 +574,6 @@ int main(int argc, char** argv) {
 	fclose (yyin);
 
 	freeSymbTable();
-	printf("Sali");
 }
 
 void yyerror(char* fmt, ...)
@@ -593,5 +592,4 @@ void yyerror(char* fmt, ...)
 		}	
 	EAN
 }
-//EL COMENTARIO DEFINITIVO
 

@@ -8,8 +8,8 @@ static const int MAX_SIZE = 30;
 
 extern int compilationState; 
 
-#define FS if( compilationState == 0 ){
-#define EFS }
+//#define FS if( compilationState == 0 ){
+//#define EFS }
 
 #define AN if( compilationState == 1 ){
 #define EAN }
@@ -63,6 +63,7 @@ typedef struct Symbol Symbol;
 
 struct Type {
 	int id;
+	unsigned int size;
 	union 
 	{
 		struct ArrayType* arrayInfo; // Used if id == TYPE_ARRAY;
@@ -82,6 +83,7 @@ struct ClassType{
 
 struct Variable {
    	Symbol* type;
+	int address;
 };
 
 struct Method {
@@ -160,6 +162,11 @@ struct Symbol* searchTopLevel(int symType, const char* const name );
 
 // Search in symbols table for the n-th argument of method "method".
 Symbol* searchNArgument(Symbol *method, int n);
+
+//Searchs for the next Global Variable record in the current global variable registration
+//without knowing the name
+struct Variable* nextGlobalVariablePointer();
+
 
 
 /*                           4. Symbols table management                      */

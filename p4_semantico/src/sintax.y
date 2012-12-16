@@ -4,11 +4,13 @@
 #include <stdarg.h>
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
+#include "codeGenUtils.h"
 
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
 //extern int yylex();
 int yydebug=1; /* modo debug si -t */
+FILE *yyout; /*fichero compilado*/
 
 extern int compilationState; 
 int errors = 0;
@@ -312,18 +314,20 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE expression DO separator
-		method_code 
-	END separator {checkIsBoolean($2);}
+	WHILE {if(compilationState){$<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$);}}
+	expression DO {if(compilationState){$<integer>$=newLabel(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);}}
+	separator
+		method_code {fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5);}
+	END separator {checkIsBoolean($<symbol>2);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 
-	IF expression after_if
-		method_code
-		else_part	
+	IF expression after_if {if(compilationState){$<integer>$ = newLabel(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);}}
+		method_code //{$$ = newLabel(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
+		else_part {if(compilationState==2){if($<integer>6!=0){fprintf(yyout,"L %d:\n",$<integer>4);}};}//El else_part deberá crear su propio código
 	END separator
 				{checkIsBoolean($2);}
 	| IF expression after_if
@@ -345,9 +349,10 @@ after_if :
 	;
 	
 else_part : 
-	ELSE separator method_code
+	ELSE separator {if(compilationState==2){$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);}}
+	method_code {fprintf(yyout,"L %d:\n",$<integer>2);}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
-	|
+	| {$<integer>$ = 0;}
 	;	
 
 // checkAssignement search left_side in the symbols table.
@@ -508,7 +513,8 @@ int main(int argc, char** argv) {
 	
 	//Symbol table is filled, go once more to check errors
 	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
-	
+
+    // Starting code analysis
 	compilationState = 1;
 
 	errors = 0;
@@ -520,23 +526,34 @@ int main(int argc, char** argv) {
 	
 	yyparse();
 	
-	compilationState = 2;
-	
 	if (argc>2)showSymTable();
+
 	
-	//If no errors then go to code generation
-	if(!errors){
-		printf("Generando codigo\n");
+	if(!errors)
+	{
+		// Starting code generation
+		compilationState = 2;
 		numlin = 1;
-		fclose (yyin);
-		yyin=fopen(argv[1],"r");
-	
+		// Peparing name of compiled file
+		char aux[51];
+	    char *ptr;
+	    strcpy(aux, argv[1]);
+	    ptr= strtok(aux ,".");
+	    strcpy(aux, ptr);
+		strcat(aux, ".q.c");
+
+		yyin=fopen(argv[1],"r"); //Source file
+		yyout=fopen(aux,"w");	 //Compiled file
+
 		goInScope(mainScope);
-	
-		yyparse();	
-	} 
-	
+		yyparse();
+		
+		fclose (yyout);
+	}
+	fclose (yyin);
+
 	freeSymbTable();
+	printf("Sali");
 }
 
 void yyerror(char* fmt, ...)
@@ -555,4 +572,5 @@ void yyerror(char* fmt, ...)
 		}	
 	EAN
 }
+//EL COMENTARIO DEFINITIVO
 

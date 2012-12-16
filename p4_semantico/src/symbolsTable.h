@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 static const int MAX_SIZE = 30;
 
 extern int compilationState; 

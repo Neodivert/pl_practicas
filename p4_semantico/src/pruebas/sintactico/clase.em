@@ -3,8 +3,12 @@ class Punto
 	@y = 0
 end
 
-a = [1]
 p = Punto.new
-p.x = 2.1
-p.y = p.x + 1
+q = p
+#p.z = 4
+a.y = 2
 puts("p.x = #{p.x} p.y = #{p.y}")
+
+def foo(var1, var2)
+ a = 2
+end 

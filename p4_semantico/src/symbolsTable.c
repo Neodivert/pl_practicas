@@ -402,10 +402,7 @@ struct Variable* nextGlobalVariablePointer(int flag)
 		if(currentGlobalVariable->symType == SYM_GLOBAL)
 		{
 			aux = currentGlobalVariable;
-			if(flag)
-			{
-				currentGlobalVariable = currentGlobalVariable->next;
-			}
+			currentGlobalVariable = currentGlobalVariable->next;
 			return ((struct Variable*)(aux->info));
 		}				
 		currentGlobalVariable = currentGlobalVariable->next;	

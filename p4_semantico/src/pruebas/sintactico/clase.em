@@ -2,7 +2,7 @@ class Punto
 	@x = 0
 	@y = 0
 end
-
+$h = 4;
 p = Punto.new
 q = p
 #p.z = 4

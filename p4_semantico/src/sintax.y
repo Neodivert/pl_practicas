@@ -555,15 +555,11 @@ int main(int argc, char** argv) {
 			printf("ERROR AL CREAR EL ARCHIVO %s\n",aux);
 		}
 
-
 		fprintf(yyout,"#include \"Q.h\"\n\n");
 
 		fprintf(yyout,"BEGIN\n");
 
-		if(nextGlobalVariablePointer(0) != NULL)
-		{
-			fprintf(yyout,"STAT(0)\n");
-		}
+		getAllGlobals(yyout);
 
 		goInScope(mainScope);
 		yyparse();

@@ -239,6 +239,7 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 	((struct Method *)(symbol->info))->localSymbols = NULL;
 	((struct Method *)(symbol->info))->lastSymbol = symbol;
 	((struct Method *)(symbol->info))->returnType = NULL;
+	((struct Method *)(symbol->info))->label = 0;
 	
 	//lastDefinedMethod->lastSymbol = symbol;
 	// Insert method's symbol in table.
@@ -415,6 +416,10 @@ void initializeSymTable()
 			
 	struct Method* scope = getCurrentScope();
 		insertMethodDefinition( "getc" );			
+	goInScope(scope);
+
+	scope = getCurrentScope();
+		insertMethodDefinition( "exit" );			
 	goInScope(scope);
 			
 	insertTypeDefinition( "integer", TYPE_INTEGER );

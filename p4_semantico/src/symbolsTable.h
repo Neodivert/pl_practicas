@@ -91,6 +91,7 @@ struct Method {
 	Symbol *lastSymbol;
 	Symbol *localSymbols;
 	Symbol *returnType;
+	int label;
 };
 
 typedef const char* const cstr;

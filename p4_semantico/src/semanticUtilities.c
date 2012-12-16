@@ -404,7 +404,7 @@ struct Symbol* checkClassDefinitonPre(const char * const className, struct Symbo
 	// Search class "className" in symbols' table.
 	struct Symbol *classSymbol = searchTopLevel( SYM_TYPE, className );
 	
-	// If not found, create the class symbol and insert it in symbols¡ table.
+	// If not found, create the class symbol and insert it in symbols table.
 	if( classSymbol == NULL ){
 		classSymbol = createClassSymbol(className);
 		insertSymbol( classSymbol );
@@ -455,12 +455,13 @@ int checkClassNew( struct Symbol *classSymbol, const char* const varName )
 	struct Symbol * type = NULL;
 
 	// This loop create all the instance's variables and insert them in 
-	// symbols' table.
-	if(classInfo->elements != NULL && classInfo->elements[0]){
+	// symbols' table. If size != 0 this was already done, so do nothing
+	if(classInfo->elements != NULL && classInfo->elements[0] && !((struct Type*)(classSymbol->info))->size){
 		for(i = 0; i < classInfo->nElements; i++)
 		{
 			type = ((struct Variable*)(classInfo->elements[i]->info))->type;
 			createClassVar(varName, classInfo->elements[i]->name, type);
+			((struct Type*)(classSymbol->info))->size += ((struct Type*)(type->info))->size;
 		}
 		i = 1;
 	}	

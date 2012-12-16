@@ -166,6 +166,7 @@ Symbol* createArraySymbol( Symbol* type, unsigned int n )
 
 	struct Type* arrayType = ((struct Type*)(symbol->info));
 	arrayType->id = TYPE_ARRAY;
+	arrayType->size = n*((struct Type*)(type->info))->size;
 	arrayType->arrayInfo = malloc( sizeof( struct ArrayType ) );
 	arrayType->arrayInfo->type = type;
 	arrayType->arrayInfo->nElements = n;
@@ -179,6 +180,7 @@ Symbol* createClassSymbol( const char* const name )
 	symbol->info = (void *)malloc(sizeof(struct Type));
 	struct Type* type = (struct Type*)symbol->info;
 	type->id = TYPE_CLASS;
+	type->size = 0;
 	type->classInfo = malloc(sizeof(struct ClassType));
 	type->classInfo->nElements = 0;
 	type->classInfo->elements = NULL;
@@ -284,7 +286,7 @@ void insertBlockDefinition( cstr name, cstr argName  )
 }
 
 // Insert type with name "name" and id "typeId" in symbols table.
-void insertTypeDefinition( cstr name, int typeId )
+void insertTypeDefinition( cstr name, int typeId, int size )
 {	
 	
 	Symbol* symbol = createSymbol( SYM_TYPE, name );
@@ -292,6 +294,7 @@ void insertTypeDefinition( cstr name, int typeId )
 	symbol->info = (void *)malloc( sizeof( struct Type ) );
 	
 	((struct Type *)(symbol->info))->id = typeId;
+	((struct Type *)(symbol->info))->size = size;
 
 	insertSymbol( symbol );
 }
@@ -426,11 +429,11 @@ void initializeSymTable()
 		insertMethodDefinition( "exit" );			
 	goInScope(scope);
 			
-	insertTypeDefinition( "integer", TYPE_INTEGER );
-	insertTypeDefinition( "float", TYPE_FLOAT );
-	insertTypeDefinition( "string", TYPE_STRING );
-	insertTypeDefinition( "char", TYPE_CHAR );
-	insertTypeDefinition( "boolean", TYPE_BOOLEAN );
+	insertTypeDefinition( "integer", TYPE_INTEGER, 4 );
+	insertTypeDefinition( "float", TYPE_FLOAT, 4 );
+	insertTypeDefinition( "string", TYPE_STRING, 1 );
+	insertTypeDefinition( "char", TYPE_CHAR, 1 );
+	insertTypeDefinition( "boolean", TYPE_BOOLEAN, 1 );
 	
 	struct Symbol* method = searchTopLevel(SYM_METHOD, "puts");
 	scope = getCurrentScope();
@@ -507,6 +510,7 @@ void showSymTable_( Symbol* sym, int level )
 		struct ArrayType* arrayInfo;
 		switch( sym->symType ){
 			case SYM_TYPE:
+				printf(" - size:[%i]", ((struct Type*)(sym->info))->size);
 				if( ((struct Type*)(sym->info))->id == TYPE_ARRAY )
 				{
 					struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
@@ -533,10 +537,11 @@ void showSymTable_( Symbol* sym, int level )
 				aux = ((struct Variable*)(sym->info))->type;
 				printf( " - type: " );
 				if( aux ){
-					printf( "[%s]\n", aux->name );
+					printf( "[%s]", aux->name );
 				}else{
-					printf( "NULL\n" );
+					printf( "NULL" );
 				}
+				printf( " - address [%i]\n", ((struct Variable*)(sym->info))->address);
 			break;
 			case SYM_METHOD:
 				printf("- label [%i]", ((struct Method*)(sym->info))->label);
@@ -547,6 +552,7 @@ void showSymTable_( Symbol* sym, int level )
 					printf( " - return type: [%s]", aux->name);
 				}	
 			case SYM_BLOCK:
+				printf("- label [%i]", ((struct Method*)(sym->info))->label);
 				aux = ((struct Method*)(sym->info))->localSymbols;
 
 				printf( " - nArguments: [%i]", ((struct Method*)(sym->info))->nArguments );

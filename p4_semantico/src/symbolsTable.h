@@ -142,7 +142,7 @@ void insertMethodDefinition( cstr name  );
 void insertBlockDefinition( cstr name, cstr argName );
 
 // Insert type with name "name" and id "typeId" in symbols table.
-void insertTypeDefinition( cstr name, int typeId );
+void insertTypeDefinition( cstr name, int typeId, int size );
 
 // Insert variable "symbol" of type "type" in symbols table.
 void insertVariable( Symbol *symbol, Symbol *type );

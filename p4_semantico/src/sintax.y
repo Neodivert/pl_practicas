@@ -529,6 +529,7 @@ int main(int argc, char** argv) {
 	if (argc>2)showSymTable();
 
 	
+	
 	if(!errors)
 	{
 		// Starting code generation
@@ -541,13 +542,33 @@ int main(int argc, char** argv) {
 	    ptr= strtok(aux ,".");
 	    strcpy(aux, ptr);
 		strcat(aux, ".q.c");
+		
+		yyin=fopen(argv[1],"r");
+		if(yyin == NULL); //Source file
+		{
+			printf("ERROR AL ABRIR EL ARCHIVO %s\n",argv[1]);
+		}
+		
+		yyout=fopen(aux,"w");	 
+		if(yyout == NULL); //Compiled file
+		{
+			printf("ERROR AL CREAR EL ARCHIVO %s\n",aux);
+		}
 
-		yyin=fopen(argv[1],"r"); //Source file
-		yyout=fopen(aux,"w");	 //Compiled file
+
+		fprintf(yyout,"#include \"Q.h\"\n\n");
+
+		fprintf(yyout,"BEGIN\n");
+
+		if(nextGlobalVariablePointer(0) != NULL)
+		{
+			fprintf(yyout,"STAT(0)\n");
+		}
 
 		goInScope(mainScope);
 		yyparse();
 		
+		fprintf(yyout,"END\n");
 		fclose (yyout);
 	}
 	fclose (yyin);

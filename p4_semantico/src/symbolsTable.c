@@ -389,7 +389,7 @@ Symbol* searchNArgument(Symbol *method, int n)
 
 //Searchs for the next Global Variable record in the current global variable registration
 //without knowing the name
-struct Variable* nextGlobalVariablePointer()
+struct Variable* nextGlobalVariablePointer(int flag)
 {
 	struct Symbol* aux = NULL;
 	while (currentGlobalVariable != NULL)
@@ -397,10 +397,13 @@ struct Variable* nextGlobalVariablePointer()
 		if(currentGlobalVariable->symType == SYM_GLOBAL)
 		{
 			aux = currentGlobalVariable;
-			currentGlobalVariable = currentGlobalVariable->next;
+			if(flag)
+			{
+				currentGlobalVariable = currentGlobalVariable->next;
+			}
 			return ((struct Variable*)(aux->info));
 		}				
-		currentGlobalVariable = currentGlobalVariable->next;		
+		currentGlobalVariable = currentGlobalVariable->next;	
 	}
 	return NULL;
 }

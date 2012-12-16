@@ -120,13 +120,13 @@ int variableCodeGeneration;
 void getAllGlobals()
 {
 	struct Variable* currentGlobal = NULL;
-	currentGlobal = nextGlobalVariablePointer();
+	currentGlobal = nextGlobalVariablePointer(1);
 	int size = ((struct Type*)(currentGlobal->type->info))->size;
 	while(currentGlobal!=NULL)
 	{
 		currentGlobal->address = topAddress;
 		topAddress = topAddress - size;		
-		currentGlobal = nextGlobalVariablePointer();
+		currentGlobal = nextGlobalVariablePointer(1);
 		size = ((struct Type*)(currentGlobal->type->info))->size;			
 	}
 }

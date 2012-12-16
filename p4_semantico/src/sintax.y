@@ -314,8 +314,8 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {if(compilationState){$<integer>$=ne(); fprintf(yyout,"L %d:\n", $<integer>$);}}
-	expression DO {if(compilationState){$<integer>$=ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);}}
+	WHILE {if(compilationState){$<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$);}}
+	expression DO {if(compilationState){$<integer>$=newLabel(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);}}
 	separator
 		method_code {fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5);}
 	END separator {checkIsBoolean($<symbol>2);}
@@ -325,8 +325,8 @@ loop :
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 
-	IF expression after_if {if(compilationState){$<integer>$ = ne(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);}}
-		method_code //{$$ = ne(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
+	IF expression after_if {if(compilationState){$<integer>$ = newLabel(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);}}
+		method_code //{$$ = newLabel(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
 		else_part {if(compilationState==2){if($<integer>6!=0){fprintf(yyout,"L %d:\n",$<integer>4);}};}//El else_part deberá crear su propio código
 	END separator
 				{checkIsBoolean($2);}
@@ -349,7 +349,7 @@ after_if :
 	;
 	
 else_part : 
-	ELSE separator {if(compilationState==2){$<integer>$ = ne(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);}}
+	ELSE separator {if(compilationState==2){$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);}}
 	method_code {fprintf(yyout,"L %d:\n",$<integer>2);}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
 	| {$<integer>$ = 0;}
@@ -513,9 +513,6 @@ int main(int argc, char** argv) {
 	
 	//Symbol table is filled, go once more to check errors
 	if (argc>2)printf("\nSintax analyzer needed %d iterations\n", i);
-	
-    fclose (yyin);
-	numlin = 1;
 
     // Starting code analysis
 	compilationState = 1;
@@ -556,6 +553,7 @@ int main(int argc, char** argv) {
 	fclose (yyin);
 
 	freeSymbTable();
+	printf("Sali");
 }
 
 void yyerror(char* fmt, ...)

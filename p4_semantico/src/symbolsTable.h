@@ -63,6 +63,7 @@ typedef struct Symbol Symbol;
 
 struct Type {
 	int id;
+	unsigned int size;
 	union 
 	{
 		struct ArrayType* arrayInfo; // Used if id == TYPE_ARRAY;

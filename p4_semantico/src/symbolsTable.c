@@ -391,7 +391,7 @@ Symbol* searchNArgument(Symbol *method, int n)
 //without knowing the name
 struct Variable* nextGlobalVariablePointer()
 {
-	struct Variable* aux = NULL;
+	struct Symbol* aux = NULL;
 	while (currentGlobalVariable != NULL)
 	{
 		if(currentGlobalVariable->symType == SYM_GLOBAL)

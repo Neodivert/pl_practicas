@@ -25,5 +25,5 @@ void getAllGlobals();
 
 /*Returns the actual address for storage in memory*/
 /*Also asigns it to the corresponding field in the symbols table*/
-unsigned int returnAddress(cstr id);
+unsigned int returnAddress(int symbolType, cstr id);
 

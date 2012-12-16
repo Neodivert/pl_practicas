@@ -114,21 +114,66 @@ int variableCodeGeneration;
 
 
 /**************************************************************************/
-/*Searchs all the global variables
+/*Searchs all the global variables and also creates the associated code
 /**************************************************************************/
 
-void getAllGlobals()
+int getAllGlobals(FILE* yyout)
 {
+	printf("FIN1\n");
+
 	struct Variable* currentGlobal = NULL;
-	currentGlobal = nextGlobalVariablePointer(1);
-	int size = ((struct Type*)(currentGlobal->type->info))->size;
+	printf("FIN2\n");
+	
+	currentGlobal = nextGlobalVariablePointer();
+	printf("FIN3\n");
+	if(currentGlobal == NULL) return -1;
+
+	int size = 0;
+	printf("FIN4\n");
+
+	int type = 0;
 	while(currentGlobal!=NULL)
 	{
+		size = ((struct Type*)(currentGlobal->type->info))->size;
+		type = ((struct Type*)(currentGlobal->type->info))->id;
+
+		printf("FIN4\n");
 		currentGlobal->address = topAddress;
+		printf("FIN5\n");
+		if(type == TYPE_STRING){
+		//TODO PENDIENTE DE OBTENER EL TAMAÑO Y MULTIPLICAR		
+		}
+		fprintf(yyout,"\tMEM(%d,%d)\n",topAddress,size);
+		/*switch (type){
+		case(TYPE_INTEGER):
+			fprint("\tI(%d)\n",);
+			break;
+		case(TYPE_FLOAT):
+			
+			break;
+		case(TYPE_STRING):
+			
+			break;
+		case(TYPE_CHAR):
+			
+			break;
+		case(TYPE_BOOLEAN):
+			
+			break;
+		case(TYPE_CLASS):
+			
+			break;
+		case(TYPE_ARRAY):
+			
+			break;
+		}*/
+		
+		printf("FIN6\n");
 		topAddress = topAddress - size;		
-		currentGlobal = nextGlobalVariablePointer(1);
-		size = ((struct Type*)(currentGlobal->type->info))->size;			
+		currentGlobal = nextGlobalVariablePointer();			
 	}
+	printf("FIN\n");
+	return 0;
 }
 
 

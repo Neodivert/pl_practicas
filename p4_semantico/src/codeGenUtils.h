@@ -2,6 +2,7 @@
 the code generation. Also the global variables and data structures*/
 #include "Q.h"
 #include "symbolsTable.h"
+#include <stdio.h>
 /*gc creates the code line that the code generation part passes*/
 //gc(char *str);
 
@@ -21,7 +22,7 @@ int freeRegister(int i, int type);
 int variableCodeGeneration;
 
 /*Generates code for variable storage*/
-void getAllGlobals();
+int getAllGlobals(FILE* yyout);
 
 /*Returns the actual address for storage in memory*/
 /*Also asigns it to the corresponding field in the symbols table*/

@@ -167,7 +167,7 @@ Symbol* searchNArgument(Symbol *method, int n);
 
 //Searchs for the next Global Variable record in the current global variable registration
 //without knowing the name
-struct Variable* nextGlobalVariablePointer(int flag);
+struct Variable* nextGlobalVariablePointer();
 
 
 

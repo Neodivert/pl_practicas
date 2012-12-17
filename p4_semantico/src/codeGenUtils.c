@@ -185,10 +185,40 @@ unsigned int returnAddress(int symbolType,cstr id)
 // Generate the code for a method "head" (set its label, and get space for its
 // local data ).void generateMethodHead( FILE* yyout, cstr methodName )
 {
+   int argumentsSize, localsSize;
+
    // Get the method's info from symbols' table.
    struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
    
    // Print the method's label in Q code.
    fprintf( yyout,"\tL: %i\n", method->label );
+   
+   // Get the total size of arguments.
+   getArgumentsSize( method, &argumentsSize, &localsSize );
+   
+   printf( "method [%s] argumens size: %i - local size: %i\n", methodName, argumentsSize, localsSize ); 
+}
+
+void getArgumentsSize( struct Method* method, int* argumentsSize, int* localsSize )
+{
+   int i;
+   
+   *argumentsSize = 0;
+   *localsSize = 0;
+   
+   Symbol* argument = method->localSymbols;
+   
+   for( i=0; i<method->nArguments; i++ ){
+      *argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+      printf( "Sumando tam: %i\n", ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size );
+      argument = argument->next;
+   }
+   
+   while( argument ){
+      if( argument->symType == SYM_VARIABLE ){ 
+         *localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+      }
+      argument = argument->next;
+   }
 }
 

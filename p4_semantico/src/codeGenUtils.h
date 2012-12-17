@@ -30,3 +30,5 @@ unsigned int returnAddress(int symbolType, cstr id);
 
 // Generate the code for a method "head" (set its label, and get space for its
 // local data ).void generateMethodHead( FILE* yyout, cstr methodName );
+
+void getArgumentsSize( struct Method* method, int* argumentsSize, int* localsSize );

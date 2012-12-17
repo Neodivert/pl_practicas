@@ -362,17 +362,28 @@ else_part :
 // If the variable already existed, check if the types of variable and right
 // side match.
 assignment : 
-	left_side right_side separator { $$ = checkAssignement( $1, $2 ); }
+	left_side right_side separator { $$ = checkAssignement( $1, $2 ); 
+									GC
+										fprintf(yyout,"%c(0x%x) = R%d",pointerType($1->varSymbol),
+																		returnAddress(SYM_GLOBAL,$1->varSymbol->name),
+																		//FIXME Falta el parámetro con el registro que sube desde right_side;
+									EGC}
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
 
 // Here we check if variable already exists. If not, it is added to symbols
 // table, unless attribute is epsilon. In that case, an error must be given.
-left_side :
+left_side ://TODO SOCORRO!!!
 	ID_GLOBAL_VARIABLE atribute '=' { $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
 									$$ = $2;
 									GC
-										$$->nRegister = assignRegisters(0), fprintf(yyout,"\tR%d=0x%x;\n",$$->nRegister,returnAddress		(SYM_GLOBAL,(cstr)$<string>1));
+										$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+										if($2->info == SYM_CLASS_VARIABLE){
+											//varSymbol gets the struct Symbol of the variable
+											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
+										}
+									//	$$->nRegister = assignRegisters(0), fprintf(yyout,"\tR%d=0x%x;\n",$$->nRegister,
+									//															returnAddress(SYM_GLOBAL,(cstr)$<string>1));
 									EGC}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }

@@ -100,6 +100,7 @@ typedef const char* const cstr;
 struct SymbolInfo
 {
 	Symbol *symbol;
+	Symbol *varSymbol;	
 	int info;
 	char *name;
 	int nRegister;

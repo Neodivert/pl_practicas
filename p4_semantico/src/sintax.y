@@ -5,6 +5,7 @@
 #include "symbolsTable.h"
 #include "semanticUtilities.h"
 #include "codeGenUtils.h"
+#include <errno.h>
 
 extern FILE *yyin; /* declarado en lexico */
 extern int numlin; /* lexico le da valores */
@@ -485,7 +486,8 @@ string_struct :
 %%
   
 int main(int argc, char** argv) {
-
+   extern int errno;
+   char errorString[256];
 	int i = 1;	
 	compilationState = 0;
 	initializeSymTable();
@@ -543,16 +545,26 @@ int main(int argc, char** argv) {
 	    strcpy(aux, ptr);
 		strcat(aux, ".q.c");
 		
-		yyin=fopen(argv[1],"r");
-		if(yyin == NULL); //Source file
-		{
+		yyin = NULL;
+		yyin = fopen( argv[1],"r" );
+		//if(yyin == NULL); //Source file
+		printf( "yyin: %i\n", yyin );
+		if( yyin){
+		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",argv[1]);
+		}else{
+		   printf( "FICHERO ABIERTO [%s]", argv[1] );
 		}
 		
+		
+		yyout = NULL;
 		yyout=fopen(aux,"w");	 
-		if(yyout == NULL); //Compiled file
-		{
-			printf("ERROR AL CREAR EL ARCHIVO %s\n",aux);
+		printf( "yyout: %i\n", yyout );
+		if( yyin ){
+		   perror( errorString );
+			printf("ERROR AL ABRIR EL ARCHIVO %s\n",aux);
+		}else{
+		   printf( "FICHERO ABIERTO [%s]", aux );
 		}
 
 		fprintf(yyout,"#include \"Q.h\"\n\n");

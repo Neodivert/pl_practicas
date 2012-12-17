@@ -231,6 +231,8 @@ struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeN
 
 struct Symbol* getReturnType( struct Symbol* method);
 
+void createPutsGetcExitCode();
+
 //void setMain();
 
 #endif

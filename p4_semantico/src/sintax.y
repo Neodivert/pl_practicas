@@ -315,10 +315,13 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {if(compilationState){$<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$);}}
-	expression DO {if(compilationState){$<integer>$=newLabel(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);}}
+	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); EGC }
+	expression DO {GC 
+					$<integer>$=newLabel(); 
+					fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);
+				   EGC}
 	separator
-		method_code {fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5);}
+		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5); EGC }
 	END separator {checkIsBoolean($3);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
@@ -326,9 +329,17 @@ loop :
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 
-	IF expression after_if {if(compilationState){$<integer>$ = newLabel(); fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);}}
+	IF expression after_if {GC 
+								$<integer>$ = newLabel(); 
+								fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);
+							EGC	
+							}
 		method_code //{$$ = newLabel(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
-		else_part {if(compilationState==2){if($<integer>6!=0){fprintf(yyout,"L %d:\n",$<integer>4);}};}//El else_part deberá crear su propio código
+		else_part {GC
+					if($<integer>6!=0){
+						fprintf(yyout,"L %d:\n",$<integer>4);
+					}
+				   EGC;}//El else_part deberá crear su propio código
 	END separator
 				{checkIsBoolean($2);}
 	| IF expression after_if
@@ -350,8 +361,13 @@ after_if :
 	;
 	
 else_part : 
-	ELSE separator {if(compilationState==2){$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);}}
-	method_code {fprintf(yyout,"L %d:\n",$<integer>2);}
+	ELSE separator {GC 
+						$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);
+					EGC
+					}
+	method_code {GC
+					fprintf(yyout,"L %d:\n",$<integer>2);
+				EGC	}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
 	| {$<integer>$ = 0;}
 	;	

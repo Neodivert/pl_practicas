@@ -370,7 +370,10 @@ assignment :
 // table, unless attribute is epsilon. In that case, an error must be given.
 left_side :
 	ID_GLOBAL_VARIABLE atribute '=' { $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
-									$$ = $2;}
+									$$ = $2;
+									GC
+										$$->nRegister = assignRegisters(0), fprintf(yyout,"\tR%d=0x%x;\n",$$->nRegister,returnAddress		(SYM_GLOBAL,(cstr)$<string>1));
+									EGC}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
 	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
@@ -572,6 +575,8 @@ int main(int argc, char** argv) {
 		fprintf(yyout,"BEGIN\n");
 
 		getAllGlobals(yyout);
+
+		fprintf(yyout,"CODE(0)\n");
 
 		goInScope(mainScope);
 		yyparse();

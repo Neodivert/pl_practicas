@@ -102,6 +102,7 @@ struct SymbolInfo
 	Symbol *symbol;
 	int info;
 	char *name;
+	int nRegister;
 };
 /*                                  Functions                                 */
 /******************************************************************************/

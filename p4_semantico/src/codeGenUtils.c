@@ -178,8 +178,8 @@ int getAllGlobals(FILE* yyout)
 
 unsigned int returnAddress(int symbolType,cstr id)
 {
-	searchVariable(symbolType, id);
-	return topAddress;
+	Symbol* variable = searchVariable(symbolType, id);
+	return ((struct Variable*)(variable->info))->address;
 }
 
 

@@ -1,4 +1,4 @@
-/*This file intends to keep the defeinitions of the procedures and functions that will used in
+/*This file intends to keep the definitions of the procedures and functions that will used in
 the code generation. Also the global variables and data structures*/
 #include "Q.h"
 #include "symbolsTable.h"
@@ -27,4 +27,7 @@ int getAllGlobals(FILE* yyout);
 /*Returns the actual address for storage in memory*/
 /*Also asigns it to the corresponding field in the symbols table*/
 unsigned int returnAddress(int symbolType, cstr id);
+
+// Generate the code for a method "head" (set its label, and get space for its
+// local data ).void generateMethodHead( FILE* yyout, cstr methodName );
 

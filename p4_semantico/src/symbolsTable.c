@@ -363,6 +363,7 @@ Symbol* searchVariable( int symType, cstr name )
 	return NULL;
 }
 
+// TODO: Hay que cambiar el comentario.
 // Search in symbols table for a method "name".
 struct Symbol* searchTopLevel(int symType, const char* const name )
 {

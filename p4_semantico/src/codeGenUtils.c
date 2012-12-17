@@ -182,4 +182,13 @@ unsigned int returnAddress(int symbolType,cstr id)
 	return topAddress;
 }
 
+// Generate the code for a method "head" (set its label, and get space for its
+// local data ).void generateMethodHead( FILE* yyout, cstr methodName )
+{
+   // Get the method's info from symbols' table.
+   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+   
+   // Print the method's label in Q code.
+   fprintf( yyout,"\tL: %i\n", method->label );
+}
 

@@ -854,3 +854,7 @@ struct Symbol* getReturnType( struct Symbol* method)
 	}
 }
 
+void createPutsGetcExitCode()
+{
+}
+

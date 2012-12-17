@@ -102,6 +102,7 @@ struct SymbolInfo
 	Symbol *symbol;
 	int info;
 	char *name;
+	int nRegister;
 };
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -228,6 +229,8 @@ Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo );
 struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeName);
 
 struct Symbol* getReturnType( struct Symbol* method);
+
+void createPutsGetcExitCode();
 
 //void setMain();
 

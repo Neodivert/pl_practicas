@@ -295,7 +295,17 @@ struct MethodInfo *checkMethodDefinition(const char* const name)
 	else
 	{
 		goInScope(((struct Method *)(method->info)));
-		info->result = 1;	
+		info->result = 1;
+		AN
+			int i, nArguments = ((struct Method *)(method->info))->nArguments;
+			struct Symbol* argument = ((struct Method *)(method->info))->localSymbols;
+			for(i = 0; i < nArguments; i++)
+			{
+				if( ((struct Variable*)(argument->info))->type == NULL){
+					yyerror("Type error: Argument %s in method %s is not defined",argument->name,method->name);
+				}
+			}
+		EAN	
 	}	
 	return info;	
 }

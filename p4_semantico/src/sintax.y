@@ -246,7 +246,10 @@ arguments :
 										// Invalid argument.
 										$$ = -1;
 									}	
-								}		
+								}
+								GC
+									
+								EGC	
 							}		 
 	| method_call_argument  {
 								if(currentMethodCall != NULL){	
@@ -273,6 +276,8 @@ method_call_argument :
 // more_arguments - semantic actions:
 // Check if every argument in method call match the corresponding argument in
 // method definition.
+
+// FIXME: Cuando use la info que devuelve expression, liberarla.
 more_arguments : 
 	',' method_call_argument {  
 								if(currentMethodCall != NULL)
@@ -283,7 +288,11 @@ more_arguments :
 									}else{
 										$$ = -1;
 									}	
-								}	 
+								}
+								GC
+									$$ = 0;
+									genParameterPass( yyout, 0, $$ );
+								EGC 
 							}
 	| ',' method_call_argument more_arguments 
 			{ 

@@ -860,35 +860,40 @@ void createPutsGetcExitCode()
 {
 }
 
-
-void getMethodDataSize( struct Method* method, int* argumentsSize, int* localsSize )
+// Auxiliar - Fill method's fields for arguments size and local data size.
+void getMethodDataSize( struct Method* method )
 {
    int i = 0;
    
-	*argumentsSize = 0;
-	*localsSize = 0;
+	// Initialization
+	method->argumentsSize = 0;
+	method->localsSize = 0;
    Symbol* argument = method->localSymbols;
    
+	// Calculate arguments size.
    for( i=0; i<method->nArguments; i++ ){
-      *argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+      method->argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       argument = argument->next;
    }
 
-	
+	// Calculate local data size.
 	while( argument ){
       if( argument->symType == SYM_VARIABLE ){ 
-         *localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+         method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       }
       argument = argument->next;
    }
 }
 
+// Iterate over methods in symbol's table and fill its fields for arguments and
+// local data sizes.
 void fillMethodDataSizes()
 {
 	Symbol* symbol = mainMethodNext;
 	struct Method* method = NULL;
 
 	// FIXME: falta que descienda en el arbol y que contemple los bloques.
+	// Searh for methods and call to "genMethodDataSize" on them.
 	while( symbol ){
 		if( ( symbol->symType == SYM_METHOD ) ){
 			method = ( struct Method* )( symbol->info );

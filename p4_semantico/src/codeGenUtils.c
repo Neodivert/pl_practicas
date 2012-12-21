@@ -182,26 +182,31 @@ unsigned int returnAddress(int symbolType,cstr id)
 	return ((struct Variable*)(variable->info))->address;
 }
 
-// Generate the code for a method "head" (set its label, and get space for its
-// local data ).
+
+/*                               Methods                                      */
+
+// Generate the code for a method "begin" (method label and local space 
+// allocation).
 void genMethodBegin( FILE* yyout, cstr methodName )
 {
    // Get the method's info from symbols' table.
    struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
    
    // Print the method name in a comment.
-	fprintf( yyout, "\t\\\\ Procedure [%s]\n", methodName );
+	fprintf( yyout, "\n\t\\\\ Procedure [%s]\n", methodName );
    
-   // Get the total size of arguments.
-	// Method label and New base.
-	fprintf( yyout,"\tL %i:\n\t\tR6 = R7;\t\\\\ New base\n", method->label );
+	// Set method label. 
+	fprintf( yyout,"\tL %i:\n", method->label );
+
+	// New base.
+	fprintf( yyout,"t\tR6 = R7;\t\\\\ New base\n", method->label );
 
 	// Allocate space for local variables.
 	fprintf( yyout,"\t\tR7 = R7 - %d;\t\\\\ Allocate space for local variables\n", method->localsSize );
-   
-  	printf( "method [%s] argumens size: %i - local size: %i\n", methodName, method->argumentsSize, method->localsSize ); 
 }
 
+
+// Generate the code for a method "end" (local data free and return).
 void genMethodEnd( FILE* yyout, cstr methodName )
 {
 	// Get the method's info from symbols' table.
@@ -216,13 +221,10 @@ void genMethodEnd( FILE* yyout, cstr methodName )
 	// Return from method.
 	fprintf( yyout,"\t\tR5 = P(R7);\t\\\\ Get return label\n", method->localsSize );
 	fprintf( yyout,"\t\tGT(R5);\t\\\\ Return to caller\n", method->localsSize );
-
-	//int argumentsSize, localsSize;
-
-	// Get the total size of arguments.
-   //getArgumentsSize( method, &argumentsSize, &localsSize );
 }
 
+
+// Generate the code for a method call "begin" (parameters memory allocation).
 void genMethodCallBegin( FILE* yyout, cstr methodName )
 {
 	// Get the called method's info from symbols' table.
@@ -235,3 +237,12 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 	fprintf( yyout,"\tR7 = R7 - %d;\t\\\\ Allocate memory for parameters\n", (method->argumentsSize+8) );
 }
 
+
+// Generate the code for a parameter pass. Arguments:
+// - vRegister - index of register with the parameter's value.
+// - offset - parameter position in stack.
+void genParameterPass( FILE* yyout, int vRegister, int offset )
+{
+	// Get parameter.
+	fprintf( yyout,"\tI(R7 + %d) = R%d;\t\\\\ Parameter\n", (8+offset), vRegister );
+}

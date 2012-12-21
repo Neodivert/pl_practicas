@@ -235,6 +235,8 @@ struct Symbol* getReturnType( struct Symbol* method);
 
 void createPutsGetcExitCode();
 
+// Iterate over methods in symbol's table and fill its fields for arguments and
+// local data sizes.
 void fillMethodDataSizes();
 
 //void setMain();

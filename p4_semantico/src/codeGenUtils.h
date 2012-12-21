@@ -28,4 +28,8 @@ int getAllGlobals(FILE* yyout);
 /*Also asigns it to the corresponding field in the symbols table*/
 unsigned int returnAddress(int symbolType, cstr id);
 
+/*Returns the code that correspond to the storage of the type passed*/
+/*as parameter*/
+char pointerType(Symbol* symbol);
+
 

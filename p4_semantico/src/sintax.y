@@ -381,8 +381,8 @@ assignment :
 	left_side right_side separator { $$ = checkAssignement( $1, $2 ); 
 									GC
 										fprintf(yyout,"%c(0x%x) = R%d",pointerType($1->varSymbol),
-																		returnAddress(SYM_GLOBAL,$1->varSymbol->name),
-																		//FIXME Falta el parámetro con el registro que sube desde right_side;
+															returnAddress(SYM_GLOBAL,$1->varSymbol->name),
+													//FIXME Falta el parámetro con el registro que sube desde right_side;
 									EGC}
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
@@ -398,8 +398,6 @@ left_side ://TODO SOCORRO!!!
 											//varSymbol gets the struct Symbol of the variable
 											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 										}
-									//	$$->nRegister = assignRegisters(0), fprintf(yyout,"\tR%d=0x%x;\n",$$->nRegister,
-									//															returnAddress(SYM_GLOBAL,(cstr)$<string>1));
 									EGC}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
@@ -474,8 +472,15 @@ term :
 
 factor :
 	IDENTIF atribute {$$ = getVariableType( SYM_VARIABLE, $1, $2 );	}
-    | ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
-    | ID_GLOBAL_VARIABLE atribute {	$$ = getVariableType( SYM_GLOBAL, $1, $2 );	}
+    	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
+    	| ID_GLOBAL_VARIABLE atribute {	$$ = getVariableType( SYM_GLOBAL, $1, $2 );	
+    					GC
+							$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+							if($2->info == SYM_CLASS_VARIABLE){
+								//varSymbol gets the struct Symbol of the variable
+								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
+							}
+    					EGC}
 	| literal 
 	| NOT factor {$$ = checkNotExpression($2);}
 	| simple_method_call {$$ = getReturnType($1);}

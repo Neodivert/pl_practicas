@@ -182,4 +182,25 @@ unsigned int returnAddress(int symbolType,cstr id)
 	return ((struct Variable*)(variable->info))->address;
 }
 
+// Gets the Q type corresponding to the type of the variable
+
+char pointerType(Symbol* symbol)
+{
+	switch(((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id)
+	case (TYPE_INTEGER || TYPE_BOOLEAN):
+		return 'I';
+	break;
+	case TYPE_FLOAT:
+		return 'F';
+	break;
+	case TYPE_CHAR:
+		return 'U';
+	break;	
+	
+}
+
+
+
+
+
 

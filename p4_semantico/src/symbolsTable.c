@@ -897,7 +897,7 @@ void fillMethodDataSizes()
 	while( symbol ){
 		if( ( symbol->symType == SYM_METHOD ) ){
 			method = ( struct Method* )( symbol->info );
-			getMethodDataSize( method, &method->argumentsSize, &method->localsSize );
+			getMethodDataSize( method );
 		}
 		symbol = symbol->next;
 	}

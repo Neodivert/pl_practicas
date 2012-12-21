@@ -5,7 +5,8 @@ int numlin = 1;
 void error(char*);
 
 int compilationState;
-unsigned int arraySize = 0;
+int arraySize = 0;
+float floatVal;
 
 %}
 capital [A-Z]
@@ -39,7 +40,7 @@ $({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); r
 @({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); return ID_INSTANCE_VARIABLE;}
 {capital}({letdig}|_)*                               {strcpy(yylval.string, yytext); return ID_CONSTANT;}
 ("+"|"-")?{digit}+                            { arraySize=atoi(yytext); return INTEGER;}
-({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {return FLOAT;}
+({digit}+"."{digit}+|"."{digit}+|{digit}+".")((e|E){digit}+)?    {floatVal=atof(yytext); return FLOAT;}
 "!="                                                     {return NOT_EQUAL;}
 "=="                                                      {return EQUAL_EQUAL;}
 ">="                                                    {return GREATER_EQUAL;}
@@ -68,7 +69,7 @@ $({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); r
 
 '\\'				{error("Characters_should_follow_the_pattern_'c'_or_'\\c'");}
 '\\t'|'\\\\'|'\\n'|'\\\'' 	{return CHAR;}
-'.'            		{return CHAR;}
+'.'            		{ arraySize = yytext[1]; return CHAR;}
 '.[^']*'				{error("Characters_should_follow_the_pattern_'c'_or_'\\c'");}
 
 

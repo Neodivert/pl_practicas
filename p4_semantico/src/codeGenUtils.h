@@ -10,6 +10,7 @@ the code generation. Also the global variables and data structures*/
 int newLabel();
 
 /*Returns an available register*/
+/*0 -> entero, 1-> Flotante*/
 int assignRegisters(int type);
 
 /*Frees all the registers*/

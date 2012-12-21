@@ -23,5 +23,5 @@ flex ${2}
 
 # Se trata el fichero sintáctico con bison y se genera el analizador final.
 #bison -vdt $codigo_analizador
-bison -d $codigo_analizador
+bison -d --warnings=none $codigo_analizador
 gcc -o $analizador $tablas lex.yy.c symbolsTable.c semanticUtilities.c codeGenUtils.c -lfl

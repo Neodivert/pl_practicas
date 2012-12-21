@@ -33,7 +33,7 @@ extern int compilationState;
 #define SYM_CLASS_VARIABLE 5
 #define SYM_METHOD 6
 #define SYM_BLOCK 7
-
+#define SYM_EXTRA_INFO 8
 
 // Valores posibles para el campo "id" de Type.
 #define TYPE_INTEGER 1
@@ -95,6 +95,11 @@ struct Method {
 	int label;
 };
 
+struct ExtraInfo {
+	int nRegister;
+	struct Symbol* variable; 
+};
+
 typedef const char* const cstr;
 
 struct SymbolInfo
@@ -111,6 +116,8 @@ struct SymbolInfo
 
 // Create a "empty and generic" symbol defining only its symType and name.
 Symbol* createSymbol ( int symType, cstr name );
+
+Symbol* createExtraInfoSymbol ( int nRegister );
 
 // Insert symbol in symbols table.
 void insertSymbol( Symbol *symb );

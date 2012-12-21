@@ -53,6 +53,27 @@ Symbol* createSymbol ( int symType, cstr  name )
 	return symbol;
 }
 
+
+Symbol* createExtraInfoSymbol ( int nRegister )
+{
+	// Allocate memory for new symbol.
+	Symbol *symbol = (Symbol *)malloc( sizeof( Symbol ) );
+
+	// Set symbol's type and name.
+	symbol->symType = SYM_EXTRA_INFO;
+	symbol->name = NULL;
+
+	// Initialize symbol's "firstChild" field and pointers. 
+	symbol->firstChild = 0;
+	symbol->prev = NULL;
+	symbol->next = NULL;
+	
+	symbol->info = (void *)malloc( sizeof(struct ExtraInfo) );
+	((struct ExtraInfo*)(symbol->info))->nRegister = nRegister;
+
+	return symbol;
+}
+
 // Insert symbol in symbols table.
 void insertSymbol( Symbol *symb )
 {

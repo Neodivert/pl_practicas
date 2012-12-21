@@ -17,7 +17,9 @@ extern int compilationState;
 int errors = 0;
 // Lexical parser fill this value when it finds an integer. We use it when 
 // defining an array to get its size.
-extern unsigned int arraySize;
+extern int arraySize;
+
+extern float floatVal;
 
 void yyerror(char* fmt, ...);
 
@@ -473,10 +475,30 @@ factor :
 	;
 
 literal : 
-	INTEGER		{ $$ = searchType( TYPE_INTEGER ); }
-	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); }
-	| CHAR		{$$ = searchType( TYPE_CHAR ); }
-	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}
+	INTEGER		{ $$ = searchType( TYPE_INTEGER ); 
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%d; \\\\Loading integer %d\n", reg, arraySize, arraySize);
+					EGC }
+	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%f; \\\\Loading float %f\n", reg, floatVal, floatVal);
+					EGC }
+	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%d; \\\\Loading char %d\n", reg, arraySize, arraySize);
+					EGC }	
+	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%d; \\\\Loading bool %d\n", reg, arraySize, arraySize);
+					EGC }	
 	;
 	
 string :
@@ -567,7 +589,7 @@ int main(int argc, char** argv) {
 		yyin = NULL;
 		yyin = fopen( argv[1],"r" );
 		//if(yyin == NULL); //Source file
-		printf( "yyin: %i\n", yyin );
+		//printf( "yyin: %i\n", yyin );
 		if( yyin){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",argv[1]);
@@ -578,7 +600,7 @@ int main(int argc, char** argv) {
 		
 		yyout = NULL;
 		yyout=fopen(aux,"w");	 
-		printf( "yyout: %i\n", yyout );
+		//printf( "yyout: %i\n", yyout );
 		if( yyin ){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",aux);

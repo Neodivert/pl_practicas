@@ -16,7 +16,7 @@ extern int compilationState;
 #define EAN }
 
 #define GC if( compilationState == 2 ){
-#define EGC }
+#define EGC } ;
 
 //0 -> Creating and filling Symbol Table
 //1 -> Doing code analisis

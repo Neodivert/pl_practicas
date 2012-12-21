@@ -20,3 +20,4 @@ def foo(var1, var2)
 end 
 
 foo( a, x )
+foo( x, x )

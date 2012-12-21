@@ -92,6 +92,9 @@ struct Method {
 	Symbol *lastSymbol;
 	Symbol *localSymbols;
 	Symbol *returnType;
+
+	int argumentsSize, localsSize;
+
 	int label;
 };
 
@@ -231,6 +234,8 @@ struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeN
 struct Symbol* getReturnType( struct Symbol* method);
 
 void createPutsGetcExitCode();
+
+void fillMethodDataSizes();
 
 //void setMain();
 

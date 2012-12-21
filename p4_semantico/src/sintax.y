@@ -123,7 +123,7 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC generateMethodHead( yyout, $2 ); EGC; } separator method_code END separator 
+	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
 		{	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
@@ -132,9 +132,12 @@ method_definition :
 			goInScope( $<methodInfo>3->scope );
 			
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);		// Cambiado $6 a $7
-			free($<methodInfo>3);		
+		
+			GC genMethodEnd( yyout, $2 ); EGC
+
+			free($<methodInfo>3);
 		}
-	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC generateMethodHead( yyout, $2 ); EGC } separator method_code END separator
+	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC genMethodBegin( yyout, $2 ); EGC } separator method_code END separator
 		{
 			if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
@@ -142,7 +145,10 @@ method_definition :
 				setNArguments( 0 ); 
 			}
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);		
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);	
+
+			GC genMethodEnd( yyout, $2 ); EGC
+	
 			free($<methodInfo>3);			
 		}
 	| DEF error END separator { yyerror( "Sintax error on method definition" ); yyerrok;}
@@ -217,6 +223,8 @@ simple_method_call:
 						nArguments = ((struct Method *)(currentMethodCall->info))->nArguments;						
 					}
 					$<symbol>$ = currentMethodCall;
+
+					GC genMethodCallBegin( yyout, $1 ); EGC
 				}			
 		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
@@ -549,10 +557,11 @@ int main(int argc, char** argv) {
 	
 	if (argc>2)showSymTable();
 
-	
-	
 	if(!errors)
 	{
+		fillMethodDataSizes();
+		if (argc>2)showSymTable();
+		
 		// Starting code generation
 		compilationState = 2;
 		numlin = 1;
@@ -574,7 +583,6 @@ int main(int argc, char** argv) {
 		}else{
 		   printf( "FICHERO ABIERTO [%s]", argv[1] );
 		}
-		
 		
 		yyout = NULL;
 		yyout=fopen(aux,"w");	 

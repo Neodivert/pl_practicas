@@ -28,7 +28,12 @@ int getAllGlobals(FILE* yyout);
 /*Also asigns it to the corresponding field in the symbols table*/
 unsigned int returnAddress(int symbolType, cstr id);
 
-// Generate the code for a method "head" (set its label, and get space for its
-// local data ).void generateMethodHead( FILE* yyout, cstr methodName );
+// Generate the code for a method "begin" (set its label, and get space for its
+// local data ).
+void genMethodBegin( FILE* yyout, cstr methodName );
 
-void getArgumentsSize( struct Method* method, int* argumentsSize, int* localsSize );
+void genMethodEnd( FILE* yyout, cstr methodName );
+
+int getArgumentsSize( struct Method* method );
+
+void genMethodCallBegin( FILE* yyout, cstr methodName );

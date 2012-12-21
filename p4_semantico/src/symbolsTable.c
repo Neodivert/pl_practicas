@@ -542,6 +542,8 @@ void showSymTable_( Symbol* sym, int level )
 				printf( " - address [%i]\n", ((struct Variable*)(sym->info))->address);
 			break;
 			case SYM_METHOD:
+				printf("- arguments' size [%i]", ((struct Method*)(sym->info))->argumentsSize);
+				printf("- locals' size [%i]", ((struct Method*)(sym->info))->localsSize);
 				printf("- label [%i]", ((struct Method*)(sym->info))->label);
 				aux = ((struct Method*)(sym->info))->returnType;
 				if(aux == NULL){
@@ -858,3 +860,40 @@ void createPutsGetcExitCode()
 {
 }
 
+
+void getMethodDataSize( struct Method* method, int* argumentsSize, int* localsSize )
+{
+   int i = 0;
+   
+	*argumentsSize = 0;
+	*localsSize = 0;
+   Symbol* argument = method->localSymbols;
+   
+   for( i=0; i<method->nArguments; i++ ){
+      *argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+      argument = argument->next;
+   }
+
+	
+	while( argument ){
+      if( argument->symType == SYM_VARIABLE ){ 
+         *localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+      }
+      argument = argument->next;
+   }
+}
+
+void fillMethodDataSizes()
+{
+	Symbol* symbol = mainMethodNext;
+	struct Method* method = NULL;
+
+	// FIXME: falta que descienda en el arbol y que contemple los bloques.
+	while( symbol ){
+		if( ( symbol->symType == SYM_METHOD ) ){
+			method = ( struct Method* )( symbol->info );
+			getMethodDataSize( method, &method->argumentsSize, &method->localsSize );
+		}
+		symbol = symbol->next;
+	}
+}

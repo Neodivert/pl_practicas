@@ -183,42 +183,55 @@ unsigned int returnAddress(int symbolType,cstr id)
 }
 
 // Generate the code for a method "head" (set its label, and get space for its
-// local data ).void generateMethodHead( FILE* yyout, cstr methodName )
+// local data ).
+void genMethodBegin( FILE* yyout, cstr methodName )
 {
-   int argumentsSize, localsSize;
-
    // Get the method's info from symbols' table.
    struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
    
-   // Print the method's label in Q code.
-   fprintf( yyout,"\tL: %i\n", method->label );
+   // Print the method name in a comment.
+	fprintf( yyout, "\t\\\\ Procedure [%s]\n", methodName );
    
    // Get the total size of arguments.
-   getArgumentsSize( method, &argumentsSize, &localsSize );
+	// Method label and New base.
+	fprintf( yyout,"\tL %i:\n\t\tR6 = R7;\t\\\\ New base\n", method->label );
+
+	// Allocate space for local variables.
+	fprintf( yyout,"\t\tR7 = R7 - %d;\t\\\\ Allocate space for local variables\n", method->localsSize );
    
-   printf( "method [%s] argumens size: %i - local size: %i\n", methodName, argumentsSize, localsSize ); 
+  	printf( "method [%s] argumens size: %i - local size: %i\n", methodName, method->argumentsSize, method->localsSize ); 
 }
 
-void getArgumentsSize( struct Method* method, int* argumentsSize, int* localsSize )
+void genMethodEnd( FILE* yyout, cstr methodName )
 {
-   int i;
-   
-   *argumentsSize = 0;
-   *localsSize = 0;
-   
-   Symbol* argument = method->localSymbols;
-   
-   for( i=0; i<method->nArguments; i++ ){
-      *argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
-      printf( "Sumando tam: %i\n", ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size );
-      argument = argument->next;
-   }
-   
-   while( argument ){
-      if( argument->symType == SYM_VARIABLE ){ 
-         *localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
-      }
-      argument = argument->next;
-   }
+	// Get the method's info from symbols' table.
+   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+
+	// Free local memory.
+	fprintf( yyout,"\t\tR7 = R7 + %d;\t\\\\ Free local variables\n", method->localsSize );
+
+	// Retrieve previous base.
+	fprintf( yyout,"\t\tR6 = P(R7+4);\t\\\\ Retrieve base\n", method->localsSize );
+
+	// Return from method.
+	fprintf( yyout,"\t\tR5 = P(R7);\t\\\\ Get return label\n", method->localsSize );
+	fprintf( yyout,"\t\tGT(R5);\t\\\\ Return to caller\n", method->localsSize );
+
+	//int argumentsSize, localsSize;
+
+	// Get the total size of arguments.
+   //getArgumentsSize( method, &argumentsSize, &localsSize );
+}
+
+void genMethodCallBegin( FILE* yyout, cstr methodName )
+{
+	// Get the called method's info from symbols' table.
+   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+
+	// Print the called method name in a comment.
+	fprintf( yyout, "\t\\\\ Starting call to procedure [%s]\n", methodName );
+	
+	// Allocate memory for parameters (and 8 bytes more for R6 and return label).
+	fprintf( yyout,"\tR7 = R7 - %d;\t\\\\ Allocate memory for parameters\n", (method->argumentsSize+8) );
 }
 

@@ -17,7 +17,9 @@ extern int compilationState;
 int errors = 0;
 // Lexical parser fill this value when it finds an integer. We use it when 
 // defining an array to get its size.
-extern unsigned int arraySize;
+extern int arraySize;
+
+extern float floatVal;
 
 void yyerror(char* fmt, ...);
 
@@ -378,12 +380,14 @@ else_part :
 // If the variable already existed, check if the types of variable and right
 // side match.
 assignment : 
-	left_side right_side separator { $$ = checkAssignement( $1, $2 ); 
-									GC
+	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
+									GC 
 										fprintf(yyout,"\t%c(0x%x) = R%d\n",pointerType($1->varSymbol),
-															returnAddress(SYM_GLOBAL,$1->varSymbol->name),((struct ExtraInfo)($2->info))->nRegister);
-													//FIXME Falta el parámetro con el registro que sube desde right_side;
-									EGC;}
+										returnAddress(SYM_GLOBAL,$1->varSymbol->name),((struct ExtraInfo*)($2->info))->nRegister);
+										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
+										freeSymbol($2); 
+									EGC }
+
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
 
@@ -446,28 +450,36 @@ relational_operator :
 // its operator's type, otherwise type does not change
 expression :
 	logical_expression 
-	| logical_expression OR expression {$$ = checkLogicalExpression($1, $3, "or");}
+	| logical_expression OR expression {NGC  $$ = checkLogicalExpression($1, $3, "or"); ENGC
+										GC genOperation(yyout, $1, $3, "||"); EGC }
 	;
 logical_expression :
 	relational_expression
-	| relational_expression AND logical_expression {$$ = checkLogicalExpression($1, $3, "and");}
+	| relational_expression AND logical_expression {NGC $$ = checkLogicalExpression($1, $3, "and"); ENGC
+													GC genOperation(yyout, $1, $3, "&&"); EGC }
 	;
 	
 relational_expression :
 	aritmetic_expression
-	| aritmetic_expression relational_operator relational_expression {$$ = checkRelationalExpression($1, $3, $2);}
+	| aritmetic_expression relational_operator relational_expression 
+		{NGC $$ = checkRelationalExpression($1, $3, $2); ENGC
+		GC genOperation(yyout, $1, $3, $2); EGC}
 	;
 
 aritmetic_expression :
 	term
-	| term '+' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "+");}
-	| term '-' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "-");}
+	| term '+' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "+"); ENGC
+									GC genOperation(yyout, $1, $3, "+"); EGC }
+	| term '-' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "-"); ENGC
+									GC genOperation(yyout, $1, $3, "-"); EGC }
 	;
 	
 term :
 	factor 
-	| factor '*' term {$$ = checkAritmeticExpression($1, $3, "*");}
-	| factor '/' term {$$ = checkAritmeticExpression($1, $3, "/");}
+	| factor '*' term { NGC $$ = checkAritmeticExpression($1, $3, "*"); ENGC
+						GC genOperation(yyout, $1, $3, "*"); EGC }
+	| factor '/' term { NGC $$ = checkAritmeticExpression($1, $3, "/"); ENGC
+						GC genOperation(yyout, $1, $3, "/"); EGC }
 	;
 
 factor :
@@ -483,17 +495,38 @@ factor :
 							//TODO Hay que hacer que se devuelva en $$ el symbol con el ExtraInfo
     					EGC;}
 	| literal 
-	| NOT factor {$$ = checkNotExpression($2);}
+	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
+					GC	$$ = $2; EGC }
 	| simple_method_call {$$ = getReturnType($1);}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
-	INTEGER		{ $$ = searchType( TYPE_INTEGER ); }
-	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); }
-	| CHAR		{$$ = searchType( TYPE_CHAR ); }
-	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}
+	INTEGER		{ $$ = searchType( TYPE_INTEGER ); 
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%d; \\\\Loading integer %d\n", reg, arraySize, arraySize);
+					EGC }
+	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%f; \\\\Loading float %f\n", reg, floatVal, floatVal);
+					EGC }
+	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%d; \\\\Loading char %d\n", reg, arraySize, arraySize);
+					EGC }	
+	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d=%d; \\\\Loading bool %d\n", reg, arraySize, arraySize);
+					EGC }	
 	;
 	
 string :
@@ -584,7 +617,7 @@ int main(int argc, char** argv) {
 		yyin = NULL;
 		yyin = fopen( argv[1],"r" );
 		//if(yyin == NULL); //Source file
-		printf( "yyin: %i\n", yyin );
+		//printf( "yyin: %i\n", yyin );
 		if( yyin){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",argv[1]);
@@ -595,7 +628,7 @@ int main(int argc, char** argv) {
 		
 		yyout = NULL;
 		yyout=fopen(aux,"w");	 
-		printf( "yyout: %i\n", yyout );
+		//printf( "yyout: %i\n", yyout );
 		if( yyin ){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",aux);

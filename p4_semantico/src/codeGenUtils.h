@@ -10,6 +10,7 @@ the code generation. Also the global variables and data structures*/
 int newLabel();
 
 /*Returns an available register*/
+/*0 -> entero, 1-> Flotante*/
 int assignRegisters(int type);
 
 /*Frees all the registers*/
@@ -28,8 +29,12 @@ int getAllGlobals(FILE* yyout);
 /*Also asigns it to the corresponding field in the symbols table*/
 unsigned int returnAddress(int symbolType, cstr id);
 
+
 /*Returns the code that correspond to the storage of the type passed*/
 /*as parameter*/
 char pointerType(Symbol* symbol);
+
+
+void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op );
 
 

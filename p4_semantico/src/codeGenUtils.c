@@ -187,6 +187,7 @@ unsigned int returnAddress(int symbolType,cstr id)
 char pointerType(Symbol* symbol)
 {
 	switch(((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id)
+	{
 	case (TYPE_INTEGER || TYPE_BOOLEAN):
 		return 'I';
 	break;
@@ -196,6 +197,7 @@ char pointerType(Symbol* symbol)
 	case TYPE_CHAR:
 		return 'U';
 	break;	
+	}
 	
 }
 

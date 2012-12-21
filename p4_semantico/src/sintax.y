@@ -315,13 +315,13 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); EGC }
+	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); EGC ;}
 	expression DO {GC 
 					$<integer>$=newLabel(); 
 					fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);
-				   EGC}
+				   EGC;}
 	separator
-		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5); EGC }
+		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5); EGC ;}
 	END separator {checkIsBoolean($3);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
@@ -333,7 +333,7 @@ if_construction :
 								$<integer>$ = newLabel(); 
 								fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);
 							EGC	
-							}
+							;}
 		method_code //{$$ = newLabel(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
 		else_part {GC
 					if($<integer>6!=0){
@@ -364,10 +364,10 @@ else_part :
 	ELSE separator {GC 
 						$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);
 					EGC
-					}
+					;}
 	method_code {GC
 					fprintf(yyout,"L %d:\n",$<integer>2);
-				EGC	}
+				EGC	;}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
 	| {$<integer>$ = 0;}
 	;	
@@ -380,16 +380,16 @@ else_part :
 assignment : 
 	left_side right_side separator { $$ = checkAssignement( $1, $2 ); 
 									GC
-										fprintf(yyout,"%c(0x%x) = R%d",pointerType($1->varSymbol),
-															returnAddress(SYM_GLOBAL,$1->varSymbol->name),
+										fprintf(yyout,"\t%c(0x%x) = R%d\n",pointerType($1->varSymbol),
+															returnAddress(SYM_GLOBAL,$1->varSymbol->name),((struct ExtraInfo)($2->info))->nRegister);
 													//FIXME Falta el parámetro con el registro que sube desde right_side;
-									EGC}
+									EGC;}
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
 
 // Here we check if variable already exists. If not, it is added to symbols
 // table, unless attribute is epsilon. In that case, an error must be given.
-left_side ://TODO SOCORRO!!!
+left_side :
 	ID_GLOBAL_VARIABLE atribute '=' { $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
 									$$ = $2;
 									GC
@@ -398,7 +398,7 @@ left_side ://TODO SOCORRO!!!
 											//varSymbol gets the struct Symbol of the variable
 											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 										}
-									EGC}
+									EGC;}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
 	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
@@ -480,7 +480,8 @@ factor :
 								//varSymbol gets the struct Symbol of the variable
 								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 							}
-    					EGC}
+							//TODO Hay que hacer que se devuelva en $$ el symbol con el ExtraInfo
+    					EGC;}
 	| literal 
 	| NOT factor {$$ = checkNotExpression($2);}
 	| simple_method_call {$$ = getReturnType($1);}

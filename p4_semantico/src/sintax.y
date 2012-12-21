@@ -380,7 +380,8 @@ else_part :
 // If the variable already existed, check if the types of variable and right
 // side match.
 assignment : 
-	left_side right_side separator { $$ = checkAssignement( $1, $2 ); }
+	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
+									GC freeSymbol($2); EGC }
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
 
@@ -439,28 +440,36 @@ relational_operator :
 // its operator's type, otherwise type does not change
 expression :
 	logical_expression 
-	| logical_expression OR expression {$$ = checkLogicalExpression($1, $3, "or");}
+	| logical_expression OR expression {NGC  $$ = checkLogicalExpression($1, $3, "or"); ENGC
+										GC genOperation(yyout, $1, $3, "||"); EGC }
 	;
 logical_expression :
 	relational_expression
-	| relational_expression AND logical_expression {$$ = checkLogicalExpression($1, $3, "and");}
+	| relational_expression AND logical_expression {NGC $$ = checkLogicalExpression($1, $3, "and"); ENGC
+													GC genOperation(yyout, $1, $3, "&&"); EGC }
 	;
 	
 relational_expression :
 	aritmetic_expression
-	| aritmetic_expression relational_operator relational_expression {$$ = checkRelationalExpression($1, $3, $2);}
+	| aritmetic_expression relational_operator relational_expression 
+		{NGC $$ = checkRelationalExpression($1, $3, $2); ENGC
+		GC genOperation(yyout, $1, $3, $2); EGC}
 	;
 
 aritmetic_expression :
 	term
-	| term '+' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "+");}
-	| term '-' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "-");}
+	| term '+' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "+"); ENGC
+									GC genOperation(yyout, $1, $3, "+"); EGC }
+	| term '-' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "-"); ENGC
+									GC genOperation(yyout, $1, $3, "-"); EGC }
 	;
 	
 term :
 	factor 
-	| factor '*' term {$$ = checkAritmeticExpression($1, $3, "*");}
-	| factor '/' term {$$ = checkAritmeticExpression($1, $3, "/");}
+	| factor '*' term { NGC $$ = checkAritmeticExpression($1, $3, "*"); ENGC
+						GC genOperation(yyout, $1, $3, "*"); EGC }
+	| factor '/' term { NGC $$ = checkAritmeticExpression($1, $3, "/"); ENGC
+						GC genOperation(yyout, $1, $3, "/"); EGC }
 	;
 
 factor :
@@ -468,7 +477,8 @@ factor :
     | ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     | ID_GLOBAL_VARIABLE atribute {	$$ = getVariableType( SYM_GLOBAL, $1, $2 );	}
 	| literal 
-	| NOT factor {$$ = checkNotExpression($2);}
+	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
+					GC	$$ = $2; EGC }
 	| simple_method_call {$$ = getReturnType($1);}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}

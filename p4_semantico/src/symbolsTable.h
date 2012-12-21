@@ -18,6 +18,9 @@ extern int compilationState;
 #define GC if( compilationState == 2 ){
 #define EGC }
 
+#define NGC if( compilationState != 2 ){
+#define ENGC }
+
 //0 -> Creating and filling Symbol Table
 //1 -> Doing code analisis
 //2 -> Generating code

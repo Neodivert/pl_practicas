@@ -28,7 +28,6 @@ int newLabel()
 int assignRegisters(int type)
 {
     int i=0;
-
 	/*Buscar un Registro*/
     if ((type == 0) && (nRegisters>0))
     {
@@ -56,7 +55,8 @@ int assignRegisters(int type)
             }
         }
     }
-   
+    
+    return -1;   
     /*Si llegamos aquí es que no hay registros libres :(*/
     /*En caso de que no haya registros libres habrá que tirar de pila (A deliberar)*/
 }
@@ -90,7 +90,7 @@ int freeRegister(int i, int type)
     if ((type == 0) && (nRegisters<8))
 	{
         registers[i]=0;
-		nRegisters--;
+		nRegisters++;
     }
 
 	else if ((type == 1) && (nRegisters<7))
@@ -180,6 +180,16 @@ unsigned int returnAddress(int symbolType,cstr id)
 {
 	Symbol* variable = searchVariable(symbolType, id);
 	return ((struct Variable*)(variable->info))->address;
+}
+
+void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op )
+{
+	int r0, r1;
+	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
+	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
+	fprintf(yyout, "\tR%d = R%d %s R%d\n", r0, r0,op, r1);
+	freeRegister(r1, 0);
+	freeSymbol(rightSide);	
 }
 
 

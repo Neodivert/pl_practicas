@@ -133,12 +133,13 @@ int getAllGlobals(FILE* yyout)
 	{
 		size = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->size;
 		type = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->id;
-
+	
+		topAddress = topAddress - size;
 		((struct Variable*)(currentGlobal->info))->address = topAddress;
 
 		if(type == TYPE_STRING){
 		//TODO PENDIENTE DE OBTENER EL TAMAÑO Y MULTIPLICAR		
-		}
+		}		
 		fprintf(yyout,"\tMEM(0x%x,%d); //Memory for var %s \n",topAddress,size, currentGlobal->name);
 		/*switch (type){
 		case(TYPE_INTEGER):
@@ -162,9 +163,8 @@ int getAllGlobals(FILE* yyout)
 		case(TYPE_ARRAY):
 			
 			break;
-		}*/
-		
-		topAddress = topAddress - size;		
+		}*/	
+				
 		currentGlobal = nextGlobalVariablePointer();			
 	}
 	return 0;

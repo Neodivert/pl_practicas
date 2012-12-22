@@ -516,25 +516,25 @@ literal :
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%d; //Loading integer %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d = %d; //Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }
 	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%f; //Loading float %f\n", reg, floatVal, floatVal);
+						fprintf(yyout, "\tR%d = %f; //Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%d; //Loading char %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d = %d; //Loading char %d\n", reg, arraySize, arraySize);
 					EGC }	
 	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%d; //Loading bool %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d = %d; //Loading bool %d\n", reg, arraySize, arraySize);
 					EGC }	
 	;
 	
@@ -648,14 +648,17 @@ int main(int argc, char** argv) {
 		fprintf(yyout,"#include \"Q.h\"\n\n");
 
 		fprintf(yyout,"BEGIN\n");
+		fprintf(yyout,"STAT(0)\n");
 
 		getAllGlobals(yyout);
 
 		fprintf(yyout,"CODE(0)\n");
+		fprintf(yyout,"L 0:\n");
 
 		goInScope(mainScope);
 		yyparse();
 		
+		fprintf(yyout,"\tGT(-2);\n");
 		fprintf(yyout,"END\n");
 		fclose (yyout);
 	}

@@ -490,8 +490,6 @@ factor :
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
     					GC
-    						//TODO Mirar esto bien, en cuanto a que atribute devuelve
-    						//un symbolInfo, pero aqui queremos en extraInfo
 							int reg = assignRegisters(0); 	
 							$$ = createExtraInfoSymbol(reg);	
 							struct ExtraInfo* aux = (struct ExtraInfo*)($$->info); 	
@@ -504,7 +502,6 @@ factor :
 							fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
 							returnAddress(SYM_GLOBAL,aux->variable->name), aux->variable->name);	
 							freeSymbolInfo($2);			   
-							//TODO Hay que hacer que se devuelva en $$ el symbol con el ExtraInfo
     					EGC;}
 	| literal 
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC

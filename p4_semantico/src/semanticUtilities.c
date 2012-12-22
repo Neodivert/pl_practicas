@@ -698,6 +698,8 @@ struct SymbolInfo* nullSymbolInfo()
 	info->symbol = NULL;
 	info->info = 0;
 	info->name = NULL;
+	info->varSymbol = NULL;
+	info->nRegister = 0;
 }
 
 // Check if all the array content has the same type. "type" refers to the type 

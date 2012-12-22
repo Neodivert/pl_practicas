@@ -382,9 +382,12 @@ else_part :
 assignment : 
 	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
 									GC 
-										fprintf(yyout,"\t%c(0x%x) = R%d\n",pointerType($1->varSymbol),
-										returnAddress(SYM_GLOBAL,$1->varSymbol->name),((struct ExtraInfo*)($2->info))->nRegister);
+										printf("Var name %s\n", $1->varSymbol->name);
+										fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
+										returnAddress(SYM_GLOBAL,$1->varSymbol->name),((struct ExtraInfo*)($2->info))->nRegister,
+										$1->varSymbol->name);
 										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
+										freeSymbolInfo($1);
 										freeSymbol($2); 
 									EGC }
 
@@ -394,15 +397,15 @@ assignment :
 // Here we check if variable already exists. If not, it is added to symbols
 // table, unless attribute is epsilon. In that case, an error must be given.
 left_side :
-	ID_GLOBAL_VARIABLE atribute '=' { $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
-									$$ = $2;
+	ID_GLOBAL_VARIABLE atribute '=' { NGC $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2); ENGC
 									GC
 										$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
 										if($2->info == SYM_CLASS_VARIABLE){
 											//varSymbol gets the struct Symbol of the variable
 											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 										}
-									EGC;}
+									EGC;
+									$$ = $2;}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
 	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
@@ -485,13 +488,22 @@ term :
 factor :
 	IDENTIF atribute {$$ = getVariableType( SYM_VARIABLE, $1, $2 );	}
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
-    	| ID_GLOBAL_VARIABLE atribute {	$$ = getVariableType( SYM_GLOBAL, $1, $2 );	
+    	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
     					GC
-							$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+    						//TODO Mirar esto bien, en cuanto a que atribute devuelve
+    						//un symbolInfo, pero aqui queremos en extraInfo
+							int reg = assignRegisters(0); 	
+							$$ = createExtraInfoSymbol(reg);	
+							struct ExtraInfo* aux = (struct ExtraInfo*)($$->info); 	
+							aux->nRegister = reg;			
+							aux->variable = searchVariable(SYM_GLOBAL,(cstr)$1);
 							if($2->info == SYM_CLASS_VARIABLE){
 								//varSymbol gets the struct Symbol of the variable
-								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
-							}
+								aux->variable = getClassVar(aux->variable,$2->name);
+							}			
+							fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
+							returnAddress(SYM_GLOBAL,aux->variable->name), aux->variable->name);	
+							freeSymbolInfo($2);			   
 							//TODO Hay que hacer que se devuelva en $$ el symbol con el ExtraInfo
     					EGC;}
 	| literal 
@@ -507,25 +519,25 @@ literal :
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%d; \\\\Loading integer %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d=%d; //Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }
 	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%f; \\\\Loading float %f\n", reg, floatVal, floatVal);
+						fprintf(yyout, "\tR%d=%f; //Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%d; \\\\Loading char %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d=%d; //Loading char %d\n", reg, arraySize, arraySize);
 					EGC }	
 	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d=%d; \\\\Loading bool %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d=%d; //Loading bool %d\n", reg, arraySize, arraySize);
 					EGC }	
 	;
 	

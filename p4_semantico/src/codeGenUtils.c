@@ -120,7 +120,7 @@ int variableCodeGeneration;
 int getAllGlobals(FILE* yyout)
 {
 
-	struct Variable* currentGlobal = NULL;
+	struct Symbol* currentGlobal = NULL;
 	
 	currentGlobal = nextGlobalVariablePointer();
 
@@ -131,15 +131,15 @@ int getAllGlobals(FILE* yyout)
 	int type = 0;
 	while(currentGlobal!=NULL)
 	{
-		size = ((struct Type*)(currentGlobal->type->info))->size;
-		type = ((struct Type*)(currentGlobal->type->info))->id;
+		size = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->size;
+		type = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->id;
 
-		currentGlobal->address = topAddress;
+		((struct Variable*)(currentGlobal->info))->address = topAddress;
 
 		if(type == TYPE_STRING){
 		//TODO PENDIENTE DE OBTENER EL TAMAÑO Y MULTIPLICAR		
 		}
-		fprintf(yyout,"\tMEM(0x%x,%d)\n",topAddress,size);
+		fprintf(yyout,"\tMEM(0x%x,%d); //Memory for var %s \n",topAddress,size, currentGlobal->name);
 		/*switch (type){
 		case(TYPE_INTEGER):
 			fprint("\tI(%d)\n",);
@@ -198,6 +198,7 @@ char pointerType(Symbol* symbol)
 		return 'U';
 	break;	
 	}
+	return 'E';
 	
 }
 
@@ -207,7 +208,7 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	int r0, r1;
 	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
 	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
-	fprintf(yyout, "\tR%d = R%d %s R%d\n", r0, r0,op, r1);
+	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 	freeRegister(r1, 0);
 	freeSymbol(rightSide);	
 }

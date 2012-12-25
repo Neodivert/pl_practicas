@@ -17,7 +17,9 @@ extern int compilationState;
 int errors = 0;
 // Lexical parser fill this value when it finds an integer. We use it when 
 // defining an array to get its size.
-extern unsigned int arraySize;
+extern int arraySize;
+
+extern float floatVal;
 
 void yyerror(char* fmt, ...);
 
@@ -332,13 +334,13 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); EGC }
+	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); EGC ;}
 	expression DO {GC 
 					$<integer>$=newLabel(); 
 					fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);
-				   EGC}
+				   EGC;}
 	separator
-		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5); EGC }
+		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5); EGC ;}
 	END separator {checkIsBoolean($3);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
@@ -350,7 +352,7 @@ if_construction :
 								$<integer>$ = newLabel(); 
 								fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);
 							EGC	
-							}
+							;}
 		method_code //{$$ = newLabel(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
 		else_part {GC
 					if($<integer>6!=0){
@@ -381,10 +383,10 @@ else_part :
 	ELSE separator {GC 
 						$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);
 					EGC
-					}
+					;}
 	method_code {GC
 					fprintf(yyout,"L %d:\n",$<integer>2);
-				EGC	}
+				EGC	;}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
 	| {$<integer>$ = 0;}
 	;	
@@ -395,18 +397,32 @@ else_part :
 // If the variable already existed, check if the types of variable and right
 // side match.
 assignment : 
-	left_side right_side separator { $$ = checkAssignement( $1, $2 ); }
+	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
+									GC 
+										printf("Var name %s\n", $1->varSymbol->name);
+										fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
+										returnAddress(SYM_GLOBAL,$1->varSymbol->name),((struct ExtraInfo*)($2->info))->nRegister,
+										$1->varSymbol->name);
+										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
+										freeSymbolInfo($1);
+										freeSymbol($2); 
+									EGC }
+
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
 
 // Here we check if variable already exists. If not, it is added to symbols
 // table, unless attribute is epsilon. In that case, an error must be given.
 left_side :
-	ID_GLOBAL_VARIABLE atribute '=' { $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2);
-									$$ = $2;
+	ID_GLOBAL_VARIABLE atribute '=' { NGC $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2); ENGC
 									GC
-										$$->nRegister = assignRegisters(0), fprintf(yyout,"\tR%d=0x%x;\n",$$->nRegister,returnAddress		(SYM_GLOBAL,(cstr)$<string>1));
-									EGC}
+										$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+										if($2->info == SYM_CLASS_VARIABLE){
+											//varSymbol gets the struct Symbol of the variable
+											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
+										}
+									EGC;
+									$$ = $2;}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
 							$$ = $2; }
 	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
@@ -454,46 +470,89 @@ relational_operator :
 // its operator's type, otherwise type does not change
 expression :
 	logical_expression 
-	| logical_expression OR expression {$$ = checkLogicalExpression($1, $3, "or");}
+	| logical_expression OR expression {NGC  $$ = checkLogicalExpression($1, $3, "or"); ENGC
+										GC genOperation(yyout, $1, $3, "||"); EGC }
 	;
 logical_expression :
 	relational_expression
-	| relational_expression AND logical_expression {$$ = checkLogicalExpression($1, $3, "and");}
+	| relational_expression AND logical_expression {NGC $$ = checkLogicalExpression($1, $3, "and"); ENGC
+													GC genOperation(yyout, $1, $3, "&&"); EGC }
 	;
 	
 relational_expression :
 	aritmetic_expression
-	| aritmetic_expression relational_operator relational_expression {$$ = checkRelationalExpression($1, $3, $2);}
+	| aritmetic_expression relational_operator relational_expression 
+		{NGC $$ = checkRelationalExpression($1, $3, $2); ENGC
+		GC genOperation(yyout, $1, $3, $2); EGC}
 	;
 
 aritmetic_expression :
 	term
-	| term '+' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "+");}
-	| term '-' aritmetic_expression {$$ = checkAritmeticExpression($1, $3, "-");}
+	| term '+' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "+"); ENGC
+									GC genOperation(yyout, $1, $3, "+"); EGC }
+	| term '-' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "-"); ENGC
+									GC genOperation(yyout, $1, $3, "-"); EGC }
 	;
 	
 term :
 	factor 
-	| factor '*' term {$$ = checkAritmeticExpression($1, $3, "*");}
-	| factor '/' term {$$ = checkAritmeticExpression($1, $3, "/");}
+	| factor '*' term { NGC $$ = checkAritmeticExpression($1, $3, "*"); ENGC
+						GC genOperation(yyout, $1, $3, "*"); EGC }
+	| factor '/' term { NGC $$ = checkAritmeticExpression($1, $3, "/"); ENGC
+						GC genOperation(yyout, $1, $3, "/"); EGC }
 	;
 
 factor :
 	IDENTIF atribute {$$ = getVariableType( SYM_VARIABLE, $1, $2 );	}
-    | ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
-    | ID_GLOBAL_VARIABLE atribute {	$$ = getVariableType( SYM_GLOBAL, $1, $2 );	}
+    	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
+    	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
+    					GC
+							int reg = assignRegisters(0); 	
+							$$ = createExtraInfoSymbol(reg);	
+							struct ExtraInfo* aux = (struct ExtraInfo*)($$->info); 	
+							aux->nRegister = reg;			
+							aux->variable = searchVariable(SYM_GLOBAL,(cstr)$1);
+							if($2->info == SYM_CLASS_VARIABLE){
+								//varSymbol gets the struct Symbol of the variable
+								aux->variable = getClassVar(aux->variable,$2->name);
+							}			
+							fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
+							returnAddress(SYM_GLOBAL,aux->variable->name), aux->variable->name);	
+							freeSymbolInfo($2);			   
+    					EGC;}
 	| literal 
-	| NOT factor {$$ = checkNotExpression($2);}
+	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
+					GC	$$ = $2; EGC }
 	| simple_method_call {$$ = getReturnType($1);}
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;
 
 literal : 
-	INTEGER		{ $$ = searchType( TYPE_INTEGER ); }
-	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); }
-	| CHAR		{$$ = searchType( TYPE_CHAR ); }
-	| BOOL		{$$ = searchType( TYPE_BOOLEAN );}
+	INTEGER		{ $$ = searchType( TYPE_INTEGER ); 
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d = %d; //Loading integer %d\n", reg, arraySize, arraySize);
+					EGC }
+	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d = %f; //Loading float %f\n", reg, floatVal, floatVal);
+					EGC }
+	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d = %d; //Loading char %d\n", reg, arraySize, arraySize);
+					EGC }	
+	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
+					GC 
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg); 
+						fprintf(yyout, "\tR%d = %d; //Loading bool %d\n", reg, arraySize, arraySize);
+					EGC }	
 	;
 	
 string :
@@ -585,7 +644,7 @@ int main(int argc, char** argv) {
 		yyin = NULL;
 		yyin = fopen( argv[1],"r" );
 		//if(yyin == NULL); //Source file
-		printf( "yyin: %i\n", yyin );
+		//printf( "yyin: %i\n", yyin );
 		if( yyin){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",argv[1]);
@@ -595,7 +654,7 @@ int main(int argc, char** argv) {
 		
 		yyout = NULL;
 		yyout=fopen(aux,"w");	 
-		printf( "yyout: %i\n", yyout );
+		//printf( "yyout: %i\n", yyout );
 		if( yyin ){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",aux);
@@ -606,14 +665,17 @@ int main(int argc, char** argv) {
 		fprintf(yyout,"#include \"Q.h\"\n\n");
 
 		fprintf(yyout,"BEGIN\n");
+		fprintf(yyout,"STAT(0)\n");
 
 		getAllGlobals(yyout);
 
 		fprintf(yyout,"CODE(0)\n");
+		fprintf(yyout,"L 0:\n");
 
 		goInScope(mainScope);
 		yyparse();
 		
+		fprintf(yyout,"\tGT(-2);\n");
 		fprintf(yyout,"END\n");
 		fclose (yyout);
 	}

@@ -10,6 +10,7 @@ the code generation. Also the global variables and data structures*/
 int newLabel();
 
 /*Returns an available register*/
+/*0 -> entero, 1-> Flotante*/
 int assignRegisters(int type);
 
 /*Frees all the registers*/
@@ -33,9 +34,6 @@ unsigned int returnAddress(int symbolType, cstr id);
 //	- Local data allocation.
 void genMethodBegin( FILE* yyout, cstr methodName );
 
-// Generate the code for a method "end"
-// 
-
 
 /*                               Methods                                      */
 
@@ -53,3 +51,12 @@ void genMethodCallBegin( FILE* yyout, cstr methodName );
 // - vRegister - index of register with the parameter's value.
 // - offset - parameter position in stack.
 void genParameterPass( FILE* yyout, int vRegister, int offset );
+
+
+/*Returns the code that correspond to the storage of the type passed*/
+/*as parameter*/
+char pointerType(Symbol* symbol);
+
+
+void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op );
+

@@ -28,7 +28,6 @@ int newLabel()
 int assignRegisters(int type)
 {
     int i=0;
-
 	/*Buscar un Registro*/
     if ((type == 0) && (nRegisters>0))
     {
@@ -56,7 +55,8 @@ int assignRegisters(int type)
             }
         }
     }
-   
+    
+    return -1;   
     /*Si llegamos aquí es que no hay registros libres :(*/
     /*En caso de que no haya registros libres habrá que tirar de pila (A deliberar)*/
 }
@@ -90,7 +90,7 @@ int freeRegister(int i, int type)
     if ((type == 0) && (nRegisters<8))
 	{
         registers[i]=0;
-		nRegisters--;
+		nRegisters++;
     }
 
 	else if ((type == 1) && (nRegisters<7))
@@ -120,7 +120,7 @@ int variableCodeGeneration;
 int getAllGlobals(FILE* yyout)
 {
 
-	struct Variable* currentGlobal = NULL;
+	struct Symbol* currentGlobal = NULL;
 	
 	currentGlobal = nextGlobalVariablePointer();
 
@@ -131,15 +131,16 @@ int getAllGlobals(FILE* yyout)
 	int type = 0;
 	while(currentGlobal!=NULL)
 	{
-		size = ((struct Type*)(currentGlobal->type->info))->size;
-		type = ((struct Type*)(currentGlobal->type->info))->id;
-
-		currentGlobal->address = topAddress;
+		size = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->size;
+		type = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->id;
+	
+		topAddress = topAddress - size;
+		((struct Variable*)(currentGlobal->info))->address = topAddress;
 
 		if(type == TYPE_STRING){
 		//TODO PENDIENTE DE OBTENER EL TAMAÑO Y MULTIPLICAR		
-		}
-		fprintf(yyout,"\tMEM(0x%x,%d)\n",topAddress,size);
+		}		
+		fprintf(yyout,"\tMEM(0x%x,%d); //Memory for var %s \n",topAddress,size, currentGlobal->name);
 		/*switch (type){
 		case(TYPE_INTEGER):
 			fprint("\tI(%d)\n",);
@@ -162,9 +163,8 @@ int getAllGlobals(FILE* yyout)
 		case(TYPE_ARRAY):
 			
 			break;
-		}*/
-		
-		topAddress = topAddress - size;		
+		}*/	
+				
 		currentGlobal = nextGlobalVariablePointer();			
 	}
 	return 0;
@@ -245,4 +245,35 @@ void genParameterPass( FILE* yyout, int vRegister, int offset )
 {
 	// Get parameter.
 	fprintf( yyout,"\tI(R7 + %d) = R%d;\t\\\\ Parameter\n", (8+offset), vRegister );
+}
+
+
+// Gets the Q type corresponding to the type of the variable
+char pointerType(Symbol* symbol)
+{
+	switch(((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id)
+	{
+	case (TYPE_INTEGER || TYPE_BOOLEAN):
+		return 'I';
+	break;
+	case TYPE_FLOAT:
+		return 'F';
+	break;
+	case TYPE_CHAR:
+		return 'U';
+	break;	
+	}
+	return 'E';
+	
+}
+
+
+void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op )
+{
+	int r0, r1;
+	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
+	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
+	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
+	freeRegister(r1, 0);
+	freeSymbol(rightSide);	
 }

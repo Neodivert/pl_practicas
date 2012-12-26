@@ -383,9 +383,35 @@ assignment :
 	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
 									GC 
 										printf("Var name %s\n", $1->varSymbol->name);
-										fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
-										returnAddress(SYM_GLOBAL,$1->varSymbol->name),((struct ExtraInfo*)($2->info))->nRegister,
-										$1->varSymbol->name);
+										
+										if ($1->varSymbol->symType == SYM_GLOBAL){
+											//Estas dos líneas hacen lo mismo, pero una solo accede a un campo
+											
+											/*fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
+											returnAddress($1->varSymbol->symType,$1->varSymbol->name),((struct ExtraInfo*)($2->info))->nRegister,
+											$1->varSymbol->name);*/
+											
+											fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
+											((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
+											$1->varSymbol->name);
+											
+										}else if ($1->varSymbol->symType == SYM_VARIABLE){
+										//Obtenemos la direccion con el desplazamiento y almacenamos
+											if($1->varSymbol->symSubtype == SYM_LOCAL){
+												fprintf(yyout,"\t%c(R7 + %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
+												//TODO Cuando se almacenen los desplazamientos en la tabla de simbolos esto deberia funcionar
+													/*((struct Variable*)($1->varSymbol->info))->address*/4,((struct ExtraInfo*)($2->info))->nRegister,
+													$1->varSymbol->name);
+											}
+											else{
+												fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
+												//TODO Cuando se almacenen los desplazamientos en la tabla de simbolos esto deberia funcionar
+													/*((struct Variable*)($1->varSymbol->info))->address*/4,((struct ExtraInfo*)($2->info))->nRegister,
+													$1->varSymbol->name);
+											
+											}
+										}
+										
 										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
 										freeSymbolInfo($1);
 										freeSymbol($2); 
@@ -407,6 +433,13 @@ left_side :
 									EGC;
 									$$ = $2;}
 	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
+									GC
+										$2->varSymbol = searchVariable(SYM_VARIABLE,(cstr)$1);
+										if($2->info == SYM_CLASS_VARIABLE){
+											//varSymbol gets the struct Symbol of the variable
+											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
+										}
+									EGC;
 							$$ = $2; }
 	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
 								$$ = $2;}

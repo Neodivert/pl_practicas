@@ -125,7 +125,7 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
+	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator { GC fprintf( yyout, "\t" ); EGC } method_code END separator 
 		{	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
@@ -133,13 +133,13 @@ method_definition :
 			} 
 			goInScope( $<methodInfo>3->scope );
 			
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);		// Cambiado $6 a $7
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $8);		// Cambiado $6 a $7
 		
 			GC genMethodEnd( yyout, $2 ); EGC
 
 			free($<methodInfo>3);
 		}
-	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC genMethodBegin( yyout, $2 ); EGC } separator method_code END separator
+	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC genMethodBegin( yyout, $2 ); EGC } separator { GC fprintf( yyout, "\t" ); EGC } method_code END separator
 		{
 			if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
@@ -147,7 +147,7 @@ method_definition :
 				setNArguments( 0 ); 
 			}
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);	
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $6);	
 
 			GC genMethodEnd( yyout, $2 ); EGC
 	
@@ -213,8 +213,8 @@ class_content :
 // block_call. See method_code.
 method_call : 
 	simple_method_call separator
-	| block_call {$$ = NULL;} 
-	;		
+	| block_call {$$ = NULL;}
+	;
 
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
@@ -228,7 +228,7 @@ simple_method_call:
 
 					GC genMethodCallBegin( yyout, $1 ); EGC
 				}			
-		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); }  
+		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); GC genMethodCall( yyout, (struct Method* )(currentMethodCall->info) ); EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
 	;
 
@@ -250,8 +250,9 @@ arguments :
 									}	
 								}
 								GC
-									
-								EGC	
+									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, nArguments-$2-1 );
+									//genParameterPass( yyout, $1 );
+								EGC
 							}		 
 	| method_call_argument  {
 								if(currentMethodCall != NULL){	
@@ -264,7 +265,9 @@ arguments :
 										$$ = -1;
 									}
 								}
-								
+								GC
+									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, nArguments-1 );
+								EGC
 						   }
 	| {$$ = 0;}
 	;
@@ -279,6 +282,13 @@ method_call_argument :
 // Check if every argument in method call match the corresponding argument in
 // method definition.
 
+/*
+struct ExtraInfo {
+	int nRegister;
+	struct Symbol* variable; 
+};
+*/
+
 // FIXME: Cuando use la info que devuelve expression, liberarla.
 more_arguments : 
 	',' method_call_argument {  
@@ -292,8 +302,13 @@ more_arguments :
 									}	
 								}
 								GC
+									printf( "Argumento (3): %i\n", nArguments-1 );
+									genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments-1 );
+									/*struct ExtraInfo* info = $2->info;
 									$$ = 0;
-									genParameterPass( yyout, 0, $$ );
+									//printf( "Valor de adress: %i\n", info->variable->address );
+									genParameterPass( yyout, $2, nArguments-1 );
+									//printf( "Tratando argumento 3 [%i]\n", $2->symType );*/
 								EGC 
 							}
 	| ',' method_call_argument more_arguments 
@@ -305,8 +320,13 @@ more_arguments :
 						$$ = $3 + 1;
 					}else{
 						$$ = -1;
-					}	
-				}		
+					}
+				}
+				GC 
+					//genParameterPass( yyout, $2 );
+					printf( "Argumento (4): %i\n", nArguments-$3-1 );
+					genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments-$3-1 );
+				EGC		
 			}	             
 	;
 

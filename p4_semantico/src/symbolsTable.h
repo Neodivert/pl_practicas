@@ -246,6 +246,9 @@ struct Symbol* getReturnType( struct Symbol* method);
 
 void createPutsGetcExitCode();
 
+// Get method's iArgument-th argument.
+Symbol* getMethodArgument( Symbol* method, int iArgument );
+
 // Iterate over methods in symbol's table and fill its fields for arguments and
 // local data sizes.
 void fillMethodDataSizes();

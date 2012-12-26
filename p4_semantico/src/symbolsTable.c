@@ -882,17 +882,19 @@ void createPutsGetcExitCode()
 }
 
 // Auxiliar - Fill method's fields for arguments size and local data size.
-void getMethodDataSize( struct Method* method )
+void fillMethodDataSize( struct Method* method )
 {
-   int i = 0;
+   int i = 0, offset = 0;
    
 	// Initialization
-	method->argumentsSize = 0;
+	method->argumentsSize = 8; // space (in bytes) dedicated to save previous R6 and return label.
 	method->localsSize = 0;
    Symbol* argument = method->localSymbols;
+	struct Variable* variable;
    
 	// Calculate arguments size.
    for( i=0; i<method->nArguments; i++ ){
+		( ( struct Variable* )( argument->info ) )->address = method->argumentsSize;
       method->argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       argument = argument->next;
    }
@@ -900,6 +902,7 @@ void getMethodDataSize( struct Method* method )
 	// Calculate local data size.
 	while( argument ){
       if( argument->symType == SYM_VARIABLE ){ 
+			( ( struct Variable* )( argument->info ) )->address = method->argumentsSize;
          method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       }
       argument = argument->next;
@@ -918,8 +921,19 @@ void fillMethodDataSizes()
 	while( symbol ){
 		if( ( symbol->symType == SYM_METHOD ) ){
 			method = ( struct Method* )( symbol->info );
-			getMethodDataSize( method );
+			fillMethodDataSize( method );
 		}
 		symbol = symbol->next;
 	}
+}
+
+// Get method's iArgument-th argument.
+Symbol* getMethodArgument( Symbol* method, int iArgument )
+{
+	int i;
+	Symbol* argument = ((struct Method*)(method->info))->localSymbols;
+	for( i=0; i<iArgument; i++ ){
+		argument = argument->next;
+	}
+	return argument;
 }

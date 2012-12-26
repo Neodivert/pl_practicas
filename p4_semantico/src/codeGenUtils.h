@@ -35,23 +35,30 @@ unsigned int returnAddress(int symbolType, cstr id);
 void genMethodBegin( FILE* yyout, cstr methodName );
 
 
-/*                               Methods                                      */
+/*                            Method definition                              */
 
-// Generate the code for a method "begin" (method label and local space 
-// allocation).
+// Generate the code for a method "begin" (set method label and new base, and
+// allocate local space).
 void genMethodBegin( FILE* yyout, cstr methodName );
 
-// Generate the code for a method "end" (local data free and return).
+// Generate the code for a method "end" (free local data and return).
 void genMethodEnd( FILE* yyout, cstr methodName );
 
-// Generate the code for a method call "begin" (parameters memory allocation).
+
+/*                               Method call                                 */
+
+// Generate the code for a method call "begin" (arguments memory allocation).
 void genMethodCallBegin( FILE* yyout, cstr methodName );
 
-// Generate the code for a parameter pass. Arguments:
-// - vRegister - index of register with the parameter's value.
-// - offset - parameter position in stack.
-void genParameterPass( FILE* yyout, int vRegister, int offset );
+// Generate the code for a method call (save base and return label and call
+// method).
+void genMethodCall( FILE* yyout, struct Method* method );
 
+// Generate the code for a parameter pass. Arguments:
+// - iRegister - index of register with the argument's value.
+// - method - called method symbol.
+// - iArgument - argument index.
+void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument );
 
 /*Returns the code that correspond to the storage of the type passed*/
 /*as parameter*/

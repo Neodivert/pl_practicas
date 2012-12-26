@@ -894,6 +894,7 @@ void fillMethodDataSize( struct Method* method )
    
 	// Calculate arguments size.
    for( i=0; i<method->nArguments; i++ ){
+		argument->symSubtype = SYM_ARG;
 		( ( struct Variable* )( argument->info ) )->address = method->argumentsSize;
       method->argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       argument = argument->next;
@@ -901,8 +902,9 @@ void fillMethodDataSize( struct Method* method )
 
 	// Calculate local data size.
 	while( argument ){
-      if( argument->symType == SYM_VARIABLE ){ 
-			( ( struct Variable* )( argument->info ) )->address = method->argumentsSize;
+      if( argument->symType == SYM_VARIABLE ){
+			argument->symSubtype = SYM_LOCAL;
+			( ( struct Variable* )( argument->info ) )->address = method->localsSize;
          method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       }
       argument = argument->next;

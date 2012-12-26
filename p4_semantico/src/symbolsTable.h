@@ -39,8 +39,6 @@ extern int compilationState;
 #define SYM_EXTRA_INFO 8
 
 // Valores posibles para el campo "symSubtype" de Symbol.
-//TODO Moi se supone que va a recorrer para que se tenga la información de cada variable almacenada igual que con
-//las variables globales
 #define SYM_LOCAL 1
 #define SYM_ARG 2
 

@@ -160,6 +160,8 @@ method_definition :
 // An Emerald's method return a value if its last sentence is an assignment or
 // a method call. If method's last sentence is like that, we return its type
 // symbol in $$, otherwise we return NULL.
+
+// FIXME: cuando se asigna a = b con a,b locales peta (por b).
 method_code : 
 	separator { $$ = NULL; } 
 	| assignment
@@ -436,14 +438,12 @@ assignment :
 										//Obtenemos la direccion con el desplazamiento y almacenamos
 											if($1->varSymbol->symSubtype == SYM_LOCAL){
 												fprintf(yyout,"\t%c(R7 + %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
-												//TODO Cuando se almacenen los desplazamientos en la tabla de simbolos esto deberia funcionar
-													/*((struct Variable*)($1->varSymbol->info))->address*/4,((struct ExtraInfo*)($2->info))->nRegister,
+													((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
 													$1->varSymbol->name);
 											}
 											else{
 												fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
-												//TODO Cuando se almacenen los desplazamientos en la tabla de simbolos esto deberia funcionar
-													/*((struct Variable*)($1->varSymbol->info))->address*/4,((struct ExtraInfo*)($2->info))->nRegister,
+													((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
 													$1->varSymbol->name);
 											
 											}

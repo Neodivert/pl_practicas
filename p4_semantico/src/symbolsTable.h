@@ -38,6 +38,12 @@ extern int compilationState;
 #define SYM_BLOCK 7
 #define SYM_EXTRA_INFO 8
 
+// Valores posibles para el campo "symSubtype" de Symbol.
+//TODO Moi se supone que va a recorrer para que se tenga la información de cada variable almacenada igual que con
+//las variables globales
+#define SYM_LOCAL 1
+#define SYM_ARG 2
+
 // Valores posibles para el campo "id" de Type.
 #define TYPE_INTEGER 1
 #define TYPE_FLOAT 2
@@ -53,6 +59,8 @@ extern int compilationState;
 struct Symbol
 {
    	int symType; // symType = TYPE, VARIABLE, etc.
+   	int symSubtype; // SUBTYPE_LOCAL, SUBTYPE_ARG
+   	
 	char *name;
 	
 	void *info;

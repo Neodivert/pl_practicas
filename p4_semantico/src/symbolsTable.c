@@ -529,7 +529,7 @@ void showSymTable_( Symbol* sym, int level )
 		struct ArrayType* arrayInfo;
 		switch( sym->symType ){
 			case SYM_TYPE:
-				printf(" - size:[%i]", ((struct Type*)(sym->info))->size);
+				printf(" - id:[%i] - size:[%i]", ((struct Type*)(sym->info))->id, ((struct Type*)(sym->info))->size);
 				if( ((struct Type*)(sym->info))->id == TYPE_ARRAY )
 				{
 					struct ArrayType *arrayInfo = ((struct Type*)(sym->info))->arrayInfo;
@@ -556,7 +556,7 @@ void showSymTable_( Symbol* sym, int level )
 				aux = ((struct Variable*)(sym->info))->type;
 				printf( " - type: " );
 				if( aux ){
-					printf( "[%s]", aux->name );
+					printf( "[%s] - id: [%i]", aux->name, ((struct Type*)(aux->info))->id );
 				}else{
 					printf( "NULL" );
 				}

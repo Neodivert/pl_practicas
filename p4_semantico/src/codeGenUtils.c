@@ -192,17 +192,17 @@ void genMethodBegin( FILE* yyout, cstr methodName )
    // Get the method's info from symbols' table.
    struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
    
-   // Print the method name in a comment.
-	fprintf( yyout, "\n\t// Procedure [%s]\n", methodName );
+   // Print a comment to indicate the method definitions' begin.
+	fprintf( yyout, "\n\t/* Procedure [%s] - begin */\n", methodName );
    
 	// Set method label. 
 	fprintf( yyout,"\tL %i:\n", method->label );
 
 	// New base.
-	fprintf( yyout,"\t\tR6 = R7;\t// New base\n", method->label );
+	fprintf( yyout,"\tR6 = R7;\t// New base\n", method->label );
 
 	// Allocate space for local variables.
-	fprintf( yyout,"\t\tR7 = R7 - %d;\t// Allocate space for local variables\n", method->localsSize );
+	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate space for local variables\n", method->localsSize );
 }
 
 
@@ -213,16 +213,19 @@ void genMethodEnd( FILE* yyout, cstr methodName )
    struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
 
 	// Free local memory.
-	fprintf( yyout,"\t\tR7 = R7 + %d;\t// Free local variables\n", method->localsSize );
+	fprintf( yyout,"\tR7 = R7 + %d;\t// Free local variables\n", method->localsSize );
 
 	// Retrieve previous base.
-	fprintf( yyout,"\t\tR6 = P(R7+4);\t// Retrieve base\n", method->localsSize );
+	fprintf( yyout,"\tR6 = P(R7+4);\t// Retrieve base\n", method->localsSize );
 
 	// Get return label.
-	fprintf( yyout,"\t\tR5 = P(R7);\t// Get return label\n", method->localsSize );
+	fprintf( yyout,"\tR5 = P(R7);\t// Get return label\n", method->localsSize );
 
 	// Return from method.
-	fprintf( yyout,"\t\tGT(R5);\t// Return to caller\n", method->localsSize );
+	fprintf( yyout,"\tGT(R5);\t// Return to caller\n", method->localsSize );
+
+	// Print a comment to indicate the method definition's end.
+	fprintf( yyout, "\t/* Procedure [%s] - end */\n\n", methodName );
 }
 
 
@@ -234,8 +237,8 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 	// Get the called method's info from symbols' table.
    struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
 
-	// Print the called method name in a comment.
-	fprintf( yyout, "\t// Starting call to procedure [%s]\n", methodName );
+	// Print a comment to indicate the method call's begin.
+	fprintf( yyout, "\n\t/* Call to procedure [%s] - begin */\n", methodName );
 	
 	// Allocate memory for arguments (+8 bytes more for previous base and return
 	// label).
@@ -249,7 +252,7 @@ void genMethodCall( FILE* yyout, struct Method* method )
 	int newLabel_ = newLabel();
 
 	// Save base
-	fprintf( yyout, "\tP(R7+4)=R6;\t// Save base\n" );
+	fprintf( yyout, "\tP(R7+4) = R6;\t// Save base\n" );
 
 	// Save return label
 	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
@@ -259,6 +262,9 @@ void genMethodCall( FILE* yyout, struct Method* method )
 
 	// Set return label
 	fprintf( yyout, "\tL %i:\n", newLabel_ );
+
+	// Print a comment to indicate the method call's end.
+	fprintf( yyout, "\t/* Call to procedure - end */\n\n" );
 }
 
 // Generate the code for a parameter pass. Arguments:
@@ -272,24 +278,28 @@ void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument 
 	int address = ((struct Variable*)( argument->info ) )->address;
 
 	// Get parameter.
-	fprintf( yyout,"\t%c(R7 + %d) = R%d;\t// %iº Argument\n", pointerType( argument ), address, iRegister, iArgument+1 );
+	fprintf( yyout,"\t%c(R7+%d) = R%d;\t// %iº Argument\n", pointerType( argument ), address, iRegister, iArgument+1 );
 }
 
 
 // Gets the Q type corresponding to the type of the variable
 char pointerType(Symbol* symbol)
 {
-	switch(((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id)
-	{
-	case (TYPE_INTEGER || TYPE_BOOLEAN):
-		return 'I';
-	break;
-	case TYPE_FLOAT:
-		return 'F';
-	break;
-	case TYPE_CHAR:
-		return 'U';
-	break;	
+	printf( "\tObteniendo tipo de simbolo [%s] - symType: %i - typeName: %s - typeId: %i\n", symbol->name, symbol->symType, ((struct Variable*)(symbol->info))->type->name, ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id );
+
+	int typeId = ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id;
+
+	switch( typeId ){
+		case TYPE_INTEGER:
+		case TYPE_BOOLEAN:
+			return 'I';
+		break;
+		case TYPE_FLOAT:
+			return 'F';
+		break;
+		case TYPE_CHAR:
+			return 'U';
+		break;	
 	}
 	return 'E';
 	

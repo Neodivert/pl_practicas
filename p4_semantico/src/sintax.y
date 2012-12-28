@@ -125,7 +125,7 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator { GC fprintf( yyout, "\t" ); EGC } method_code END separator 
+	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
 		{	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
@@ -133,13 +133,13 @@ method_definition :
 			} 
 			goInScope( $<methodInfo>3->scope );
 			
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $8);		// Cambiado $6 a $7
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);		// Cambiado $6 a $7
 		
 			GC genMethodEnd( yyout, $2 ); EGC
 
 			free($<methodInfo>3);
 		}
-	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC genMethodBegin( yyout, $2 ); EGC } separator { GC fprintf( yyout, "\t" ); EGC } method_code END separator
+	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC genMethodBegin( yyout, $2 ); EGC } separator method_code END separator
 		{
 			if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
@@ -147,7 +147,7 @@ method_definition :
 				setNArguments( 0 ); 
 			}
 			goInScope($<methodInfo>3->scope);
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $6);	
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);	
 
 			GC genMethodEnd( yyout, $2 ); EGC
 	
@@ -241,6 +241,7 @@ simple_method_call:
 arguments : 
 	 method_call_argument more_arguments 
 							{ 
+								NGC
 								if(currentMethodCall != NULL){
 								  	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments - $2);
 									if(result == 0){
@@ -251,12 +252,15 @@ arguments :
 										$$ = -1;
 									}	
 								}
+								ENGC
 								GC
-									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, nArguments-$2-1 );
+									printf( "1 - [0]\n" );
+									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, 0 );
 									//genParameterPass( yyout, $1 );
 								EGC
 							}		 
 	| method_call_argument  {
+								NGC
 								if(currentMethodCall != NULL){	
 								 	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments);
 									if(result == 0){
@@ -267,8 +271,10 @@ arguments :
 										$$ = -1;
 									}
 								}
+								ENGC
 								GC
-									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, nArguments-1 );
+									printf( "2 - [0]\n" );
+									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, 0 );
 								EGC
 						   }
 	| {$$ = 0;}
@@ -294,6 +300,7 @@ struct ExtraInfo {
 // FIXME: Cuando use la info que devuelve expression, liberarla.
 more_arguments : 
 	',' method_call_argument {  
+								NGC
 								if(currentMethodCall != NULL)
 								{
 									int result = checkMethodCallArguments(currentMethodCall, $2, nArguments);
@@ -303,8 +310,9 @@ more_arguments :
 										$$ = -1;
 									}	
 								}
+								ENGC
 								GC
-									printf( "Argumento (3): %i\n", nArguments-1 );
+									printf( "3 - [%i]\n", nArguments-1 );
 									genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments-1 );
 									/*struct ExtraInfo* info = $2->info;
 									$$ = 0;
@@ -315,6 +323,7 @@ more_arguments :
 							}
 	| ',' method_call_argument more_arguments 
 			{ 
+				NGC
 				if(currentMethodCall != NULL)
 				{
 				  	int result = checkMethodCallArguments(currentMethodCall, $2, nArguments - $3);
@@ -324,9 +333,10 @@ more_arguments :
 						$$ = -1;
 					}
 				}
+				ENGC
 				GC 
 					//genParameterPass( yyout, $2 );
-					printf( "Argumento (4): %i\n", nArguments-$3-1 );
+					printf( "4 - [%i]\n", nArguments-$3-1 );
 					genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments-$3-1 );
 				EGC		
 			}	             
@@ -725,6 +735,11 @@ int main(int argc, char** argv) {
 		fprintf(yyout,"CODE(0)\n");
 		fprintf(yyout,"L 0:\n");
 
+		if (argc>2){
+			printf( "*****************ANTES GENERACION CODIGO\n" );
+			showSymTable();
+		}
+
 		goInScope(mainScope);
 		yyparse();
 		
@@ -734,6 +749,7 @@ int main(int argc, char** argv) {
 	}
 	fclose (yyin);
 
+	if (argc>2)showSymTable();
 	freeSymbTable();
 }
 

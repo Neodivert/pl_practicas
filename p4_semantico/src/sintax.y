@@ -125,22 +125,23 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
-		{	if($<methodInfo>3->result == 0){
+	DEF IDENTIF { NGC $<methodInfo>$ = checkMethodDefinition( $2 ); ENGC } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
+		{ NGC	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
 				setNArguments( $4 ); 
 			} 
 			goInScope( $<methodInfo>3->scope );
 			
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);		// Cambiado $6 a $7
+			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7); ENGC // Cambiado $6 a $7
 		
 			GC genMethodEnd( yyout, $2 ); EGC
 
-			free($<methodInfo>3);
+			NGC free($<methodInfo>3); ENGC
 		}
-	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC genMethodBegin( yyout, $2 ); EGC } separator method_code END separator
+	| DEF IDENTIF { NGC $<methodInfo>$ = checkMethodDefinition( $2 ); ENGC GC genMethodBegin( yyout, $2 ); EGC } separator method_code END separator
 		{
+			NGC
 			if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
@@ -148,10 +149,10 @@ method_definition :
 			}
 			goInScope($<methodInfo>3->scope);
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);	
-
+			ENGC
 			GC genMethodEnd( yyout, $2 ); EGC
 	
-			free($<methodInfo>3);			
+			NGC free($<methodInfo>3); ENGC			
 		}
 	| DEF error END separator { yyerror( "Sintax error on method definition" ); yyerrok;}
 	| DEF IDENTIF error END separator { goInScope(getParentScope()); yyerror( "Sintax error on method definition %s",$2); yyerrok;}
@@ -163,16 +164,16 @@ method_definition :
 
 // FIXME: cuando se asigna a = b con a,b locales peta (por b).
 method_code : 
-	separator { $$ = NULL; } 
+	separator { NGC $$ = NULL; ENGC } 
 	| assignment
-	| assignment method_code { $$ = $2 ? $2 : $1; }
+	| assignment method_code { NGC $$ = $2 ? $2 : $1; ENGC }
 	| method_call
-	| method_call method_code { $$ = $2 ? $2 : $1; }	
-	| separator method_code {$$ = $2;}
-	| loop {$$ = NULL;}
-	| loop method_code {$$ = NULL;}
-	| if_construction {$$ = NULL;}	 
-	| if_construction method_code {$$ = NULL;} 
+	| method_call method_code { NGC $$ = $2 ? $2 : $1; ENGC }	
+	| separator method_code { NGC $$ = $2; ENGC }
+	| loop { NGC $$ = NULL; ENGC}
+	| loop method_code { NGC $$ = NULL; ENGC }
+	| if_construction { NGC $$ = NULL; ENGC }	 
+	| if_construction method_code { NGC $$ = NULL; ENGC } 
 	;
 
 // checkArgumentDefinition insert argument's symbol with name $2 in symbols
@@ -197,18 +198,18 @@ separator :
 	;
 
 class_definition : 
-	CLASS ID_CONSTANT separator { currentClass = checkClassDefinitonPre($2, currentClass);}
+	CLASS ID_CONSTANT separator { NGC currentClass = checkClassDefinitonPre($2, currentClass); ENGC }
 		class_content 
-	END separator {currentClass = checkClassDefinitonPost( $2, $5 );}
+	END separator { NGC currentClass = checkClassDefinitonPost( $2, $5 ); ENGC }
 	| CLASS error END separator {yyerror( "Sintax error on class definition"); yyerrok;}
 	| CLASS ID_CONSTANT error END separator {yyerror( "Sintax error on class definition %s", $2); yyerrok;}
 	;
 
 class_content : 
-	ID_INSTANCE_VARIABLE '=' literal  { $$ = checkClassContentDefinition(currentClass, $1, $3, 0); }
-	| ID_INSTANCE_VARIABLE '=' literal separator class_content { $$ = checkClassContentDefinition(currentClass, $1, $3, $5); }
-	| separator class_content {$$ = $2;}	
-	| {$$ = 0;}		
+	ID_INSTANCE_VARIABLE '=' literal  { NGC $$ = checkClassContentDefinition(currentClass, $1, $3, 0); ENGC }
+	| ID_INSTANCE_VARIABLE '=' literal separator class_content { NGC $$ = checkClassContentDefinition(currentClass, $1, $3, $5); ENGC }
+	| separator class_content { NGC $$ = $2; ENGC }	
+	| { NGC $$ = 0; ENGC }		
 	;
 
 // In $$ we return symple_method_call return type, or NULL, if we have a
@@ -470,26 +471,35 @@ assignment :
 // Here we check if variable already exists. If not, it is added to symbols
 // table, unless attribute is epsilon. In that case, an error must be given.
 left_side :
-	ID_GLOBAL_VARIABLE atribute '=' { NGC $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2); ENGC
+	ID_GLOBAL_VARIABLE atribute '=' { NGC $2->symbol = getCreateVariable(SYM_GLOBAL, $1, $2); $$ = $2; ENGC
 									GC
 										$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
 										if($2->info == SYM_CLASS_VARIABLE){
 											//varSymbol gets the struct Symbol of the variable
 											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 										}
+										$$ = $2;
 									EGC;
-									$$ = $2;}
-	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
+									}
+	| IDENTIF atribute '=' { NGC $2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2); $$ = $2; ENGC
 									GC
 										$2->varSymbol = searchVariable(SYM_VARIABLE,(cstr)$1);
 										if($2->info == SYM_CLASS_VARIABLE){
 											//varSymbol gets the struct Symbol of the variable
 											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 										}
+										$$ = $2;
 									EGC;
-							$$ = $2; }
-	| ID_CONSTANT atribute '=' {$2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2);
-								$$ = $2;}
+							 }
+	| ID_CONSTANT atribute '=' {NGC $2->symbol = getCreateVariable(SYM_CONSTANT, $1, $2); $$ = $2; ENGC
+									GC
+										$2->varSymbol = searchVariable(SYM_CONSTANT,(cstr)$1);
+										if($2->info == SYM_CLASS_VARIABLE){
+											//varSymbol gets the struct Symbol of the variable
+											$2->varSymbol = getClassVar($2->varSymbol,$2->name);
+										}
+										$$ = $2;
+									EGC;}
 	;
 	
 // Here we check if variable is of type struct and it actually has the field
@@ -504,17 +514,17 @@ atribute :
 // right_side returns its type (integer, boolean, array, class, etc).	
 right_side :
 	expression
-	| string {$$ = searchType( TYPE_STRING );}
+	| string { NGC $$ = searchType( TYPE_STRING ); ENGC }
 	//We save arraySize because otherwise it could be overwritten by literal
-	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
-	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
-	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
+	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' { NGC $$ = checkArray( $7, $<integer>6); ENGC}
+	| ID_CONSTANT NEW {	NGC $$ = searchTopLevel( SYM_TYPE, $1);	ENGC}
+	| '[' array_content ']' { NGC $$ = checkArray($2->symbol, $2->info ); ENGC }  
 	;
 
 // Here we check if all the array content has the same type.		
 array_content :   
-	literal { $$ = nullSymbolInfo(); $$->symbol = $1; $$->info = 1; }
-	| literal ',' array_content { $$ = checkArrayContent($1, $3); }
+	literal { NGC $$ = nullSymbolInfo(); $$->symbol = $1; $$->info = 1; ENGC }
+	| literal ',' array_content { NGC $$ = checkArrayContent($1, $3); ENGC }
 	;		      
 
 
@@ -566,8 +576,8 @@ term :
 	;
 
 factor :
-	IDENTIF atribute {$$ = getVariableType( SYM_VARIABLE, $1, $2 );	}
-    	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
+	IDENTIF atribute { NGC $$ = getVariableType( SYM_VARIABLE, $1, $2 ); ENGC }
+    	| ID_CONSTANT atribute {NGC $$ = getVariableType( SYM_CONSTANT, $1, $2 ); ENGC }
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
     					GC
 							int reg = assignRegisters(0); 	
@@ -592,25 +602,25 @@ factor :
 	;
 
 literal : 
-	INTEGER		{ $$ = searchType( TYPE_INTEGER ); 
+	INTEGER		{ NGC $$ = searchType( TYPE_INTEGER ); ENGC
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
 						fprintf(yyout, "\tR%d = %d; //Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }
-	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
+	| FLOAT		{ NGC $$ = searchType( TYPE_FLOAT ); ENGC 	 				
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
 						fprintf(yyout, "\tR%d = %f; //Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
-	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
+	| CHAR		{ NGC $$ = searchType( TYPE_CHAR ); ENGC
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
 						fprintf(yyout, "\tR%d = %d; //Loading char %d\n", reg, arraySize, arraySize);
 					EGC }	
-	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
+	| BOOL		{ NGC $$ = searchType( TYPE_BOOLEAN ); ENGC
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
@@ -749,6 +759,7 @@ int main(int argc, char** argv) {
 	}
 	fclose (yyin);
 
+	goInScope(mainScope);
 	if (argc>2)showSymTable();
 	freeSymbTable();
 }

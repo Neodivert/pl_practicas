@@ -179,7 +179,7 @@ method_code :
 // table (if it doesn't exist yet).
 // In $$ we return the number of defined arguments (integer).
 arguments_definition : 
-	'(' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition ')' { $$ = 1 + $4; }
+	'(' IDENTIF { NGC checkArgumentDefinition($2); ENGC } more_arguments_definition ')' { NGC $$ = 1 + $4; ENGC }
 	| '(' ')' {$$ = 0;}
 	;
 
@@ -187,7 +187,7 @@ arguments_definition :
 // table (if it doesn't exist yet).
 // In $$ we return the number of defined arguments (integer).
 more_arguments_definition : 
-	',' IDENTIF { checkArgumentDefinition($2); } more_arguments_definition { $$ = 1 + $4; }
+	',' IDENTIF { NGC checkArgumentDefinition($2); ENGC } more_arguments_definition { NGC $$ = 1 + $4; ENGC }
 	| { $$ = 0; }
 	;
 
@@ -215,22 +215,23 @@ class_content :
 // block_call. See method_code.
 method_call : 
 	simple_method_call separator
-	| block_call {$$ = NULL;}
+	| block_call { NGC $$ = NULL; ENGC }
 	;
 
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
 simple_method_call:  
-	IDENTIF '(' { 	
-					currentMethodCall = searchTopLevel( SYM_METHOD, $1);					
+	IDENTIF '(' { 
+					currentMethodCall = searchTopLevel( SYM_METHOD, $1);
+					NGC				
 					if(currentMethodCall && currentMethodCall->info ){						
 						nArguments = ((struct Method *)(currentMethodCall->info))->nArguments;						
 					}
 					$<symbol>$ = currentMethodCall;
-
+					ENGC
 					GC genMethodCallBegin( yyout, $1 ); EGC
 				}			
-		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); GC genMethodCall( yyout, (struct Method* )(currentMethodCall->info) ); EGC }  
+		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); ENGC GC genMethodCall( yyout, (struct Method* )(currentMethodCall->info) ); EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
 	;
 
@@ -283,7 +284,7 @@ arguments :
 // In $$ we return a pointer to method's type symbol.
 method_call_argument : 	
 	expression
-	| string {$$ = searchType( TYPE_STRING );}
+	| string { GC $$ = searchType( TYPE_STRING ); EGC }
 	;
 	
 // more_arguments - semantic actions:
@@ -346,12 +347,12 @@ more_arguments :
 // checkBlockDefinition search for block in symbols' table and create it if
 // doens't exist.
 block_call : 
-	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
+	IDENTIF EACH start_block '|' IDENTIF '|' { NGC $<method>$ = checkBlockDefinition( $1, $5 ); ENGC } separator
 		method_code
-	end_block separator { goInScope($<method>7); }
+	end_block separator { NGC goInScope($<method>7); ENGC }
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on %s.each definition", $1 ); yyerrok;}
 	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}
-	;			 
+	;
 
 start_block:
 	DO
@@ -373,7 +374,7 @@ loop :
 				   EGC;}
 	separator
 		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5); EGC ;}
-	END separator {checkIsBoolean($3);}
+	END separator { NGC checkIsBoolean($3); ENGC }
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 

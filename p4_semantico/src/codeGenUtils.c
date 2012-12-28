@@ -175,6 +175,12 @@ int getAllGlobals(FILE* yyout)
 int getAllLocalsMain(FILE* yyout)
 {
 	fillMainMethodDataSize();
+	struct Method* main = getCurrentScope();
+	// New base.
+	fprintf( yyout,"\tR6 = R7;\t// New base\n", main->label );
+
+	// Allocate space for local variables.
+	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate space for local variables\n", main->localsSize );	
 }
 
 /**************************************************************************/

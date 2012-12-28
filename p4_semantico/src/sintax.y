@@ -749,10 +749,10 @@ int main(int argc, char** argv) {
 		fprintf(yyout,"STAT(0)\n");
 
 		getAllGlobals(yyout);
-		getAllLocalsMain(yyout);
 
 		fprintf(yyout,"CODE(0)\n");
 		fprintf(yyout,"L 0:\n");
+		getAllLocalsMain(yyout);
 
 		if (argc>2){
 			printf( "*****************ANTES GENERACION CODIGO\n" );

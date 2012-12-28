@@ -213,7 +213,7 @@ void genMethodEnd( FILE* yyout, cstr methodName )
    struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
 
 	// Free local memory.
-	fprintf( yyout,"\tR7 = R7 + %d;\t// Free local variables\n", method->localsSize );
+	fprintf( yyout,"\tR7 = R6;\t// Free local variables\n", method->localsSize );
 
 	// Retrieve previous base.
 	fprintf( yyout,"\tR6 = P(R7+4);\t// Retrieve base\n", method->localsSize );

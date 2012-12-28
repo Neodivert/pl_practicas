@@ -105,13 +105,10 @@ Symbol* checkNotExpression(Symbol* s){
 // (*) If s is non-NULL, this function also generates an error message.
 Symbol* checkIsBoolean(Symbol* s){
 	int t;
-	printf("ta aki\n");
 	if( s == NULL || s->info == NULL ){
 		return NULL; 
 	} 	
-	printf("ta ak 1i\n");
 	t = ((struct Type *)(s->info))->id;
-	printf("ta aki 2\n");
 	//Operand is boolean.
 	if(t == TYPE_BOOLEAN)
 	{

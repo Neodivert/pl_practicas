@@ -461,7 +461,9 @@ assignment :
 										
 										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
 										freeSymbolInfo($1);
-										freeSymbol($2); 
+										if($2->symType == SYM_EXTRA_INFO ){
+											freeSymbol($2); 
+										}	
 									EGC }
 
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
@@ -479,7 +481,7 @@ left_side :
 										}
 									EGC;
 									$$ = $2;}
-	| IDENTIF atribute '=' {$2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2);
+	| IDENTIF atribute '=' { NGC $2->symbol = getCreateVariable(SYM_VARIABLE, $1, $2); ENGC
 									GC
 										$2->varSymbol = searchVariable(SYM_VARIABLE,(cstr)$1);
 										if($2->info == SYM_CLASS_VARIABLE){

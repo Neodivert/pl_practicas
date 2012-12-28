@@ -196,7 +196,7 @@ void genMethodBegin( FILE* yyout, cstr methodName )
 	fprintf( yyout, "\n\t/* Procedure [%s] - begin */\n", methodName );
    
 	// Set method label. 
-	fprintf( yyout,"\tL %i:\n", method->label );
+	fprintf( yyout,"L %i:\n", method->label );
 
 	// New base.
 	fprintf( yyout,"\tR6 = R7;\t// New base\n", method->label );
@@ -261,7 +261,7 @@ void genMethodCall( FILE* yyout, struct Method* method )
 	fprintf( yyout, "\tGT(%i);\t// Call method\n", method->label );
 
 	// Set return label
-	fprintf( yyout, "\tL %i:\n", newLabel_ );
+	fprintf( yyout, "L %i:\n", newLabel_ );
 
 	// Print a comment to indicate the method call's end.
 	fprintf( yyout, "\t/* Call to procedure - end */\n\n" );

@@ -3,8 +3,10 @@
 /*This file intends to keep the implementation of the functions and procedures
 needed for the code generation part*/
 
-
-int registers[8] = {0,0,0,0,0,0,0,0};
+//The last two values are R6 and R7, because they are used by the
+//Q to track the variables and the stack, we do not allow the user
+//to used them.
+int registers[8] = {0,0,0,0,0,0,1,1};
 int nRegisters = 8;
 int nLabels = 0;
 unsigned int topAddress = Z;

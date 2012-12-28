@@ -447,7 +447,7 @@ assignment :
 										}else if ($1->varSymbol->symType == SYM_VARIABLE){
 										//Obtenemos la direccion con el desplazamiento y almacenamos
 											if($1->varSymbol->symSubtype == SYM_LOCAL){
-												fprintf(yyout,"\t%c(R7 + %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
+												fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
 													((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
 													$1->varSymbol->name);
 											}

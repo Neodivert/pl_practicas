@@ -242,7 +242,7 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 	
 	// Allocate memory for arguments (+8 bytes more for previous base and return
 	// label).
-	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for parameters\n", method->argumentsSize );
+	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", method->argumentsSize );
 }
 
 // Generate the code for a method call (save base and return label and call
@@ -262,6 +262,9 @@ void genMethodCall( FILE* yyout, struct Method* method )
 
 	// Set return label
 	fprintf( yyout, "L %i:\n", newLabel_ );
+
+	// Free arguments memory
+	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", method->argumentsSize );
 
 	// Print a comment to indicate the method call's end.
 	fprintf( yyout, "\t/* Call to procedure - end */\n\n" );

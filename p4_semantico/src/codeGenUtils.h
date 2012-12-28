@@ -25,6 +25,9 @@ int variableCodeGeneration;
 /*Generates code for variable storage*/
 int getAllGlobals(FILE* yyout);
 
+/*Generates code for local variables of hidden main method*/
+int getAllLocalsMain(FILE* yyout);
+
 /*Returns the actual address for storage in memory*/
 /*Also asigns it to the corresponding field in the symbols table*/
 unsigned int returnAddress(int symbolType, cstr id);

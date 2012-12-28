@@ -894,7 +894,7 @@ void fillMethodDataSize( struct Method* method )
    
 	// Calculate arguments size.
    for( i=0; i<method->nArguments; i++ ){
-		argument->symSubtype = SYM_ARG;
+		((struct Variable*)(argument->info))->symSubtype = SYM_ARG;
 		( ( struct Variable* )( argument->info ) )->address = method->argumentsSize;
       method->argumentsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       argument = argument->next;
@@ -903,7 +903,7 @@ void fillMethodDataSize( struct Method* method )
 	// Calculate local data size.
 	while( argument ){
       if( argument->symType == SYM_VARIABLE ){
-			argument->symSubtype = SYM_LOCAL;
+			((struct Variable*)(argument->info))->symSubtype = SYM_LOCAL;
 			( ( struct Variable* )( argument->info ) )->address = method->localsSize;
          method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       }
@@ -927,6 +927,21 @@ void fillMethodDataSizes()
 		}
 		symbol = symbol->next;
 	}
+}
+
+void fillMainMethodDataSize()
+{
+	Symbol* symbol = mainMethodNext;
+	struct Method *method = (struct Method*)(mainMethod->info);
+	// Calculate local data size.
+	while( symbol ){
+      if( symbol->symType == SYM_VARIABLE ){
+		((struct Variable*)(symbol->info))->symSubtype = SYM_LOCAL;
+		( ( struct Variable* )( symbol->info ) )->address = method->localsSize;
+		method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( symbol->info ) )->type )->info ) )->size;
+      }
+      symbol = symbol->next;
+   }	
 }
 
 // Get method's iArgument-th argument.

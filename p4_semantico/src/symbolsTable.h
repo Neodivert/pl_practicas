@@ -28,7 +28,7 @@ extern int compilationState;
 /*                                   Constants                                */
 /******************************************************************************/
 
-// Valores posibles para el campo "symType" de Symbol.
+// Values for in struct Symbol symType
 #define SYM_TYPE 1
 #define SYM_VARIABLE 2
 #define SYM_CONSTANT 3
@@ -38,11 +38,11 @@ extern int compilationState;
 #define SYM_BLOCK 7
 #define SYM_EXTRA_INFO 8
 
-// Valores posibles para el campo "symSubtype" de Symbol.
+// Values for in struct Variable symSubtype
 #define SYM_LOCAL 1
 #define SYM_ARG 2
 
-// Valores posibles para el campo "id" de Type.
+// Values for id in struct Type
 #define TYPE_INTEGER 1
 #define TYPE_FLOAT 2
 #define TYPE_STRING 3
@@ -57,7 +57,6 @@ extern int compilationState;
 struct Symbol
 {
    	int symType; // symType = TYPE, VARIABLE, etc.
-   	int symSubtype; // SUBTYPE_LOCAL, SUBTYPE_ARG
    	
 	char *name;
 	
@@ -93,6 +92,7 @@ struct ClassType{
 
 struct Variable {
    	Symbol* type;
+   	int symSubtype; // SUBTYPE_LOCAL, SUBTYPE_ARG
 	int address;
 };
 
@@ -258,6 +258,10 @@ Symbol* getMethodArgument( Symbol* method, int iArgument );
 // Iterate over methods in symbol's table and fill its fields for arguments and
 // local data sizes.
 void fillMethodDataSizes();
+
+// Iterate over main Method in symbol's table and fill its fields for arguments and
+// local data sizes.
+void fillMainMethodDataSize();
 
 //void setMain();
 

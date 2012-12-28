@@ -27,6 +27,8 @@ struct Symbol* currentMethodCall = NULL;
 struct Symbol* currentClass = NULL; 
 int nArguments = 0; 
 
+int nextCodeLabel = 0;
+
 %}
 
 // Possible data returned by a token or no terminal.
@@ -110,7 +112,7 @@ program :
 	;
 
 code : 
-	method_definition
+	method_definition 
 	| class_definition
 	| method_call
    	| loop
@@ -125,7 +127,8 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); } arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
+	DEF IDENTIF { GC nextCodeLabel = newLabel(); fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); EGC $<methodInfo>$ = checkMethodDefinition( $2 ); } 
+	arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
 		{	if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
 				// of arguments.
@@ -135,11 +138,21 @@ method_definition :
 			
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);		// Cambiado $6 a $7
 		
-			GC genMethodEnd( yyout, $2 ); EGC
+			GC 
+				genMethodEnd( yyout, $2 ); 
+				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
+			EGC
 
 			free($<methodInfo>3);
 		}
-	| DEF IDENTIF { $<methodInfo>$ = checkMethodDefinition( $2 ); GC genMethodBegin( yyout, $2 ); EGC } separator method_code END separator
+	| DEF IDENTIF {  $<methodInfo>$ = checkMethodDefinition( $2 ); 
+		GC 
+			nextCodeLabel = newLabel(); 
+			fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel);
+			genMethodBegin( yyout, $2 );
+			
+		EGC } 
+		separator method_code END separator
 		{
 			if($<methodInfo>3->result == 0){
 				// If method wasn't already in symbols' table, set its number
@@ -149,7 +162,10 @@ method_definition :
 			goInScope($<methodInfo>3->scope);
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);	
 
-			GC genMethodEnd( yyout, $2 ); EGC
+			GC 
+				genMethodEnd( yyout, $2 ); 
+				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
+			EGC
 	
 			free($<methodInfo>3);			
 		}

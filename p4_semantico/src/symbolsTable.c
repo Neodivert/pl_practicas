@@ -904,7 +904,7 @@ void fillMethodDataSize( struct Method* method )
 	while( argument ){
       if( argument->symType == SYM_VARIABLE ){
 			argument->symSubtype = SYM_LOCAL;
-			( ( struct Variable* )( argument->info ) )->address = method->localsSize;
+			( ( struct Variable* )( argument->info ) )->address = method->localsSize + 4;
          method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
       }
       argument = argument->next;

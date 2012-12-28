@@ -762,6 +762,7 @@ int main(int argc, char** argv) {
 		goInScope(mainScope);
 		yyparse();
 		
+		fprintf( yyout,"\tR7 = R7 + %d;\t// Free space for local variables\n", mainScope->localsSize );	
 		fprintf(yyout,"\tGT(-2);\n");
 		fprintf(yyout,"END\n");
 		fclose (yyout);

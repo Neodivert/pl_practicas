@@ -884,7 +884,7 @@ void createPutsGetcExitCode()
 // Auxiliar - Fill method's fields for arguments size and local data size.
 void fillMethodDataSize( struct Method* method )
 {
-   int i = 0, offset = 0;
+   int i = 0, offset = 0, size;
    
 	// Initialization
 	method->argumentsSize = 8; // space (in bytes) dedicated to save previous R6 and return label.
@@ -904,8 +904,9 @@ void fillMethodDataSize( struct Method* method )
 	while( argument ){
       if( argument->symType == SYM_VARIABLE ){
 			((struct Variable*)(argument->info))->symSubtype = SYM_LOCAL;
-			( ( struct Variable* )( argument->info ) )->address = method->localsSize + 4;
-         method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+			size = ( (struct Type* )( ( ( ( struct Variable* )( argument->info ) )->type )->info ) )->size;
+			( ( struct Variable* )( argument->info ) )->address = method->localsSize + size;
+         method->localsSize += size;
       }
       argument = argument->next;
    }

@@ -385,10 +385,10 @@ loop :
 	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); EGC ;}
 	expression DO {GC 
 					$<integer>$=newLabel(); 
-					fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>3,$<integer>$);
+					fprintf(yyout,"\tIF(!R%d) GT(%d);\t//begin LOOP\n",((struct ExtraInfo*)($3->info))->nRegister,$<integer>$);
 				   EGC;}
 	separator
-		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\n",$<integer>2,$<integer>5); EGC ;}
+		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\t//END LOOP\n",$<integer>2,$<integer>5); EGC ;}
 	END separator {checkIsBoolean($3);}
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
@@ -398,13 +398,13 @@ loop :
 if_construction : 
 	IF expression after_if {GC 
 								$<integer>$ = newLabel(); 
-								fprintf(yyout,"\tIF(!R%d) GT(%d);\n",$<integer>2,$<integer>$);
+								fprintf(yyout,"\tIF(!R%d) GT(%d);\t//we check the condition\n",((struct ExtraInfo*)($2->info))->nRegister,$<integer>$);
 							EGC	
 							;}
-		method_code //{$$ = newLabel(); fprintf(yyout,"\tGT(%d);\n",$$);} ****Este GT solo aparece en caso de que haya else.
+		method_code 
 		else_part {GC
-					if($<integer>6!=0){
-						fprintf(yyout,"L %d:\n",$<integer>4);
+					if($<integer>6==0){
+						fprintf(yyout,"L %d:\t//tag for END IF\n",$<integer>4);
 					}
 				   EGC;}//El else_part deberá crear su propio código
 	END separator
@@ -429,11 +429,11 @@ after_if :
 	
 else_part : 
 	ELSE separator {GC 
-						$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:", $<integer>$, $<integer>-1);
+						$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:\t//Tag of Else part\n", $<integer>$, $<integer>-1);
 					EGC
 					;}
 	method_code {GC
-					fprintf(yyout,"L %d:\n",$<integer>2);
+					fprintf(yyout,"L %d:\t//Tag for END IF\n",$<integer>3);
 				EGC	;}
 	| ELSE separator error {yyerror( "Sintax error on else" ); yyerrok;}
 	| {$<integer>$ = 0;}
@@ -705,7 +705,6 @@ int main(int argc, char** argv) {
 	yyparse();
 	
 	if (argc>2)showSymTable();
-
 	if(!errors)
 	{
 		fillMethodDataSizes();

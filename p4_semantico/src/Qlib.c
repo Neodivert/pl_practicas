@@ -74,6 +74,13 @@ L putf_: {unsigned char *p=inv_str(&U(R1)); // invierte: nva. dir. real 1er char
 	  printf((char*)p,R2);             // traslada                 
           reinv_str(p,&U(R1));   	    // re-invierte                
 	  GT(R0);                           // retorna
-	}                                                          
+	}      
+
+L puts_: {
+	char *p=inv_str(&U(P(R7+4)));
+	printf((char*)p);
+	reinv_str(p,&U(P(R7+4)));
+	GT(P(R7));
+}                                                 
 
 ENDLIB

@@ -34,6 +34,7 @@ false						{arraySize = 0; return BOOL;}
 true                    	{arraySize = 1; return BOOL;}
 ".each"						{return EACH;}
 ".new"						{return NEW;}
+"puts"						{return PUTS;}
 Array						{return ARRAY;}
 
 

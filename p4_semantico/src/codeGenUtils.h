@@ -70,3 +70,5 @@ char pointerType(Symbol* symbol);
 
 void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op );
 
+void genPuts( FILE* yyout, cstr str );
+

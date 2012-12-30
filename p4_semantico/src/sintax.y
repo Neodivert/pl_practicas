@@ -59,6 +59,10 @@ int nextCodeLabel = 0;
 %type <integer> more_arguments
 %type <integer> class_content
 %type <string> relational_operator
+%type <string> string
+%type <string> substring
+%type <string> substring_part
+
 
 // Tokens
 %token <symbol> INTEGER
@@ -93,6 +97,7 @@ int nextCodeLabel = 0;
 %token EACH
 %token NEW
 %token ARRAY
+%token PUTS
 
 // Operators precedence
 %left '+'
@@ -119,6 +124,7 @@ code :
    	| if_construction
 	| separator
 	| assignment
+	| puts
 	;
 
 // Method definition - Semantic actions:
@@ -526,7 +532,7 @@ atribute :
 // right_side returns its type (integer, boolean, array, class, etc).	
 right_side :
 	expression
-	| string {$$ = searchType( TYPE_STRING );}
+	| string { printf( "string = [%s]\n", $1 ); $$ = checkArray( searchType( TYPE_CHAR ), strlen( $1 ) ); }
 	//We save arraySize because otherwise it could be overwritten by literal
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
 	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
@@ -664,21 +670,31 @@ literal :
 					EGC }	
 	;
 	
+puts : PUTS string { printf( "puts [%s]", $2 ); GC genPuts( yyout, $2 ); EGC };
+
 string :
-	BEGIN_COMPLEX_STRING END_COMPLEX_STRING 
-	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING 
+	BEGIN_COMPLEX_STRING END_COMPLEX_STRING { strcpy( $$, "" ); }
+	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING
+	 { 
+		strcpy( $$, $2 );
+		GC 
+			//int reg = assignRegisters(0); 
+			//$$ = createExtraInfoSymbol(reg); 
+			//fprintf(yyout, "\tR%d = %d; //Loading bool %d\n", reg, arraySize, arraySize);
+		EGC
+	 }
 	| BEGIN_COMPLEX_STRING error END_COMPLEX_STRING {yyerror( "Sintax error on string" ); yyerrok;}
 	;
 	
 substring :
-	substring_part
-	| substring_part substring
+	substring_part { strcpy( $$, $1 ); }
+	| substring_part substring { strcpy( $$, $1 ); strcat( $$, $2 ); }
 	;
 	
 substring_part :
-	SUBSTRING 
-	| string_struct
-	| SEC_SCAPE 
+	SUBSTRING { printf( "\n\nSUBSTRING: [%s]\n\n", $1 ); strcpy( $$, $1 ); }
+	//| string_struct { strcpy( $$, $1 ); }
+	| SEC_SCAPE { strcpy( $$, $1 ); }
 	;
 	
 //TODO Lexical analizer does not allow expression on strings, so here we are only getting

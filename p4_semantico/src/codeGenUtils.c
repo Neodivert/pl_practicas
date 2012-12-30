@@ -319,7 +319,6 @@ char pointerType(Symbol* symbol)
 		break;	
 	}
 	return 'E';
-	
 }
 
 
@@ -331,4 +330,51 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 	freeRegister(r1, 0);
 	freeSymbol(rightSide);	
+}
+
+// Entrada: R0=etiqueta de retorno
+//          R1=dirección de la ristra de formato
+//          R2=valor entero a visualizar (opcional según formato)
+// No modifica ningún registro ni la ristra de formato
+
+
+void genPuts( FILE* yyout, cstr str )
+{
+	int i, size = 9 + strlen( str );
+
+	// Print a comment to indicate the puts call's begin.
+	fprintf( yyout, "\n\t/* Call to puts - begin */\n" );
+
+	// Allocate memory for arguments (+8 bytes more for previous base and return
+	// label).
+	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", size );
+	
+	// Arguments
+	fprintf( yyout,"\t// puts %s\n", str );
+	for( i=0; i<strlen( str ); i++ ){
+		fprintf( yyout,"\tU(R7+%d) = '%c';\n", 8+i, str[i] );
+	}
+	//fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 8+i );
+	
+	int newLabel_ = newLabel();
+
+	// Pointer to string
+	fprintf( yyout, "R4 = R7 + 8;" );
+	fprintf( yyout, "\tP(R7+4) = R4; //Pointer to string\n" ); //+8
+
+	
+	// Save return label
+	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
+
+	// Call method
+	fprintf( yyout, "\tGT(-13);\t// Call puts\n" );
+
+	// Set return label
+	fprintf( yyout, "L %i:\n", newLabel_ );
+
+	// Free arguments memory
+	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", size );
+	
+	// Print a comment to indicate the puts call's end.
+	fprintf( yyout, "\t/* Call to puts - end */\n\n" );
 }

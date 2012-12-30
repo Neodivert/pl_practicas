@@ -933,13 +933,15 @@ void fillMethodDataSizes()
 void fillMainMethodDataSize()
 {
 	Symbol* symbol = mainMethodNext;
+	int size;
 	struct Method *method = (struct Method*)(mainMethod->info);
 	// Calculate local data size.
 	while( symbol ){
       if( symbol->symType == SYM_VARIABLE ){
 		((struct Variable*)(symbol->info))->symSubtype = SYM_LOCAL;
-		( ( struct Variable* )( symbol->info ) )->address = method->localsSize + 4;
-		method->localsSize += ( (struct Type* )( ( ( ( struct Variable* )( symbol->info ) )->type )->info ) )->size;
+		size = ( (struct Type* )( ( ( ( struct Variable* )( symbol->info ) )->type )->info ) )->size;		
+		( ( struct Variable* )( symbol->info ) )->address = method->localsSize + size;
+        method->localsSize += size;		
       }
       symbol = symbol->next;
    }	

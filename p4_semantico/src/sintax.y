@@ -399,6 +399,10 @@ if_construction :
 	IF expression after_if {GC 
 								$<integer>$ = newLabel(); 
 								fprintf(yyout,"\tIF(!R%d) GT(%d);\t//we check the condition\n",((struct ExtraInfo*)($2->info))->nRegister,$<integer>$);
+								freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
+								if($2->symType == SYM_EXTRA_INFO ){
+									freeSymbol($2); 
+								}
 							EGC	
 							;}
 		method_code 
@@ -408,7 +412,7 @@ if_construction :
 					}
 				   EGC;}//El else_part deberá crear su propio código
 	END separator
-				{checkIsBoolean($2);}
+				{ NGC checkIsBoolean($2); ENGC }
 	| IF expression after_if
 		error
 		else_part
@@ -584,7 +588,31 @@ term :
 	;
 
 factor :
-	IDENTIF atribute {$$ = getVariableType( SYM_VARIABLE, $1, $2 );	}
+	IDENTIF atribute { NGC $$ = getVariableType( SYM_VARIABLE, $1, $2 ); ENGC
+						GC
+						int reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg);	
+						struct ExtraInfo* aux = (struct ExtraInfo*)($$->info); 
+						aux->nRegister = reg;			
+						aux->variable = searchVariable(SYM_VARIABLE,(cstr)$1);	
+						if($2->info == SYM_CLASS_VARIABLE){
+							//varSymbol gets the struct Symbol of the variable
+							aux->variable = getClassVar(aux->variable,$2->name);
+						}											
+															
+						if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
+							fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var %s\n",reg, 
+								pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
+								aux->variable->name);
+						}
+						else{
+							fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
+								pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
+								aux->variable->name);
+						}
+						freeSymbolInfo($2);
+						EGC 		
+			}
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
     					GC

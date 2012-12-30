@@ -340,29 +340,47 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 
 void genPuts( FILE* yyout, cstr str )
 {
+	// size = 4 (return label) + 4 (pointer to string) + 1 (null character) +
+	// strlen(str).
 	int i, size = 9 + strlen( str );
 
 	// Print a comment to indicate the puts call's begin.
 	fprintf( yyout, "\n\t/* Call to puts - begin */\n" );
 
-	// Allocate memory for arguments (+8 bytes more for previous base and return
-	// label).
+	// Allocate memory for arguments
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", size );
 	
 	// Arguments
-	fprintf( yyout,"\t// puts %s\n", str );
+	fprintf( yyout,"\t/* string [%s]*/\n", str );
 	for( i=0; i<strlen( str ); i++ ){
-		fprintf( yyout,"\tU(R7+%d) = '%c';\n", 8+i, str[i] );
+		switch( str[i] ){
+			case '\n':
+				fprintf( yyout,"\tU(R7+%d) = '\\n';\n", 8+i );
+			break;
+			case '\t':
+				fprintf( yyout,"\tU(R7+%d) = '\\t';\n", 8+i );
+			break;
+			case '\\':
+				fprintf( yyout,"\tU(R7+%d) = '\\\\';\n", 8+i );
+			break;
+			case '\"':
+				fprintf( yyout,"\tU(R7+%d) = '\"';\n", 8+i );
+			break;
+			default:
+				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 8+i, str[i] );
+			break;
+		}
 	}
-	//fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 8+i );
+	fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 8+i );
 	
 	int newLabel_ = newLabel();
 
 	// Pointer to string
-	fprintf( yyout, "R4 = R7 + 8;" );
+	// FIXME: esta orden esta puesta porque P(R7+4) = R7+8; no me lo pillaba la 
+	// maquina Q. Como ven, se usa el R4 por la cara.
+	fprintf( yyout, "\tR4 = R7 + 8;\n" ); 
 	fprintf( yyout, "\tP(R7+4) = R4; //Pointer to string\n" ); //+8
 
-	
 	// Save return label
 	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
 

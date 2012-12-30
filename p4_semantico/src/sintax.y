@@ -195,6 +195,8 @@ method_code :
 	| loop method_code {$$ = NULL;}
 	| if_construction {$$ = NULL;}	 
 	| if_construction method_code {$$ = NULL;} 
+	| puts
+	| puts method_code
 	;
 
 // checkArgumentDefinition insert argument's symbol with name $2 in symbols
@@ -670,19 +672,11 @@ literal :
 					EGC }	
 	;
 	
-puts : PUTS string { printf( "puts [%s]", $2 ); GC genPuts( yyout, $2 ); EGC };
+puts : PUTS string { GC genPuts( yyout, $2 ); EGC };
 
 string :
 	BEGIN_COMPLEX_STRING END_COMPLEX_STRING { strcpy( $$, "" ); }
-	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING
-	 { 
-		strcpy( $$, $2 );
-		GC 
-			//int reg = assignRegisters(0); 
-			//$$ = createExtraInfoSymbol(reg); 
-			//fprintf(yyout, "\tR%d = %d; //Loading bool %d\n", reg, arraySize, arraySize);
-		EGC
-	 }
+	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING { strcpy( $$, $2 ); }
 	| BEGIN_COMPLEX_STRING error END_COMPLEX_STRING {yyerror( "Sintax error on string" ); yyerrok;}
 	;
 	
@@ -692,7 +686,7 @@ substring :
 	;
 	
 substring_part :
-	SUBSTRING { printf( "\n\nSUBSTRING: [%s]\n\n", $1 ); strcpy( $$, $1 ); }
+	SUBSTRING { strcpy( $$, $1 ); }
 	//| string_struct { strcpy( $$, $1 ); }
 	| SEC_SCAPE { strcpy( $$, $1 ); }
 	;

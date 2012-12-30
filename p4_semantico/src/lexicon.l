@@ -50,7 +50,11 @@ $({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); r
 
 \"                  {BEGIN(COMPLEX_STRING); return BEGIN_COMPLEX_STRING;}
 
-<COMPLEX_STRING>\\t|\\\\|\\n|\\\"         {return SEC_SCAPE;}
+<COMPLEX_STRING>\\t        					{ strcpy( yylval.string, "\t" ); return SEC_SCAPE;}
+<COMPLEX_STRING>\\\\         					{ strcpy( yylval.string, "\\" ); return SEC_SCAPE;}
+<COMPLEX_STRING>\\n         					{ strcpy( yylval.string, "\n" ); return SEC_SCAPE;}
+<COMPLEX_STRING>\\\"         					{ strcpy( yylval.string, "\"" ); return SEC_SCAPE;}
+
 <COMPLEX_STRING>\"          {BEGIN(INITIAL); return END_COMPLEX_STRING;}
 <COMPLEX_STRING>"#{"         {BEGIN(IDENT); return START_STRUCT;}
 <COMPLEX_STRING>\n         {numlin++; BEGIN(INITIAL); error("Unfinished_string");}

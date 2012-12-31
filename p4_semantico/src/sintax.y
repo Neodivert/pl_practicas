@@ -65,7 +65,7 @@ int insideIfLoop = 0;
 %type <string> string
 %type <string> substring
 %type <string> substring_part
-
+%type <string> string_struct
 
 // Tokens
 %token <symbol> INTEGER
@@ -672,7 +672,7 @@ factor :
 								aux->variable->name);
 						}
 						freeSymbolInfo($2);
-						EGC 		
+						EGC
 			}
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
@@ -725,7 +725,7 @@ literal :
 					EGC }	
 	;
 	
-puts : PUTS '(' string ')' { GC genPuts( yyout, $3 ); EGC };
+puts : PUTS '(' string ')' { GC genPuts( yyout, $3 ); printf( "PUTS [%s]\n", $3 ); EGC };
 
 string :
 	BEGIN_COMPLEX_STRING END_COMPLEX_STRING { strcpy( $$, "" ); }
@@ -734,20 +734,21 @@ string :
 	;
 	
 substring :
-	substring_part { strcpy( $$, $1 ); }
-	| substring_part substring { strcpy( $$, $1 ); strcat( $$, $2 ); }
+	substring_part { GC strcpy( $$, $1 ); EGC }
+	| substring_part substring { GC strcpy( $$, $1 ); strcat( $$, $2 ); EGC }
 	;
 	
 substring_part :
-	SUBSTRING { strcpy( $$, $1 ); }
-	//| string_struct { strcpy( $$, $1 ); }
-	| SEC_SCAPE { strcpy( $$, $1 ); }
+	SUBSTRING { GC strcpy( $$, $1 ); EGC }
+	| string_struct { GC strcpy( $$, $1 ); EGC }
+	| SEC_SCAPE { GC strcpy( $$, $1 ); EGC }
 	;
 	
 //TODO Lexical analizer does not allow expression on strings, so here we are only getting
 //simple variables
 string_struct :
-		START_STRUCT expression END_STRUCT
+		/*START_STRUCT expression END_STRUCT
+		|*/ START_STRUCT factor END_STRUCT { GC char* str = genNumericString( $2 ); strcpy( $$, str ); printf( "\n\n$$=[%s]\n\n", $$ ); free( str ); EGC } // FIXME: si el factor es una variable falta comprobar que exista.
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%

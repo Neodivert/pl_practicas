@@ -78,7 +78,31 @@ L putf_: {unsigned char *p=inv_str(&U(R1)); // invierte: nva. dir. real 1er char
 
 L puts_: {
 	char *p=inv_str(&U(P(R7+4)));
-	printf((char*)p);
+	int i = 0;
+	while( i < strlen(p) ){
+		if( p[i] != '@' ){
+			putchar( p[i] );
+			i++;
+		}else{
+			switch( p[i+2] ){
+				printf(p,I(R7+4));
+				case 'i':
+					printf( "%i", R[p[i+1]-(int)('0')] );
+				break;
+				case 'f':
+					printf( "%f", R[p[i+1]-(int)('0')] );
+				break;
+				case 'c':
+					printf( "%c", R[p[i+1]-(int)('0')] );
+				break;
+				default:
+					printf( "E" );
+				break;
+			}
+			i += 3;
+		}
+	}
+	//printf((char*)p);
 	reinv_str(p,&U(P(R7+4)));
 	GT(P(R7));
 }                                                 

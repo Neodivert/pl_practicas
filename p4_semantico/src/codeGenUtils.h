@@ -67,8 +67,8 @@ void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument 
 /*as parameter*/
 char pointerType(Symbol* symbol);
 
-
 void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op );
 
 void genPuts( FILE* yyout, cstr str );
 
+char* genNumericString( Symbol* symbol );

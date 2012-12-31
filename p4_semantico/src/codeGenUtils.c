@@ -413,3 +413,55 @@ void genPuts( FILE* yyout, cstr str )
 	// Print a comment to indicate the puts call's end.
 	fprintf( yyout, "\t/* Call to puts - end */\n\n" );
 }
+
+#define TYPE_INTEGER 1
+#define TYPE_FLOAT 2
+#define TYPE_STRING 3
+#define TYPE_CHAR 4
+#define TYPE_BOOLEAN 5
+#define TYPE_CLASS 6
+#define TYPE_ARRAY 7
+
+char* genNumericString( Symbol* symbol )
+{
+	char *str = (char*)malloc( 4 );
+	int reg, type;
+
+	printf( "Generando string numerica - BEGIN\n" );
+
+	reg = ((struct ExtraInfo*)(symbol->info))->nRegister;
+	type = ((struct Type*)(((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->info))->id;
+
+	str[0] = '@';
+	str[1] = '0' + (char)reg;
+
+	switch( type ){
+		case TYPE_INTEGER:
+		case TYPE_BOOLEAN:
+			str[2] = 'i';
+		break;
+		case TYPE_FLOAT:
+			str[2] = 'f';
+		break;
+		case TYPE_CHAR:
+			str[2] = 'c';
+		break;
+		default:
+			str[2] = 'E';
+		break;
+	}
+
+	str[3] = 0;
+	/*
+	printf( "Symbol name: [%s]\n", symbol->name );
+	printf( "Symbol type: [%i]\n", symbol->symType );
+	printf( "Symbol register: [%i]\n", reg );
+	printf( "Symbol var: [%p]\n", ((struct ExtraInfo*)(symbol->info))->variable );
+	printf( "Symbol var type name: [%s]\n", ((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->name );
+	printf( "Symbol var type id: [%i]\n", ((struct Type*)(((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->info))->id );
+	*/
+
+	printf( "Generando string numerica - END\n" );
+
+	return str;
+}

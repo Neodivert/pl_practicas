@@ -133,15 +133,16 @@ method_definition :
 	DEF IDENTIF { GC nextCodeLabel = newLabel(); fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); EGC $<methodInfo>$ = checkMethodDefinition( $2 ); } 
 	arguments_definition { GC genMethodBegin( yyout, $2 ); returnValueSet = 0; EGC; } 
 	separator method_code END separator 
-		{	if($<methodInfo>3->result == 0){
-				// If method wasn't already in symbols' table, set its number
-				// of arguments.
-				setNArguments( $4 ); 
-			} 
-			goInScope( $<methodInfo>3->scope );
+		{	NGC 
+				if($<methodInfo>3->result == 0){
+					// If method wasn't already in symbols' table, set its number
+					// of arguments.
+					setNArguments( $4 ); 
+				} 
 			
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);		// Cambiado $6 a $7
-		
+				setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);
+			ENGC
+			goInScope( $<methodInfo>3->scope );
 			GC 
 				genMethodEnd( yyout, $2 ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
@@ -657,7 +658,7 @@ factor :
 	| literal 
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
 					GC	$$ = $2; EGC }
-	| simple_method_call {$$ = getReturnType($1);}
+	| simple_method_call { NGC $$ = getReturnType($1); ENGC }
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;

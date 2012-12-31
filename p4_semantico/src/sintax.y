@@ -29,7 +29,7 @@ int nArguments = 0;
 
 int nextCodeLabel = 0;
 
-int returnValueSet = 0;
+int returnValueSet = 1;
 int insideIfLoop = 0;
 
 %}
@@ -145,6 +145,7 @@ method_definition :
 			GC 
 				genMethodEnd( yyout, $2 ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
+				returnValueSet = 1;
 			EGC
 
 			free($<methodInfo>3);
@@ -189,21 +190,7 @@ method_code :
 					}	
 					$$ = NULL;
 				EGC}
-	| assignment method_code { NGC $$ = $2 ? $2 : $1; ENGC/*
-					GC if(!returnValueSet && !insideIfLoop){
-						int reg = ((struct ExtraInfo*)($1->info))->nRegister;
-						struct Method* method = getCurrentScope();
-						
-						fprintf(yyout,"\t%c(R6-%d) = R%d; //Save return value\n",
-						pointerType(method->returnType), ((struct Type*)(method->returnType->info))->size,
-						reg);
-						returnValueSet = 1;
-					} 					
-					if($1->symType == SYM_EXTRA_INFO ){
-						freeSymbol($1); 
-					}	
-					$$ = NULL;
-				EGC*/}
+	| assignment method_code { NGC $$ = $2 ? $2 : $1; ENGC }
 	| method_call
 	| method_call method_code { $$ = $2 ? $2 : $1; }	
 	| separator method_code {$$ = $2;}
@@ -510,14 +497,13 @@ assignment :
 											}
 										}
 										
-										if(!returnValueSet && !insideIfLoop){
+										if(!insideIfLoop){
 											int reg = ((struct ExtraInfo*)($2->info))->nRegister;
 											struct Method* method = getCurrentScope();
 											if(method->returnType){												
 												fprintf(yyout,"\t%c(R6+%d) = R%d; //Save return value\n",
 												pointerType(method->returnType), ((struct Type*)(method->returnType->info))->size, reg);
 											}
-											returnValueSet = 1;
 										}
 										
 										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );

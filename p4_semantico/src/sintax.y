@@ -186,9 +186,9 @@ method_code :
 	| method_call method_code { $$ = $2 ? $2 : $1; }	
 	| separator method_code {$$ = $2;}
 	| loop {$$ = NULL;}
-	| loop method_code {$$ = NULL;}
+	| loop method_code {$$ = $2;}
 	| if_construction {$$ = NULL;}	 
-	| if_construction method_code {$$ = NULL;} 
+	| if_construction method_code {$$ = $2;} 
 	;
 
 // checkArgumentDefinition insert argument's symbol with name $2 in symbols
@@ -237,16 +237,22 @@ method_call :
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
 simple_method_call:  
-	IDENTIF '(' { 	
-					currentMethodCall = searchTopLevel( SYM_METHOD, $1);					
+	IDENTIF '(' { 	currentMethodCall = searchTopLevel( SYM_METHOD, $1);	
+					NGC				
 					if(currentMethodCall && currentMethodCall->info ){						
 						nArguments = ((struct Method *)(currentMethodCall->info))->nArguments;						
 					}
 					$<symbol>$ = currentMethodCall;
+					ENGC
 
 					GC genMethodCallBegin( yyout, $1 ); EGC
 				}			
-		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); GC genMethodCall( yyout, (struct Method* )(currentMethodCall->info) ); EGC }  
+		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); ENGC 
+			GC 
+				int reg = assignRegisters(0); 
+				$$ = createExtraInfoSymbol(reg);
+				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
+			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
 	;
 

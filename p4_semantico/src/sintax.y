@@ -117,11 +117,19 @@ program :
 code : 
 	method_definition 
 	| class_definition
-	| method_call
+	| method_call 	{ GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+				EGC}
    	| loop
    	| if_construction
 	| separator
-	| assignment
+	| assignment { GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+				EGC}
 	;
 
 // Method definition - Semantic actions:
@@ -191,9 +199,26 @@ method_code :
 					}	
 					$$ = NULL;
 				EGC}
-	| assignment method_code { NGC $$ = $2 ? $2 : $1; ENGC }
-	| method_call
-	| method_call method_code { $$ = $2 ? $2 : $1; }	
+	| assignment method_code { NGC $$ = $2 ? $2 : $1; ENGC 
+				GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+					$$ = NULL;
+				EGC}
+	| method_call { GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+					$$ = NULL;
+				EGC}
+	| method_call method_code { NGC $$ = $2 ? $2 : $1; ENGC 
+				GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+					$$ = NULL;
+				EGC}	
 	| separator method_code {$$ = $2;}
 	| loop {$$ = NULL;}
 	| loop method_code {$$ = $2;}

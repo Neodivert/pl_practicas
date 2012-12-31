@@ -29,6 +29,9 @@ int nArguments = 0;
 
 int nextCodeLabel = 0;
 
+int returnValueSet = 1;
+int insideIfLoop = 0;
+
 %}
 
 // Possible data returned by a token or no terminal.
@@ -119,12 +122,20 @@ program :
 code : 
 	method_definition 
 	| class_definition
-	| method_call
+	| method_call 	{ GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+				EGC}
    	| loop
    	| if_construction
 	| separator
-	| assignment
 	| puts
+	| assignment { GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+				EGC}
 	;
 
 // Method definition - Semantic actions:
@@ -134,19 +145,22 @@ code :
 // if method was already in symbols table (1) or not (0).
 method_definition : 
 	DEF IDENTIF { GC nextCodeLabel = newLabel(); fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); EGC $<methodInfo>$ = checkMethodDefinition( $2 ); } 
-	arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } separator method_code END separator 
-		{	if($<methodInfo>3->result == 0){
-				// If method wasn't already in symbols' table, set its number
-				// of arguments.
-				setNArguments( $4 ); 
-			} 
-			goInScope( $<methodInfo>3->scope );
+	arguments_definition { GC genMethodBegin( yyout, $2 ); returnValueSet = 0; EGC; } 
+	separator method_code END separator 
+		{	NGC 
+				if($<methodInfo>3->result == 0){
+					// If method wasn't already in symbols' table, set its number
+					// of arguments.
+					setNArguments( $4 ); 
+				} 
 			
-			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);		// Cambiado $6 a $7
-		
+				setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $7);
+			ENGC
+			goInScope( $<methodInfo>3->scope );
 			GC 
 				genMethodEnd( yyout, $2 ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
+				returnValueSet = 1;
 			EGC
 
 			free($<methodInfo>3);
@@ -183,20 +197,41 @@ method_definition :
 // a method call. If method's last sentence is like that, we return its type
 // symbol in $$, otherwise we return NULL.
 
-// FIXME: cuando se asigna a = b con a,b locales peta (por b).
 method_code : 
 	separator { $$ = NULL; } 
-	| assignment
-	| assignment method_code { $$ = $2 ? $2 : $1; }
-	| method_call
-	| method_call method_code { $$ = $2 ? $2 : $1; }	
+	| assignment { GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+					$$ = NULL;
+				EGC}
+	| assignment method_code { NGC $$ = $2 ? $2 : $1; ENGC 
+				GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+					$$ = NULL;
+				EGC}
+	| method_call { GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+					$$ = NULL;
+				EGC}
+	| method_call method_code { NGC $$ = $2 ? $2 : $1; ENGC 
+				GC  					
+					if($1->symType == SYM_EXTRA_INFO ){
+						freeSymbol($1); 
+					}	
+					$$ = NULL;
+				EGC}	
 	| separator method_code {$$ = $2;}
 	| loop {$$ = NULL;}
-	| loop method_code {$$ = NULL;}
+	| loop method_code {$$ = $2;}
 	| if_construction {$$ = NULL;}	 
-	| if_construction method_code {$$ = NULL;} 
 	| puts
 	| puts method_code
+	| if_construction method_code {$$ = $2;} 
 	;
 
 // checkArgumentDefinition insert argument's symbol with name $2 in symbols
@@ -245,16 +280,22 @@ method_call :
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
 simple_method_call:  
-	IDENTIF '(' { 	
-					currentMethodCall = searchTopLevel( SYM_METHOD, $1);					
+	IDENTIF '(' { 	currentMethodCall = searchTopLevel( SYM_METHOD, $1);	
+					NGC				
 					if(currentMethodCall && currentMethodCall->info ){						
 						nArguments = ((struct Method *)(currentMethodCall->info))->nArguments;						
 					}
 					$<symbol>$ = currentMethodCall;
+					ENGC
 
 					GC genMethodCallBegin( yyout, $1 ); EGC
 				}			
-		arguments ')' { $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); GC genMethodCall( yyout, (struct Method* )(currentMethodCall->info) ); EGC }  
+		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); ENGC 
+			GC 
+				int reg = assignRegisters(0); 
+				$$ = createExtraInfoSymbol(reg);
+				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
+			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
 	;
 
@@ -370,9 +411,9 @@ more_arguments :
 // checkBlockDefinition search for block in symbols' table and create it if
 // doens't exist.
 block_call : 
-	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); } separator
+	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); GC insideIfLoop++; EGC } separator
 		method_code
-	end_block separator { goInScope($<method>7); }
+	end_block separator { goInScope($<method>7); insideIfLoop--;}
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on %s.each definition", $1 ); yyerrok;}
 	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}
 	;			 
@@ -390,14 +431,18 @@ end_block:
 // While loop. 
 // Semantic verifications: expression must return a boolean. 
 loop : 
-	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); EGC ;}
+	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); insideIfLoop++; EGC ;}
 	expression DO {GC 
 					$<integer>$=newLabel(); 
 					fprintf(yyout,"\tIF(!R%d) GT(%d);\t//begin LOOP\n",((struct ExtraInfo*)($3->info))->nRegister,$<integer>$);
+					freeRegister( ((struct ExtraInfo*)($3->info))->nRegister, 0 );
+					if($3->symType == SYM_EXTRA_INFO ){
+						freeSymbol($3); 
+					}					
 				   EGC;}
 	separator
 		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\t//END LOOP\n",$<integer>2,$<integer>5); EGC ;}
-	END separator {checkIsBoolean($3);}
+	END separator { NGC checkIsBoolean($3); ENGC GC insideIfLoop--; EGC }
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
@@ -411,6 +456,7 @@ if_construction :
 								if($2->symType == SYM_EXTRA_INFO ){
 									freeSymbol($2); 
 								}
+								insideIfLoop++;
 							EGC	
 							;}
 		method_code 
@@ -420,7 +466,7 @@ if_construction :
 					}
 				   EGC;}//El else_part deberá crear su propio código
 	END separator
-				{ NGC checkIsBoolean($2); ENGC }
+				{ NGC checkIsBoolean($2); ENGC GC insideIfLoop--; EGC}
 	| IF expression after_if
 		error
 		else_part
@@ -458,9 +504,7 @@ else_part :
 // side match.
 assignment : 
 	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
-									GC 
-										printf("Var name %s\n", $1->varSymbol->name);
-										
+									GC 									
 										if ($1->varSymbol->symType == SYM_GLOBAL){
 											//Estas dos líneas hacen lo mismo, pero una solo accede a un campo
 											
@@ -487,11 +531,20 @@ assignment :
 											}
 										}
 										
+										if(!insideIfLoop){
+											int reg = ((struct ExtraInfo*)($2->info))->nRegister;
+											struct Method* method = getCurrentScope();
+											
+											if(method->returnType){	
+												int size = method->argumentsSize;									
+												fprintf(yyout,"\t%c(R6+%d) = R%d; //Save return value\n",
+													pointerType(method->returnType), size, reg);
+											}
+										}
+										
 										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
 										freeSymbolInfo($1);
-										if($2->symType == SYM_EXTRA_INFO ){
-											freeSymbol($2); 
-										}	
+										$$ = $2;
 									EGC }
 
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
@@ -640,7 +693,7 @@ factor :
 	| literal 
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
 					GC	$$ = $2; EGC }
-	| simple_method_call {$$ = getReturnType($1);}
+	| simple_method_call { NGC $$ = getReturnType($1); ENGC }
 	| '(' expression ')' {$$ = $2;}
 	| '(' error ')' {yyerror( "Sintax error on expression" ); yyerrok;}
 	;

@@ -55,7 +55,7 @@ void genMethodCallBegin( FILE* yyout, cstr methodName );
 
 // Generate the code for a method call (save base and return label and call
 // method).
-void genMethodCall( FILE* yyout, struct Method* method );
+void genMethodCall( FILE* yyout, struct Method* method, int reg );
 
 // Generate the code for a parameter pass. Arguments:
 // - iRegister - index of register with the argument's value.

@@ -256,14 +256,19 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 	
 	// Allocate memory for arguments (+8 bytes more for previous base and return
 	// label).
-	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", method->argumentsSize );
+	int totalSize = method->argumentsSize;
+	if(method->returnType){
+		totalSize += ((struct Type*)(method->returnType->info))->size;
+	}	
+	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments and return value\n", totalSize );
 }
 
 // Generate the code for a method call (save base and return label and call
 // method).
-void genMethodCall( FILE* yyout, struct Method* method )
+void genMethodCall( FILE* yyout, struct Method* method, int reg )
 {
 	int newLabel_ = newLabel();
+	int totalSize = method->argumentsSize;
 
 	// Save base
 	fprintf( yyout, "\tP(R7+4) = R6;\t// Save base\n" );
@@ -277,8 +282,16 @@ void genMethodCall( FILE* yyout, struct Method* method )
 	// Set return label
 	fprintf( yyout, "L %i:\n", newLabel_ );
 
+	
+	
+	if(method->returnType){
+		// Save return value
+		fprintf( yyout, "\tR%d = %c(R7+%d); // Save return value\n", reg, 
+			pointerType(method->returnType), totalSize);	
+		totalSize += ((struct Type*)(method->returnType->info))->size;	
+	}
 	// Free arguments memory
-	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", method->argumentsSize );
+	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments and return value\n", totalSize );
 
 	// Print a comment to indicate the method call's end.
 	fprintf( yyout, "\t/* Call to procedure - end */\n\n" );
@@ -302,10 +315,14 @@ void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument 
 // Gets the Q type corresponding to the type of the variable
 char pointerType(Symbol* symbol)
 {
-	printf( "\tObteniendo tipo de simbolo [%s] - symType: %i - typeName: %s - typeId: %i\n", symbol->name, symbol->symType, ((struct Variable*)(symbol->info))->type->name, ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id );
-
-	int typeId = ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id;
-
+	int typeId;
+	
+	if(symbol->symType == SYM_TYPE){
+		typeId = ((struct Type*)(symbol->info))->id;
+	}else{ //It is a variable
+		typeId = ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id;
+	}
+	
 	switch( typeId ){
 		case TYPE_INTEGER:
 		case TYPE_BOOLEAN:

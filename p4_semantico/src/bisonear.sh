@@ -6,7 +6,7 @@
 # Comprueba que se pasan los dos parámetros necesarios.
 if (( $# != 2 )); then
    echo "ERROR: Se requiere dos argumento (fichero sintáctico (.y) y fichero lexico (.l)" >&2
-   exit -1
+   exit 1
 fi
 
 # A partir del nombre del fichero sintáctico se genera:
@@ -24,4 +24,15 @@ flex ${2}
 # Se trata el fichero sintáctico con bison y se genera el analizador final.
 #bison -vdt $codigo_analizador
 bison -d --warnings=none $codigo_analizador
+if (( $? != 0 )) ; then
+	echo "Error en bison -d $codigo_analizador" >&2
+	exit 1
+fi
+
 gcc -o $analizador $tablas lex.yy.c symbolsTable.c semanticUtilities.c codeGenUtils.c -lfl
+if (( $? != 0 )) ; then
+	echo "Error al compilar analizador $codigo_analizador" >&2
+	exit 1
+fi
+
+exit 0

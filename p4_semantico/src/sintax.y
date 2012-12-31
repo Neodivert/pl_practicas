@@ -725,7 +725,7 @@ literal :
 					EGC }	
 	;
 	
-puts : PUTS string { GC genPuts( yyout, $2 ); EGC };
+puts : PUTS '(' string ')' { GC genPuts( yyout, $3 ); EGC };
 
 string :
 	BEGIN_COMPLEX_STRING END_COMPLEX_STRING { strcpy( $$, "" ); }
@@ -861,6 +861,8 @@ int main(int argc, char** argv) {
 
 	if (argc>2)showSymTable();
 	freeSymbTable();
+
+	return errors;
 }
 
 void yyerror(char* fmt, ...)

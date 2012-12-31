@@ -302,8 +302,6 @@ void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument 
 // Gets the Q type corresponding to the type of the variable
 char pointerType(Symbol* symbol)
 {
-	printf( "\tObteniendo tipo de simbolo [%s] - symType: %i - typeName: %s - typeId: %i\n", symbol->name, symbol->symType, ((struct Variable*)(symbol->info))->type->name, ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id );
-
 	int typeId = ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id;
 
 	switch( typeId ){

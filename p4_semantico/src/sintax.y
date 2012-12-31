@@ -386,10 +386,14 @@ loop :
 	expression DO {GC 
 					$<integer>$=newLabel(); 
 					fprintf(yyout,"\tIF(!R%d) GT(%d);\t//begin LOOP\n",((struct ExtraInfo*)($3->info))->nRegister,$<integer>$);
+					freeRegister( ((struct ExtraInfo*)($3->info))->nRegister, 0 );
+					if($3->symType == SYM_EXTRA_INFO ){
+						freeSymbol($3); 
+					}					
 				   EGC;}
 	separator
 		method_code { GC fprintf(yyout,"\tGT(%d);\nL %d:\t//END LOOP\n",$<integer>2,$<integer>5); EGC ;}
-	END separator {checkIsBoolean($3);}
+	END separator { NGC checkIsBoolean($3); ENGC }
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
@@ -450,9 +454,7 @@ else_part :
 // side match.
 assignment : 
 	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
-									GC 
-										printf("Var name %s\n", $1->varSymbol->name);
-										
+									GC 									
 										if ($1->varSymbol->symType == SYM_GLOBAL){
 											//Estas dos líneas hacen lo mismo, pero una solo accede a un campo
 											

@@ -501,9 +501,11 @@ assignment :
 										if(!insideIfLoop){
 											int reg = ((struct ExtraInfo*)($2->info))->nRegister;
 											struct Method* method = getCurrentScope();
-											if(method->returnType){												
+											
+											if(method->returnType){	
+												int size = method->argumentsSize;									
 												fprintf(yyout,"\t%c(R6+%d) = R%d; //Save return value\n",
-												pointerType(method->returnType), ((struct Type*)(method->returnType->info))->size, reg);
+													pointerType(method->returnType), size, reg);
 											}
 										}
 										

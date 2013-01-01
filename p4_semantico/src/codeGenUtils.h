@@ -73,4 +73,4 @@ void genPuts( FILE* yyout, cstr str );
 
 char* genNumericString( Symbol* symbol );
 
-void genGetCall( FILE* yyout, char type, int reg );
+void genGetCall( FILE* yyout, char inputType, int reg );

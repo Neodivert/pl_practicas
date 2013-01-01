@@ -495,7 +495,13 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 	fprintf( yyout, "L %i:\n", newLabel_ );
 
 	// Save returned value
-	fprintf( yyout, "\tR%d = I(R7+5);\t// Save returned value\n", reg );
+	if( inputType != 'F' ){
+		fprintf( yyout, "\tR%d = %c(R7+5);\t// Save returned value\n", reg, inputType );
+	}else{
+		// FIXME: Aun falla con los flotantes.
+		reg = 0;
+		fprintf( yyout, "\tRR%d = %c(R7+5);\t// Save returned value\n", reg, inputType );
+	}
 
 	// Free arguments memory
 	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", size );

@@ -90,7 +90,7 @@ L puts_: {
 					printf( "%i", R[p[i+1]-(int)('0')] );
 				break;
 				case 'f':
-					printf( "%f", R[p[i+1]-(int)('0')] );
+					printf( "%f", (float)R[p[i+1]-(int)('0')] );
 				break;
 				case 'c':
 					printf( "%c", R[p[i+1]-(int)('0')] );
@@ -115,14 +115,14 @@ L get_: {
 
 	printf( "get de tipo [%c]\n", inputType );
 	switch( inputType ){
-		case 'c':
-			I(R7+5) = input[0];
+		case 'U':
+			U(R7+5) = input[0];
 		break;
-		case 'i':
+		case 'I':
 			I(R7+5) = atoi( input );
 		break;
-		case 'f':
-			I(R7+5) = atof( input );
+		case 'F':
+			F(R7+5) = atof( input );
 		break;
 		default:
 			printf( "ERROR: undefined type in input (%c)\n", inputType );

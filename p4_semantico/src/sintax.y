@@ -66,6 +66,7 @@ int insideIfLoop = 0;
 %type <string> substring
 %type <string> substring_part
 %type <string> string_struct
+%type <integer> get;
 
 // Tokens
 %token <symbol> INTEGER
@@ -102,6 +103,8 @@ int insideIfLoop = 0;
 %token ARRAY
 %token PUTS
 %token GETI
+%token GETF
+%token GETC
 
 // Operators precedence
 %left '+'
@@ -593,8 +596,25 @@ right_side :
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
 	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
 	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}
+	| get
+		{ $$ = searchType( $1 );
+			
+			GC 
+				char c = 'I';
+				switch( $1 ){
+					case TYPE_FLOAT: c = 'F'; break;
+					case TYPE_CHAR: c = 'U'; break;
+					default: c = 'I'; break;
+				}
+				int reg = assignRegisters(0);
+				$$ = createExtraInfoSymbol(reg);
+				genGetCall( yyout, c, reg );
+				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
+				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( $1 );
+			EGC }
+/*
 	| GETI 
-		{ $$ = searchType( TYPE_INTEGER ); printf( "\n\nDEVOLVIENDO [%s]\n\n", $$->name );
+		{ $$ = searchType( TYPE_INTEGER );
 			GC 
 				int reg = assignRegisters(0); 	
 				$$ = createExtraInfoSymbol(reg);	
@@ -602,6 +622,31 @@ right_side :
 				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
 				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( TYPE_INTEGER );
 			EGC }
+	| GETF
+		{ $$ = searchType( TYPE_FLOAT );
+			GC 
+				int reg = assignRegisters(0); 	
+				$$ = createExtraInfoSymbol(reg);	
+				genGetCall( yyout, 'f', reg ); 
+				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
+				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( TYPE_FLOAT );
+			EGC }
+	| GETC 
+		{ $$ = searchType( TYPE_CHAR );
+			GC 
+				int reg = assignRegisters(0); 	
+				$$ = createExtraInfoSymbol(reg);	
+				genGetCall( yyout, 'c', reg ); 
+				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
+				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( TYPE_CHAR );
+			EGC }
+*/
+	;
+
+get :
+	GETI { $$ = TYPE_INTEGER; }
+	| GETF { $$ = TYPE_FLOAT; }
+	| GETC { $$ = TYPE_CHAR; }
 	;
 
 // Here we check if all the array content has the same type.		
@@ -738,7 +783,7 @@ literal :
 // FIXME: en el fichero de prueba es.em se invoca muchas veces a geti y a puts,
 // y los registros acaban acabandose y da error. Solucionar.
 // FIXME: peta con strings largas.
-puts : PUTS '(' string ')' { GC genPuts( yyout, $3 ); printf( "PUTS [%s]\n", $3 ); EGC };
+puts : PUTS '(' string ')' { GC genPuts( yyout, $3 ); EGC };
 
 string :
 	BEGIN_COMPLEX_STRING END_COMPLEX_STRING { strcpy( $$, "" ); }

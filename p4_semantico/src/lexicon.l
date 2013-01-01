@@ -36,6 +36,8 @@ true                    	{arraySize = 1; return BOOL;}
 ".new"						{return NEW;}
 "puts"						{return PUTS;}
 "geti"						{return GETI;}
+"getf"						{return GETF;}
+"getc"						{return GETC;}
 Array						{return ARRAY;}
 
 

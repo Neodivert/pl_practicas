@@ -101,6 +101,7 @@ int insideIfLoop = 0;
 %token NEW
 %token ARRAY
 %token PUTS
+%token GETI
 
 // Operators precedence
 %left '+'
@@ -591,7 +592,16 @@ right_side :
 	//We save arraySize because otherwise it could be overwritten by literal
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
 	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
-	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}  
+	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}
+	| GETI 
+		{ $$ = searchType( TYPE_INTEGER ); printf( "\n\nDEVOLVIENDO [%s]\n\n", $$->name );
+			GC 
+				int reg = assignRegisters(0); 	
+				$$ = createExtraInfoSymbol(reg);	
+				genGetCall( yyout, 'i', reg ); 
+				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
+				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( TYPE_INTEGER );
+			EGC }
 	;
 
 // Here we check if all the array content has the same type.		
@@ -654,7 +664,7 @@ factor :
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg);	
 						struct ExtraInfo* aux = (struct ExtraInfo*)($$->info); 
-						aux->nRegister = reg;			
+						aux->nRegister = reg;
 						aux->variable = searchVariable(SYM_VARIABLE,(cstr)$1);	
 						if($2->info == SYM_CLASS_VARIABLE){
 							//varSymbol gets the struct Symbol of the variable
@@ -708,7 +718,7 @@ literal :
 	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
 					GC 
 						int reg = assignRegisters(0); 
-						$$ = createExtraInfoSymbol(reg); 
+						$$ = createExtraInfoSymbol(reg);
 						fprintf(yyout, "\tR%d = %f; //Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 

@@ -414,6 +414,7 @@ void genPuts( FILE* yyout, cstr str )
 	fprintf( yyout, "\t/* Call to puts - end */\n\n" );
 }
 
+/*
 #define TYPE_INTEGER 1
 #define TYPE_FLOAT 2
 #define TYPE_STRING 3
@@ -421,6 +422,7 @@ void genPuts( FILE* yyout, cstr str )
 #define TYPE_BOOLEAN 5
 #define TYPE_CLASS 6
 #define TYPE_ARRAY 7
+*/
 
 char* genNumericString( Symbol* symbol )
 {
@@ -464,4 +466,40 @@ char* genNumericString( Symbol* symbol )
 	printf( "Generando string numerica - END\n" );
 
 	return str;
+}
+
+
+void genGetCall( FILE* yyout, char inputType, int reg )
+{
+	// size = 4 (used register) 4 (return label) + 1 (inputType)
+	int size = 9;
+
+	// Print a comment to indicate the get call's begin.
+	fprintf( yyout, "\n\t/* Call to get (%c) - begin */\n", inputType );
+
+	// Allocate memory for arguments
+	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", size );
+	
+	int newLabel_ = newLabel();
+
+	// Pointer to string
+	fprintf( yyout, "\tU(R7+4) = '%c';\t// Save inputType\n", inputType );
+
+	// Save return label
+	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
+
+	// Call method
+	fprintf( yyout, "\tGT(-14);\t// Call get (%c)\n", inputType );
+
+	// Set return label
+	fprintf( yyout, "L %i:\n", newLabel_ );
+
+	// Save returned value
+	fprintf( yyout, "\tR%d = I(R7+5);\t// Save returned value\n", reg );
+
+	// Free arguments memory
+	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", size );
+	
+	// Print a comment to indicate the puts call's end.
+	fprintf( yyout, "\t/* Call to get (%c) - end */\n\n", inputType );
 }

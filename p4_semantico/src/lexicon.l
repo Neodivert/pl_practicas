@@ -35,6 +35,7 @@ true                    	{arraySize = 1; return BOOL;}
 ".each"						{return EACH;}
 ".new"						{return NEW;}
 "puts"						{return PUTS;}
+"geti"						{return GETI;}
 Array						{return ARRAY;}
 
 

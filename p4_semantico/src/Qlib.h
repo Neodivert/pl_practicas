@@ -30,3 +30,5 @@
 #define new_     -11    // asigna o libera espacio en heap
 #define putf_    -12    // visualiza ristra y/o entero
 #define puts_		-13
+
+#define get_	-14

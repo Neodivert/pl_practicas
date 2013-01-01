@@ -105,6 +105,31 @@ L puts_: {
 	//printf((char*)p);
 	reinv_str(p,&U(P(R7+4)));
 	GT(P(R7));
-}                                                 
+}      
+
+L get_: {
+	char input[30];
+	char inputType = U(R7+4);
+
+	fgets( input, 29, stdin );
+
+	printf( "get de tipo [%c]\n", inputType );
+	switch( inputType ){
+		case 'c':
+			I(R7+5) = input[0];
+		break;
+		case 'i':
+			I(R7+5) = atoi( input );
+		break;
+		case 'f':
+			I(R7+5) = atof( input );
+		break;
+		default:
+			printf( "ERROR: undefined type in input (%c)\n", inputType );
+		break;
+	}
+
+	GT(P(R7));
+}
 
 ENDLIB

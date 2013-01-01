@@ -72,3 +72,5 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 void genPuts( FILE* yyout, cstr str );
 
 char* genNumericString( Symbol* symbol );
+
+void genGetCall( FILE* yyout, char type, int reg );

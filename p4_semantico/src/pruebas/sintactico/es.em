@@ -1,4 +1,11 @@
 
+entrada = 1
+while( entrada != 0 ) do
+	puts( "Introduzca un entero: " )
+	entrada = geti
+	puts( "La entrada ha sido #{entrada}\n" )
+end
+
 a = 1 + 5
 puts( "hola (#{a})\n" )
 

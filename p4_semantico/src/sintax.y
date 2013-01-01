@@ -735,6 +735,9 @@ literal :
 					EGC }	
 	;
 	
+// FIXME: en el fichero de prueba es.em se invoca muchas veces a geti y a puts,
+// y los registros acaban acabandose y da error. Solucionar.
+// FIXME: peta con strings largas.
 puts : PUTS '(' string ')' { GC genPuts( yyout, $3 ); printf( "PUTS [%s]\n", $3 ); EGC };
 
 string :

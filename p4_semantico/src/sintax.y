@@ -13,6 +13,9 @@ extern int numlin; /* lexico le da valores */
 int yydebug=1; /* modo debug si -t */
 FILE *yyout; /*fichero compilado*/
 
+extern struct ExtraInfo* extraInfoPerRegister[8];
+int nextRegisterOverflow = 0;
+
 extern int compilationState; 
 int errors = 0;
 // Lexical parser fill this value when it finds an integer. We use it when 
@@ -509,13 +512,8 @@ else_part :
 assignment : 
 	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
 									GC 									
-										if ($1->varSymbol->symType == SYM_GLOBAL){
-											//Estas dos líneas hacen lo mismo, pero una solo accede a un campo
-											
-											/*fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
-											returnAddress($1->varSymbol->symType,$1->varSymbol->name),((struct ExtraInfo*)($2->info))->nRegister,
-											$1->varSymbol->name);*/
-											
+										if ($1->varSymbol->symType == SYM_GLOBAL){					
+										//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.				
 											fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
 											((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
 											$1->varSymbol->name);
@@ -757,6 +755,13 @@ literal :
 	INTEGER		{ $$ = searchType( TYPE_INTEGER ); 
 					GC 
 						int reg = assignRegisters(0); 
+						if (reg == -1){
+							
+							reg = ((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister;
+							fprintf(yyout,"\tR7 = R7-4\n\tI(R7) = R%d\t//Derramamos el registro\n",reg);
+							((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister = 7;
+							nextRegisterOverflow = (nextRegisterOverflow++)%6;
+						}
 						$$ = createExtraInfoSymbol(reg); 
 						fprintf(yyout, "\tR%d = %d; //Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }

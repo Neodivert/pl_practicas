@@ -7,7 +7,7 @@ needed for the code generation part*/
 //Q to track the variables and the stack, we do not allow the user
 //to used them.
 int registers[8] = {0,0,0,0,0,0,1,1};
-int nRegisters = 8;
+int nRegisters = 6;
 int nLabels = 0;
 unsigned int topAddress = Z;
 
@@ -33,7 +33,7 @@ int assignRegisters(int type)
 	/*Buscar un Registro*/
     if ((type == 0) && (nRegisters>0))
     {
-        for (i=0;i<8;i++)
+        for (i=0;i<6;i++)
         {
             if (registers[i]==0)
             {
@@ -57,7 +57,7 @@ int assignRegisters(int type)
             }
         }
     }
-    
+
     return -1;   
     /*Si llegamos aquí es que no hay registros libres :(*/
     /*En caso de que no haya registros libres habrá que tirar de pila (A deliberar)*/
@@ -70,7 +70,7 @@ int assignRegisters(int type)
 int freeRegisters()
 {
     int i=0;
-    for (i=0;i<8;i=i++){
+    for (i=0;i<3;i=i++){
         registers[i]=0;
 	}
 
@@ -85,17 +85,15 @@ int freeRegisters()
 /**************************************************************************/
 int freeRegister(int i, int type)
 {
-    if (i < 0) return -1;
+   if (i < 0) return -1;
     if (i > 7) return -2;
     if ((type != 0) && (type != 1)) return -3;
 
-    if ((type == 0) && (nRegisters<8))
-	{
+    if ((type == 0) && (nRegisters<6)){
         registers[i]=0;
 		nRegisters++;
     }
-
-	else if ((type == 1) && (nRegisters<7))
+	else if ((type == 1) && (nRegisters<5))
 	{
 
     	if ((i % 2) == 1) return -4;
@@ -103,7 +101,7 @@ int freeRegister(int i, int type)
     	registers[i]=0;
         registers[i+1]=0;
 
-		nRegisters = nRegisters-2;
+		nRegisters = nRegisters+2;
     }
     return 0;
 }
@@ -315,6 +313,7 @@ void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument 
 // Gets the Q type corresponding to the type of the variable
 char pointerType(Symbol* symbol)
 {
+
 	int typeId;
 	
 	if(symbol->symType == SYM_TYPE){
@@ -344,9 +343,20 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	int r0, r1;
 	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
 	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
+	if(r0 == 7){
+		r0 = assignRegisters(0);
+		((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
+	}
+	if(r1 == 7){
+		r1 = assignRegisters(0);
+		((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
+	}
 	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 	freeRegister(r1, 0);
 	freeSymbol(rightSide);	
+	
 }
 
 // Entrada: R0=etiqueta de retorno

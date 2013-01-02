@@ -29,6 +29,9 @@ static char change = 0;
 
 extern int compilationState;
 
+struct ExtraInfo* extraInfoPerRegister[8];
+
+
 /*                                  Functions                                 */
 /******************************************************************************/
 
@@ -70,6 +73,8 @@ Symbol* createExtraInfoSymbol ( int nRegister )
 	
 	symbol->info = (void *)malloc( sizeof(struct ExtraInfo) );
 	((struct ExtraInfo*)(symbol->info))->nRegister = nRegister;
+	//Copy the pointer into Register List Array
+	extraInfoPerRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
 
 	return symbol;
 }

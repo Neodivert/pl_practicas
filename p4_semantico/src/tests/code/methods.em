@@ -6,6 +6,3 @@ def foo( a, b)
 end 
 
 foo( 5, 7 )
-
-#a = "hola"
-#puts( a )

@@ -1,3 +1,5 @@
+$a = 15
+$b = 30
 
 entrada = 1
 while( entrada != 0 ) do

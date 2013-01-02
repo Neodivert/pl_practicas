@@ -233,8 +233,8 @@ method_code :
 	| loop {$$ = NULL;}
 	| loop method_code {$$ = $2;}
 	| if_construction {$$ = NULL;}	 
-	| puts
-	| puts method_code
+	| puts {$$ = NULL;}
+	| puts method_code {$$ = $2;}
 	| if_construction method_code {$$ = $2;} 
 	;
 
@@ -294,13 +294,13 @@ simple_method_call:
 
 					GC genMethodCallBegin( yyout, $1 ); EGC
 				}			
-		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall); ENGC 
+		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
 			GC 
 				int reg = assignRegisters(0); 
 				$$ = createExtraInfoSymbol(reg);
 				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 			EGC }  
-	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok;}
+	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok; $$ = NULL;}
 	;
 
 
@@ -491,7 +491,7 @@ after_if :
 	
 else_part : 
 	ELSE separator {GC 
-						$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d)\nL %d:\t//Tag of Else part\n", $<integer>$, $<integer>-1);
+						$<integer>$ = newLabel(); fprintf(yyout,"\tGT(%d);\nL %d:\t//Tag of Else part\n", $<integer>$, $<integer>-1);
 					EGC
 					;}
 	method_code {GC

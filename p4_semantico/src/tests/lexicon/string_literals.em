@@ -1,41 +1,47 @@
-# Prueba de literales string y caracter
+###############################################################################
+# Emerald - lexical test
+# String and char literals
+###############################################################################
 
-#Pruba de las secuencias de escape
+# Escape sequences
+###############################################################################
 "\t '  \\\" \" \n  \\n" 
 
 # Strings
+###############################################################################
 "a"
 "abc"
 
-# Error: String sin cerrar.
+# ERROR: unclosed string.
 "a 
-# Error: String sin abrir.		
+# Error: unopen string.		
 a"		
 
 "a#{a}"
-# Error: Interpolación sin cerrar.
+# ERROR: Unclosed interpolation.
 "#{"		
 "#{
-# Error: solo se permiten variables simples
+# ERROR: only simple variables allowed in interpolation.
 "#{a[1]}"
 "#{a} \" dfd \t #{b}"
-# Error secuencias de escape \u y \q
+# ERROR: illegal escape sequences (\u,\q).
 "3 df} \u#\\ {\q"
 
-# Caracteres
+# Characters
+###############################################################################
 'a'
-# Error: caracter sin cerrar
+# ERROR: Unclosed character.
 'a
 ''
-# Error: caracter sin abrir
+# ERROR: Unopen character
 a'
-# Error: \ sin valor
+# ERROR: Undefined escape sequence.
 '\'
 '\n'
 '\s'
-# Error: solo se permite un caracter
+# ERROR: Only one character allowed.
 'aa'
-# Error: solo se permite un caracter
+# ERROR: Only one character allowed.
 '\nk'
 '\''
 '"'

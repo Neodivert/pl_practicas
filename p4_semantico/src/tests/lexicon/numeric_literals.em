@@ -1,22 +1,29 @@
-# Enteros
+###############################################################################
+# Emerald - lexical test
+# Numeric literals
+###############################################################################
+
+# Integers
+###############################################################################
 +1
 +2
 566
 451
-45a	# Error: no se admiten letras (y como identificador no se admite un numero al principio).
+45a	# ERROR: not letters allowed.
 -5
 -99
 -45
 -65
 
-# En coma flotante
+# Floats
+###############################################################################
 1.
 .1
 01.01
-1.1.2	# Error a partir del segundo punto.
-0.3e	# Error: hay que especificar un exponente.
-0.3E	# Error: hay que especificar un exponente.
-0.3e1.3	# Error: no se admite un numero en coma flotante en el exponente.
+1.1.2		# ERROR: more than one '.'
+0.3e		# ERROR: not exponent specified.
+0.3E		# ERROR: not exponent specified.
+0.3e1.3	# ERROR: not float allowed in the exponent.
 0.3e25
 0.3E25
 .3e25

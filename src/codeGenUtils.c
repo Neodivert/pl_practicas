@@ -395,7 +395,7 @@ void genPuts( FILE* yyout, cstr str )
 	// Pointer to string
 	// FIXME: esta orden esta puesta porque P(R7+4) = R7+8; no me lo pillaba la 
 	// maquina Q. Como ven, se usa el R4 por la cara.
-	fprintf( yyout, "\tR4 = R7 + 8;\n" ); 
+	fprintf( yyout, "\tR4 = R7 + 8;\n" );
 	fprintf( yyout, "\tP(R7+4) = R4; //Pointer to string\n" ); //+8
 
 	// Save return label

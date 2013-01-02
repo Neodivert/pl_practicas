@@ -450,6 +450,8 @@ loop :
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
+// FIXME: Cuando me equivoque y escribi el nombre de una variable que no existia
+// en la condicion, me dio un fallo de segmentacion (moi).
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 

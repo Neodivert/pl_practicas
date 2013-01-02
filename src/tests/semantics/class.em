@@ -1,23 +1,25 @@
+###############################################################################
+# Emerald - semantic test
+# Create and use a class.
+# Language's tested features: classes, output, and method calling.
+###############################################################################
+
+# Class definition.
 class Punto
 	@x = 0
 	@y = 0
 end
-$h = 4;
+
+# Class instances creation.
 p = Punto.new
 q = p
-#p.z = 4
-#a.y = 2
+
+# Instance elements output.
 puts("p.x = #{p.x} p.y = #{p.y}")
 
-x = 1
-
-a = Array.new( 5, 3 )
-
-def foo(var1, var2)
- a = 2
- b = 3
- c = 4
+# Method definition and calling
+def sum(var1, var2)
+ a = var1 + var2
 end 
 
-foo( a, x )
-foo( x, x )
+foo( p.x, p.y )

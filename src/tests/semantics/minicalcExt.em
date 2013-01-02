@@ -1,3 +1,12 @@
+###############################################################################
+# Emerald - code test
+# Interactive aritmetic expressions interpreter with more code added at the 
+# end.
+# Language's tested features: methods, ifs, I/O, arrays
+###############################################################################
+
+# FIXME: still doesnt work in code generation.
+
 #  Pequeño deféprete deferactivo de expresiones aritméticas enteras.
 
 #  El usuario teclea cada vez una expresión, y se le muestra el
@@ -22,10 +31,10 @@ def numero()
     error()
   end
   
- # resultado = 10 * resultado + c- '0'
+  resultado = 10 * resultado + c- '0'
   c = getc()
   while (c >= '0' and c<= '9') do 
-   # resultado = 10 * resultado + c - '0'
+    resultado = 10 * resultado + c - '0'
     c = getc()
   end 
   resultado = resultado
@@ -97,4 +106,55 @@ while (c!='\n') do
   else 
     error()
   end   
+end
+
+class Punto
+	@x = 0
+	@y = 0
+end
+
+a = [1]
+p = Punto.new
+p.x = 2.1
+p.y = p.x + 1
+puts("p.x = #{p.x} p.y = #{p.y}")
+
+d = Array.new(4,1)
+a = Array.new(6,1.2)
+
+c = [1.1 , 2.1, 1.1] 
+b = z + d[1] + p[2]
+z = 1
+
+$pe = 1
+arg1 = 4
+i = 4.5
+def metodo ( arg1, arg2 )
+	i = 1
+	$pa = 1
+	arg1.each do |i|
+		d = 5
+		$pi = 1
+		ar2.each do |j|
+			$po = 1
+			d = 5.4
+			h = d
+			x = Array.new(1,3)
+		end	
+	end
+	$pu = 1
+	b = 5
+end
+$paa = 1
+
+def multiplicar(a, b)
+  res = a * b
+end
+
+a = [1, 2, 3, 4]
+
+a.each do |i|
+	b = 4
+	c = multiplicar(i, b)
+	puts(c)
 end

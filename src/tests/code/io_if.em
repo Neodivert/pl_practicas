@@ -1,12 +1,18 @@
-# Programa de ejemplo para probrar la E/S y el if.
+###############################################################################
+# Emerald - code test
+# Conditionally print one message or another depending on user input.
+# Language's tested features: I/O, if.
+###############################################################################
 
-puts "Introduzca su nota: "
-numero = getc
+# Ask the user to input its grade.
+puts( "Input your grade (0-10): " )
+grade = geti
 
-puts "Resultado: "
-if( numero >= 5)
-	puts "Aprobado\n"
+# Print a message or another depending on user input.
+puts( "Result: " )
+if( grade >= 5)
+	puts( "PASS\n" )
 else
-	puts "Supendido\n"
+	puts( "FAIL\n" )
 end
 

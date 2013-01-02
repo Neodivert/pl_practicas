@@ -1,7 +1,14 @@
-a = 5
-def metodo ( arg1, arg2 )
-	d = [1,2,3]
-	arg1.each do |i|
+###############################################################################
+# Emerald - semantic test
+# Random method that accepts an array as an argument.
+# Language's tested features: passing an array to a method / block, nested 
+# blocks.
+###############################################################################
+
+# Random method, don't try to find any logic in it.
+def method ( array, arg2 )
+	d = [1, 2, 3]
+	array.each do |i|
 		d = 5
 		d.each { |j|
 			d = 5.4
@@ -11,7 +18,8 @@ def metodo ( arg1, arg2 )
 	b = arg2
 end
 
-c = Array.new(2,1.1)
-metodo(c,1.1)
+# Array creation and passing to a method.
+c = Array.new( 2, 1.1 )
+method( c, 1.1 )
 
 

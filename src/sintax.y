@@ -302,6 +302,14 @@ simple_method_call:
 				int reg = assignRegisters(0); 
 				$$ = createExtraInfoSymbol(reg);
 				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
+				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
+					struct Method* method = getCurrentScope();					
+					if(method->returnType){	
+						int size = method->argumentsSize;									
+						fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
+							pointerType(method->returnType), size, reg);
+					}
+				}				
 			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok; $$ = NULL;}
 	;
@@ -541,7 +549,7 @@ assignment :
 											
 											if(method->returnType){	
 												int size = method->argumentsSize;									
-												fprintf(yyout,"\t%c(R6+%d) = R%d; //Save return value\n",
+												fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
 													pointerType(method->returnType), size, reg);
 											}
 										}

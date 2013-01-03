@@ -284,7 +284,7 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 	
 	if(method->returnType){
 		// Save return value
-		fprintf( yyout, "\tR%d = %c(R7+%d); // Save return value\n", reg, 
+		fprintf( yyout, "\tR%d = %c(R7+%d); // Get return value\n", reg, 
 			pointerType(method->returnType), totalSize);	
 		totalSize += ((struct Type*)(method->returnType->info))->size;	
 	}

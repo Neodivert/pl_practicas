@@ -36,6 +36,8 @@ unsigned int returnAddress(int symbolType, cstr id);
 
 struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop);
 
+struct Symbol* genAccessVariable(FILE* yyout,cstr name, int Symtype, struct SymbolInfo* atribute); 
+
 // Generate the code for a method "begin"
 //	- Method label.
 //	- Local data allocation.

@@ -685,46 +685,11 @@ term :
 
 factor :
 	IDENTIF atribute { NGC $$ = getVariableType( SYM_VARIABLE, $1, $2 ); ENGC
-						GC
-						int reg = assignRegisters(0); 
-						$$ = createExtraInfoSymbol(reg);	
-						struct ExtraInfo* aux = (struct ExtraInfo*)($$->info); 
-						aux->nRegister = reg;
-						aux->variable = searchVariable(SYM_VARIABLE,(cstr)$1);	
-						if($2->info == SYM_CLASS_VARIABLE){
-							//varSymbol gets the struct Symbol of the variable
-							aux->variable = getClassVar(aux->variable,$2->name);
-						}											
-															
-						if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
-							fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var %s\n",reg, 
-								pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
-								aux->variable->name);
-						}
-						else{
-							fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
-								pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
-								aux->variable->name);
-						}
-						freeSymbolInfo($2);
-						EGC
+						GC 	$$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2); EGC
 			}
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
-    					GC
-							int reg = assignRegisters(0); 	
-							$$ = createExtraInfoSymbol(reg);	
-							struct ExtraInfo* aux = (struct ExtraInfo*)($$->info); 	
-							aux->nRegister = reg;			
-							aux->variable = searchVariable(SYM_GLOBAL,(cstr)$1);
-							if($2->info == SYM_CLASS_VARIABLE){
-								//varSymbol gets the struct Symbol of the variable
-								aux->variable = getClassVar(aux->variable,$2->name);
-							}			
-							fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
-							returnAddress(SYM_GLOBAL,aux->variable->name), aux->variable->name);	
-							freeSymbolInfo($2);			   
-    					EGC;}
+    					GC $$ = genAccessVariable(yyout, $1, SYM_GLOBAL, $2);	EGC;}
 	| literal 
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
 					GC	$$ = $2; EGC }

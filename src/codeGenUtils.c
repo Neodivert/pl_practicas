@@ -279,6 +279,45 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 	return rightSide;
 }
 
+struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute)
+{
+	int reg = assignRegisters(0); 	
+	struct Symbol* returnSymbol = createExtraInfoSymbol(reg);	
+	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
+	aux->nRegister = reg;			
+	aux->variable = searchVariable(symType, name);
+	if(atribute->info == SYM_CLASS_VARIABLE){
+		//varSymbol gets the struct Symbol of the variable
+		aux->variable = getClassVar(aux->variable,atribute->name);
+	}			
+	if( symType == SYM_VARIABLE )
+	{
+		if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
+			fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var %s\n",reg, 
+				pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
+				aux->variable->name);
+		}
+		else{
+			fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
+				pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
+				aux->variable->name);
+		}	
+	} 
+	else 
+	{
+		if( symType == SYM_GLOBAL )
+		{
+			fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
+				returnAddress(symType,aux->variable->name), aux->variable->name);		
+		} 
+		else
+		{
+		}
+	}	
+	
+	freeSymbolInfo(atribute);
+	return returnSymbol;
+}
 
 /*                             Method definition                             */
 

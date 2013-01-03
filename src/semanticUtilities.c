@@ -127,6 +127,27 @@ Symbol* checkIsBoolean(Symbol* s){
 // 	NULL - otherwise. (*)
 // (*) If s1 and s2 are both non-NULL, this function also generates an error 
 // message).
+Symbol* checkArraySameType(Symbol* s1, Symbol* s2)
+{
+	struct Symbol *ss1 = ((struct Type*)(s1->info))->arrayInfo->type;
+	struct Symbol *ss2 = ((struct Type*)(s2->info))->arrayInfo->type;
+	
+	if(ss1 == NULL || ss2 == NULL || ss1->info == NULL || ss2->info == NULL){
+		return NULL;
+	}
+	
+	int t1,t2;
+	t1 = ((struct Type *)(ss1->info))->id;
+	t2 = ((struct Type *)(ss2->info))->id;
+
+	if(t1 == t2 ){ 
+		return s1;
+	}else{
+		return NULL;
+	}		
+	
+}
+
 Symbol* checkSameType(Symbol* s1, Symbol* s2){
 	int t1, t2;
 	if( s1 == NULL || s2 == NULL || s1->info == NULL || s2->info == NULL){
@@ -135,9 +156,13 @@ Symbol* checkSameType(Symbol* s1, Symbol* s2){
 		 
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
-	//Both operators are boolean.
+	//Both operators are the same.
 	if(t1 == t2 ){ 
-		return s1;
+		if( t1 == TYPE_ARRAY ){
+			return checkArraySameType(s1, s2);
+		}else{
+			return s1;
+		}	
 	}else
 	{
 		return NULL;

@@ -202,26 +202,42 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 	struct Variable* leftInfo = (struct Variable*)(leftSide->varSymbol->info);
 	int i, arraySize, elementSize;
 
-	if( rightInfo->assignmentType == TYPE_ARRAY ){
+	if( rightInfo->assignmentType == TYPE_ARRAY || leftSide->info == TYPE_ARRAY ){
 		arraySize = ((struct Type*)(leftInfo->type->info))->arrayInfo->nElements;
 		elementSize = ((struct Type*)(((struct Type*)(leftInfo->type->info))->arrayInfo->type->info))->size;
 	}		
 	
+	//Left side is a global variable
 	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
-	//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.	
+		//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.	
+		//Right side is Array.new or [e,e,..,e]
 		if( rightInfo->assignmentType == TYPE_ARRAY ){
 			for( i = 0; i < arraySize; i++ ){
 				fprintf(yyout,"\t%c(0x%x + %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
 					leftInfo->address, elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
 			}
 		}else{		
-			fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-				leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+			//Assignement $var[expression] = expression
+			if( leftSide->info = TYPE_ARRAY ){
+				int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
+					elementSize, leftSide->varSymbol->name);
+				fprintf(yyout,"\t%c(0x%x + R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
+					leftInfo->address, reg, rightInfo->nRegister, leftSide->varSymbol->name);
+				freeRegister( reg, 0 );	
+				freeSymbol(leftSide->exprSymbol);
+			//Assignement $var = expression
+			}else{
+				fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+					leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);			
+			}		
 		}		
-	
+	//Left side not a global varialbe
 	}else if (leftSide->varSymbol->symType == SYM_VARIABLE){
-	//Obtenemos la direccion con el desplazamiento y almacenamos
+		//Obtenemos la direccion con el desplazamiento y almacenamos
+		//Left side is a local variable
 		if(((struct Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
+			//Right side is Array.new or [e,e,..,e]
 			if( rightInfo->assignmentType == TYPE_ARRAY ){
 				for( i = 0; i < arraySize; i++ ){	
 					fprintf(yyout,"\t%c(R6 - %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
@@ -232,10 +248,12 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 					leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
 			}	
 		}
+		//Left side is an argument variable
 		else{
+			//Right side is Array.new or [e,e,..,e]
 			if( rightInfo->assignmentType == TYPE_ARRAY ){
 				for( i = 0; i < arraySize; i++ ){	
-					fprintf(yyout,"\t%c(R6  %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
+					fprintf(yyout,"\t%c(R6 + %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
 						leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
 				}	
 			}else{	

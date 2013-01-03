@@ -119,6 +119,7 @@ struct SymbolInfo
 {
 	Symbol *symbol;
 	Symbol *varSymbol;	
+	Symbol *exprSymbol;
 	int info;
 	char *name;
 	int nRegister;

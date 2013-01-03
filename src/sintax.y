@@ -556,7 +556,10 @@ left_side :
 // integer.
 atribute :
 	'.' IDENTIF { $$ = checkClassAtribute($2);}
-	| '[' expression ']' { $$ = checkIsInteger($2); }
+	| '[' expression ']' 
+		{ $$ = checkIsInteger($2);
+		  GC $$->exprSymbol = $2; EGC
+		}
 	| { $$ = nullSymbolInfo();}
 	;	
 

@@ -696,6 +696,7 @@ struct SymbolInfo* nullSymbolInfo()
 	info->info = 0;
 	info->name = NULL;
 	info->varSymbol = NULL;
+	info->exprSymbol = NULL;
 	info->nRegister = 0;
 }
 

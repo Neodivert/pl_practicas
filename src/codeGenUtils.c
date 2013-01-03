@@ -218,7 +218,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 			}
 		}else{		
 			//Assignement $var[expression] = expression
-			if( leftSide->info = TYPE_ARRAY ){
+			if( leftSide->info == TYPE_ARRAY ){
 				int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
 				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
 					elementSize, leftSide->varSymbol->name);
@@ -241,11 +241,25 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 			if( rightInfo->assignmentType == TYPE_ARRAY ){
 				for( i = 0; i < arraySize; i++ ){	
 					fprintf(yyout,"\t%c(R6 - %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
-						leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+						leftInfo->address - elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
 				}	
 			}else{	
-				fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-					leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+				//Assignement var[expression] = expression
+				if( leftSide->info == TYPE_ARRAY ){
+					int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+					fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
+						elementSize, leftSide->varSymbol->name);
+					fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
+						leftInfo->address, leftSide->varSymbol->name);						
+					fprintf(yyout,"\t%c(R6 + R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
+						reg, rightInfo->nRegister, leftSide->varSymbol->name);
+					freeRegister( reg, 0 );	
+					freeSymbol(leftSide->exprSymbol);
+				//Assignement var = expression
+				}else{			
+					fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+						leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+				}		
 			}	
 		}
 		//Left side is an argument variable
@@ -256,9 +270,23 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 					fprintf(yyout,"\t%c(R6 + %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
 						leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
 				}	
-			}else{	
-				fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-					leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+			}else{				
+				//Assignement var[expression] = expression
+				if( leftSide->info == TYPE_ARRAY ){
+					int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+					fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
+						elementSize, leftSide->varSymbol->name);
+					fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
+						leftInfo->address, leftSide->varSymbol->name);						
+					fprintf(yyout,"\t%c(R6 - R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
+						reg, rightInfo->nRegister, leftSide->varSymbol->name);
+					freeRegister( reg, 0 );	
+					freeSymbol(leftSide->exprSymbol);
+				//Assignement var = expression
+				}else{			
+					fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+						leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+				}			
 			}
 		}
 	}

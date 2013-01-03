@@ -827,21 +827,17 @@ int main(int argc, char** argv) {
 		yyin = fopen( argv[1],"r" );
 		//if(yyin == NULL); //Source file
 		//printf( "yyin: %i\n", yyin );
-		if( yyin){
+		if( !yyin ){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",argv[1]);
-		}else{
-		   printf( "FICHERO ABIERTO [%s]", argv[1] );
 		}
 		
 		yyout = NULL;
 		yyout=fopen(aux,"w");	 
 		//printf( "yyout: %i\n", yyout );
-		if( yyin ){
+		if( !yyin ){
 		   perror( errorString );
 			printf("ERROR AL ABRIR EL ARCHIVO %s\n",aux);
-		}else{
-		   printf( "FICHERO ABIERTO [%s]", aux );
 		}
 
 		fprintf(yyout,"#include \"Q.h\"\n\n");

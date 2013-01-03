@@ -327,9 +327,21 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	if( symType == SYM_VARIABLE )
 	{
 		if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
-			fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var %s\n",reg, 
-				pointerType(aux->variable), returnAddress(symType,aux->variable->name),
-				aux->variable->name);
+			if( atribute->info = TYPE_ARRAY ){
+				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
+				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
+					elementSize, aux->variable->name);
+				fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",expReg, expReg,
+					returnAddress(symType,aux->variable->name), aux->variable->name);						
+				fprintf(yyout,"\tR%d = %c(R6 + R%d); //%s[expr] = expr\n",reg, 
+					pointerType(aux->variable), expReg, aux->variable->name);
+				freeRegister( expReg, 0 );	
+				freeSymbol(atribute->exprSymbol);			
+			}else{
+				fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var %s\n",reg, 
+					pointerType(aux->variable), returnAddress(symType,aux->variable->name),
+					aux->variable->name);
+			}	
 		}else{
 			fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
 				pointerType(aux->variable), returnAddress(symType,aux->variable->name),

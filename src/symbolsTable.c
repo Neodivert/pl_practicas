@@ -456,16 +456,19 @@ void initializeSymTable()
 			
 	insertTypeDefinition( "integer", TYPE_INTEGER, 4 );
 	insertTypeDefinition( "float", TYPE_FLOAT, 4 );
-	insertTypeDefinition( "string", TYPE_STRING, 1 );
+	//insertTypeDefinition( "string", TYPE_STRING, 1 );
 	insertTypeDefinition( "char", TYPE_CHAR, 1 );
 	insertTypeDefinition( "boolean", TYPE_BOOLEAN, 1 );
+	
+	
+	insertArray( searchType(TYPE_CHAR), 0 );
 	
 	struct Symbol* method = searchTopLevel(SYM_METHOD, "puts");
 	scope = getCurrentScope();
 	
 	goInScope( ((struct Method*)(method->info)) );	
 		struct Symbol* var = createVariable(SYM_VARIABLE, "input_str");
-		insertVariable(var, searchType(TYPE_STRING));	
+		insertVariable(var, searchType(TYPE_ARRAY));	
 	goInScope(scope);
 		
 	method = searchTopLevel(SYM_METHOD, "getc");

@@ -735,8 +735,9 @@ literal :
 // FIXME: en el fichero de prueba es.em se invoca muchas veces a geti y a puts,
 // y los registros acaban acabandose y da error. Solucionar.
 // FIXME: peta con strings largas.
-puts : PUTS '(' string ')' { GC genPuts( yyout, $3 ); EGC };
-
+puts : PUTS '(' string ')' separator { GC genPuts( yyout, $3 ); EGC }
+	| PUTS error separator { yyerror("Wrong arguments in puts"), yyerrok; }
+	;
 string :
 	BEGIN_COMPLEX_STRING END_COMPLEX_STRING { strcpy( $$, "" ); }
 	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING { strcpy( $$, $2 ); }

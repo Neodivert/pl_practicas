@@ -587,6 +587,10 @@ char* genNumericString( Symbol* symbol )
 	reg = ((struct ExtraInfo*)(symbol->info))->nRegister;
 	type = ((struct Type*)(((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->info))->id;
 
+	if(type == TYPE_ARRAY){
+		type = ((struct Type*)(getArrayType( ((struct ExtraInfo*)(symbol->info))->variable )))->id;
+	}
+	
 	str[0] = '@';
 	str[1] = '0' + (char)reg;
 

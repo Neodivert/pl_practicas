@@ -68,6 +68,8 @@ $({letter}|_)({letdig}|_)*                     {strcpy(yylval.string, yytext); r
 <IDENT>$({letter}|_)({letdig}|_)*         {strcpy(yylval.string, yytext); return ID_GLOBAL_VARIABLE;}
 <IDENT>{capital}({capital}|_)*            {strcpy(yylval.string, yytext); return ID_CONSTANT;}
 <IDENT>({letter}|_)({letdig}|_)*              {strcpy(yylval.string, yytext); return IDENTIF;}
+<IDENT>"["|"]"							{return yytext[0];}
+<IDENT>("+"|"-")?{digit}+                 { arraySize=atoi(yytext); return INTEGER;}
 <IDENT>"}"         {BEGIN(COMPLEX_STRING); return END_STRUCT;}
 <IDENT>"."         			{return yytext[0];}
 <IDENT>\" 			{BEGIN(INITIAL); error("Unfinished_interpolation_in_string");}

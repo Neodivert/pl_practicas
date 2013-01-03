@@ -144,8 +144,16 @@ Symbol* checkArraySameType(Symbol* s1, Symbol* s2)
 		return s1;
 	}else{
 		return NULL;
-	}		
-	
+	}	
+}
+
+Symbol* checkClassSameType(Symbol* s1, Symbol* s2)
+{
+	if( strcmp(s1->name, s2->name) == 0){ 
+		return s1;
+	}else{
+		return NULL;
+	}	
 }
 
 Symbol* checkSameType(Symbol* s1, Symbol* s2){
@@ -161,7 +169,11 @@ Symbol* checkSameType(Symbol* s1, Symbol* s2){
 		if( t1 == TYPE_ARRAY ){
 			return checkArraySameType(s1, s2);
 		}else{
-			return s1;
+			if( t1 == TYPE_CLASS){
+				return checkClassSameType(s1, s2);
+			}else{
+				return s1;
+			}
 		}	
 	}else
 	{

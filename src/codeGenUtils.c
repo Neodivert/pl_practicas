@@ -319,7 +319,7 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 		//varSymbol gets the struct Symbol of the variable
 		aux->variable = getClassVar(aux->variable,atribute->name);
 	}			
-	
+
 	if( atribute->info == TYPE_ARRAY ){
 		elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(aux->variable->info))->type->info))->arrayInfo->type->info))->size;
 	}	
@@ -327,14 +327,14 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	if( symType == SYM_VARIABLE )
 	{
 		if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
-			if( atribute->info = TYPE_ARRAY ){
+			if( atribute->info == TYPE_ARRAY ){
 				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
 				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
 					elementSize, aux->variable->name);
 				fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",expReg, expReg,
 					returnAddress(symType,aux->variable->name), aux->variable->name);						
 				fprintf(yyout,"\tR%d = %c(R6 + R%d); //%s[expr] = expr\n",reg, 
-					pointerType(aux->variable), expReg, aux->variable->name);
+					pointerType(aux->variable), expReg, aux->variable->name);	
 				freeRegister( expReg, 0 );	
 				freeSymbol(atribute->exprSymbol);			
 			}else{
@@ -343,14 +343,26 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 					aux->variable->name);
 			}	
 		}else{
-			fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
-				pointerType(aux->variable), returnAddress(symType,aux->variable->name),
-				aux->variable->name);
+			if( atribute->info == TYPE_ARRAY ){
+				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
+				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
+					elementSize, aux->variable->name);
+				fprintf(yyout, "\tR%d = R%d + %d; //Calculate local %s position\n",expReg, expReg,
+					returnAddress(symType,aux->variable->name), aux->variable->name);						
+				fprintf(yyout,"\tR%d = %c(R6 + R%d); //%s[expr] = expr\n",reg, 
+					pointerType(aux->variable), expReg, aux->variable->name);
+				freeRegister( expReg, 0 );	
+				freeSymbol(atribute->exprSymbol);			
+			}else{
+				fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
+					pointerType(aux->variable), returnAddress(symType,aux->variable->name),
+					aux->variable->name);
+			}			
 		}	
 	}else{
 		if( symType == SYM_GLOBAL )
 		{
-			if( atribute->info = TYPE_ARRAY ){
+			if( atribute->info == TYPE_ARRAY ){
 				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
 				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
 					elementSize, aux->variable->name);
@@ -361,11 +373,11 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 			}else{			
 			fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
 				returnAddress(symType,aux->variable->name), aux->variable->name);	
-			}		
+			}
+		//FIXME Las constantes van aqui			
 		}else{
 		}
 	}	
-	
 	freeSymbolInfo(atribute);
 	return returnSymbol;
 }

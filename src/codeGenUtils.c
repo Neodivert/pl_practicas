@@ -281,7 +281,8 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 
 struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute)
 {
-	int reg = assignRegisters(0); 	
+	int reg = assignRegisters(0); 
+	int elementSize = 0;	
 	struct Symbol* returnSymbol = createExtraInfoSymbol(reg);	
 	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
 	aux->nRegister = reg;			
@@ -290,28 +291,38 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 		//varSymbol gets the struct Symbol of the variable
 		aux->variable = getClassVar(aux->variable,atribute->name);
 	}			
+	
+	if( atribute->info == TYPE_ARRAY ){
+		elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(aux->variable->info))->type->info))->arrayInfo->type->info))->size;
+	}	
+	
 	if( symType == SYM_VARIABLE )
 	{
 		if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
 			fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var %s\n",reg, 
-				pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
+				pointerType(aux->variable), returnAddress(symType,aux->variable->name),
 				aux->variable->name);
-		}
-		else{
+		}else{
 			fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
-				pointerType(aux->variable), returnAddress(SYM_VARIABLE,aux->variable->name),
+				pointerType(aux->variable), returnAddress(symType,aux->variable->name),
 				aux->variable->name);
 		}	
-	} 
-	else 
-	{
+	}else{
 		if( symType == SYM_GLOBAL )
 		{
+			if( atribute->info = TYPE_ARRAY ){
+				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
+				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
+					elementSize, aux->variable->name);
+				fprintf(yyout,"\tR%d = %c(0x%x + R%d); //Loading value of var %s[expr]\n",reg, pointerType(aux->variable),
+					returnAddress(symType,aux->variable->name), expReg, aux->variable->name);
+				freeRegister( expReg, 0 );	
+				freeSymbol(atribute->exprSymbol);
+			}else{			
 			fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
-				returnAddress(symType,aux->variable->name), aux->variable->name);		
-		} 
-		else
-		{
+				returnAddress(symType,aux->variable->name), aux->variable->name);	
+			}		
+		}else{
 		}
 	}	
 	

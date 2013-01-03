@@ -198,29 +198,55 @@ unsigned int returnAddress(int symbolType,cstr id)
 
 struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop)
 {
+	struct ExtraInfo* rightInfo = (struct ExtraInfo*)(rightSide->info);
+	struct Variable* leftInfo = (struct Variable*)(leftSide->varSymbol->info);
+	int i, arraySize, elementSize;
+
+	if( rightInfo->assignmentType == TYPE_ARRAY ){
+		arraySize = ((struct Type*)(leftInfo->type->info))->arrayInfo->nElements;
+		elementSize = ((struct Type*)(((struct Type*)(leftInfo->type->info))->arrayInfo->type->info))->size;
+	}		
+	
 	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
-	//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.				
-		fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-		((struct Variable*)(leftSide->varSymbol->info))->address,((struct ExtraInfo*)(rightSide->info))->nRegister,
-		leftSide->varSymbol->name);
+	//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.	
+		if( rightInfo->assignmentType == TYPE_ARRAY ){
+			for( i = 0; i < arraySize; i++ ){
+				fprintf(yyout,"\t%c(0x%x + %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
+					leftInfo->address, elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+			}
+		}else{		
+			fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+				leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+		}		
 	
 	}else if (leftSide->varSymbol->symType == SYM_VARIABLE){
 	//Obtenemos la direccion con el desplazamiento y almacenamos
 		if(((struct Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
-			fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-				((struct Variable*)(leftSide->varSymbol->info))->address,((struct ExtraInfo*)(rightSide->info))->nRegister,
-				leftSide->varSymbol->name);
+			if( rightInfo->assignmentType == TYPE_ARRAY ){
+				for( i = 0; i < arraySize; i++ ){	
+					fprintf(yyout,"\t%c(R6 - %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
+						leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+				}	
+			}else{	
+				fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+					leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+			}	
 		}
 		else{
-			fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-				((struct Variable*)(leftSide->varSymbol->info))->address,((struct ExtraInfo*)(rightSide->info))->nRegister,
-				leftSide->varSymbol->name);
-	
+			if( rightInfo->assignmentType == TYPE_ARRAY ){
+				for( i = 0; i < arraySize; i++ ){	
+					fprintf(yyout,"\t%c(R6  %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
+						leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+				}	
+			}else{	
+				fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+					leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+			}
 		}
 	}
 
 	if(!insideIfLoop){
-		int reg = ((struct ExtraInfo*)(rightSide->info))->nRegister;
+		int reg = rightInfo->nRegister;
 		struct Method* method = getCurrentScope();
 	
 		if(method->returnType){	
@@ -230,7 +256,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 		}
 	}
 
-	freeRegister( ((struct ExtraInfo*)(rightSide->info))->nRegister, 0 );
+	freeRegister( rightInfo->nRegister, 0 );
 	freeSymbolInfo(leftSide);
 	return rightSide;
 }

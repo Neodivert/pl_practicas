@@ -108,6 +108,7 @@ struct Method {
 };
 
 struct ExtraInfo {
+	int assignmentType;
 	int nRegister;
 	struct Symbol* variable; 
 };

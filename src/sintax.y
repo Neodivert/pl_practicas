@@ -521,43 +521,7 @@ else_part :
 // side match.
 assignment : 
 	left_side right_side separator { NGC $$ = checkAssignement( $1, $2 ); ENGC
-									GC 									
-										if ($1->varSymbol->symType == SYM_GLOBAL){					
-										//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.				
-											fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType($1->varSymbol),
-											((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
-											$1->varSymbol->name);
-											
-										}else if ($1->varSymbol->symType == SYM_VARIABLE){
-										//Obtenemos la direccion con el desplazamiento y almacenamos
-											if(((struct Variable*)($1->varSymbol->info))->symSubtype == SYM_LOCAL){
-												fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
-													((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
-													$1->varSymbol->name);
-											}
-											else{
-												fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType($1->varSymbol),
-													((struct Variable*)($1->varSymbol->info))->address,((struct ExtraInfo*)($2->info))->nRegister,
-													$1->varSymbol->name);
-											
-											}
-										}
-										
-										if(!insideIfLoop){
-											int reg = ((struct ExtraInfo*)($2->info))->nRegister;
-											struct Method* method = getCurrentScope();
-											
-											if(method->returnType){	
-												int size = method->argumentsSize;									
-												fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
-													pointerType(method->returnType), size, reg);
-											}
-										}
-										
-										freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
-										freeSymbolInfo($1);
-										$$ = $2;
-									EGC }
+									GC $$ = genAssignement(yyout, $1, $2, insideIfLoop); EGC }
 
 	| left_side error separator {yyerror( "Sintax error on local variable %s assignment", $1->symbol->name ); freeSymbolInfo($1); $$ = NULL; yyerrok;}
 	;
@@ -601,7 +565,12 @@ right_side :
 	expression
 	| string { printf( "string = [%s]\n", $1 ); $$ = checkArray( searchType( TYPE_CHAR ), strlen( $1 ) ); }
 	//We save arraySize because otherwise it could be overwritten by literal
-	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' {$$ = checkArray( $7, $<integer>6);}
+	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' 
+		{ NGC $$ = checkArray( $7, $<integer>6); ENGC 
+		  GC
+		  	((struct ExtraInfo*)($7->info))->assignmentType = TYPE_ARRAY; 
+			$$ = $7;	  	
+		  EGC}
 	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
 	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}
 	| get

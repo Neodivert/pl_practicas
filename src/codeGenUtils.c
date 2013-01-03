@@ -194,6 +194,47 @@ unsigned int returnAddress(int symbolType,cstr id)
 	return ((struct Variable*)(variable->info))->address;
 }
 
+/*                            Assignement                              */
+
+struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop)
+{
+	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
+	//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.				
+		fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+		((struct Variable*)(leftSide->varSymbol->info))->address,((struct ExtraInfo*)(rightSide->info))->nRegister,
+		leftSide->varSymbol->name);
+	
+	}else if (leftSide->varSymbol->symType == SYM_VARIABLE){
+	//Obtenemos la direccion con el desplazamiento y almacenamos
+		if(((struct Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
+			fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+				((struct Variable*)(leftSide->varSymbol->info))->address,((struct ExtraInfo*)(rightSide->info))->nRegister,
+				leftSide->varSymbol->name);
+		}
+		else{
+			fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+				((struct Variable*)(leftSide->varSymbol->info))->address,((struct ExtraInfo*)(rightSide->info))->nRegister,
+				leftSide->varSymbol->name);
+	
+		}
+	}
+
+	if(!insideIfLoop){
+		int reg = ((struct ExtraInfo*)(rightSide->info))->nRegister;
+		struct Method* method = getCurrentScope();
+	
+		if(method->returnType){	
+			int size = method->argumentsSize;									
+			fprintf(yyout,"\t%c(R6 + %d) = R%d; //Store return value\n",
+				pointerType(method->returnType), size, reg);
+		}
+	}
+
+	freeRegister( ((struct ExtraInfo*)(rightSide->info))->nRegister, 0 );
+	freeSymbolInfo(leftSide);
+	return rightSide;
+}
+
 
 /*                             Method definition                             */
 
@@ -315,11 +356,19 @@ char pointerType(Symbol* symbol)
 {
 
 	int typeId;
+	struct Type* type = NULL;
 	
 	if(symbol->symType == SYM_TYPE){
-		typeId = ((struct Type*)(symbol->info))->id;
-	}else{ //It is a variable
-		typeId = ((struct Type*)(((struct Variable*)(symbol->info))->type->info))->id;
+		// Symbol is a type
+		type = (struct Type*)(symbol->info);		
+	}else{ // symbol is a variable
+		type = (struct Type*)(((struct Variable*)(symbol->info))->type->info);
+	}
+	
+	typeId = type->id;
+	
+	if(typeId == TYPE_ARRAY){
+		typeId = ((struct Type*)(type->arrayInfo->type->info))->id;
 	}
 	
 	switch( typeId ){

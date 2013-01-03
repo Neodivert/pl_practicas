@@ -32,6 +32,10 @@ int getAllLocalsMain(FILE* yyout);
 /*Also asigns it to the corresponding field in the symbols table*/
 unsigned int returnAddress(int symbolType, cstr id);
 
+/*                            Assignement                              */
+
+struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop);
+
 // Generate the code for a method "begin"
 //	- Method label.
 //	- Local data allocation.

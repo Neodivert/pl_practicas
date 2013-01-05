@@ -716,7 +716,7 @@ literal :
 						if (reg == -1){
 							
 							reg = ((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister;
-							fprintf(yyout,"\tR7 = R7-4\n\tI(R7) = R%d\t//Derramamos el registro\n",reg);
+							fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//Derramamos el registro\n",reg);
 							((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister = 7;
 							nextRegisterOverflow = (nextRegisterOverflow++)%6;
 						}

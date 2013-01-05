@@ -588,12 +588,12 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	if(r0 == 7){
 		r0 = assignRegisters(0);
 		((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
-		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
 	}
 	if(r1 == 7){
 		r1 = assignRegisters(0);
 		((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
-		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
 	}
 	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 	freeRegister(r1, 0);

@@ -532,14 +532,16 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 // - iRegister - index of register with the argument's value.
 // - method - called method symbol.
 // - iArgument - argument index.
-void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument )
+void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method, int iArgument )
 {
 	Symbol* argument = getMethodArgument( method, iArgument );
-
+	int iRegister = ((struct ExtraInfo*)(argumentSymbol->info))->nRegister;
 	int address = ((struct Variable*)( argument->info ) )->address;
 
 	// Get parameter.
 	fprintf( yyout,"\t%c(R7+%d) = R%d;\t// %iº Argument\n", pointerType( argument ), address, iRegister, iArgument+1 );
+	freeRegister( iRegister, 0 );
+	freeSymbol(argumentSymbol);	
 }
 
 

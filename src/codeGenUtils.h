@@ -71,7 +71,7 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg );
 // - iRegister - index of register with the argument's value.
 // - method - called method symbol.
 // - iArgument - argument index.
-void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument );
+void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method, int iArgument );
 
 /*Returns the code that correspond to the storage of the type passed*/
 /*as parameter*/

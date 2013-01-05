@@ -330,8 +330,7 @@ arguments :
 								}
 								ENGC
 								GC
-									printf( "1 - [0]\n" );
-									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, 0 );
+									genArgumentPass( yyout, $1, currentMethodCall, 0 );
 									//genParameterPass( yyout, $1 );
 								EGC
 							}		 
@@ -349,8 +348,7 @@ arguments :
 								}
 								ENGC
 								GC
-									printf( "2 - [0]\n" );
-									genArgumentPass( yyout, ((struct ExtraInfo*)($1->info))->nRegister, currentMethodCall, 0 );
+									genArgumentPass( yyout, $1, currentMethodCall, 0 );
 								EGC
 						   }
 	| {$$ = 0;}
@@ -388,14 +386,8 @@ more_arguments :
 								}
 								ENGC
 								GC
-									printf( "3 - [%i]\n", nArguments-1 );
 									nArguments--;
-									genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments);
-									/*struct ExtraInfo* info = $2->info;
-									$$ = 0;
-									//printf( "Valor de adress: %i\n", info->variable->address );
-									genParameterPass( yyout, $2, nArguments-1 );
-									//printf( "Tratando argumento 3 [%i]\n", $2->symType );*/
+									genArgumentPass( yyout, $2, currentMethodCall, nArguments);
 								EGC 
 							}
 	| ',' method_call_argument more_arguments 
@@ -412,13 +404,8 @@ more_arguments :
 				}
 				ENGC
 				GC 
-					//genParameterPass( yyout, $2 );
-					//$$ = $3-1;
-					//printf("$3 vale %d\n", $3);
-					//printf( "4 - [%i]\n", nArguments-$3-1 );
 					nArguments--;
-					printf("Vale %d\n", nArguments);
-					genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments );
+					genArgumentPass( yyout, $2, currentMethodCall, nArguments );
 				EGC		
 			}	             
 	;

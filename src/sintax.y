@@ -285,13 +285,11 @@ method_call :
 // Check if we are making a correct call (same number or arguments) to a defined 
 // method.
 simple_method_call:  
-	IDENTIF '(' { 	currentMethodCall = searchTopLevel( SYM_METHOD, $1);	
-					NGC				
+	IDENTIF '(' { 	currentMethodCall = searchTopLevel( SYM_METHOD, $1);				
 					if(currentMethodCall && currentMethodCall->info ){						
 						nArguments = ((struct Method *)(currentMethodCall->info))->nArguments;						
 					}
 					$<symbol>$ = currentMethodCall;
-					ENGC
 
 					GC genMethodCallBegin( yyout, $1 ); EGC
 				}			
@@ -391,7 +389,8 @@ more_arguments :
 								ENGC
 								GC
 									printf( "3 - [%i]\n", nArguments-1 );
-									genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments-1 );
+									nArguments--;
+									genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments);
 									/*struct ExtraInfo* info = $2->info;
 									$$ = 0;
 									//printf( "Valor de adress: %i\n", info->variable->address );
@@ -414,8 +413,12 @@ more_arguments :
 				ENGC
 				GC 
 					//genParameterPass( yyout, $2 );
-					printf( "4 - [%i]\n", nArguments-$3-1 );
-					genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments-$3-1 );
+					//$$ = $3-1;
+					//printf("$3 vale %d\n", $3);
+					//printf( "4 - [%i]\n", nArguments-$3-1 );
+					nArguments--;
+					printf("Vale %d\n", nArguments);
+					genArgumentPass( yyout, ((struct ExtraInfo*)($2->info))->nRegister, currentMethodCall, nArguments );
 				EGC		
 			}	             
 	;

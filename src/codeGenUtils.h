@@ -6,6 +6,7 @@ the code generation. Also the global variables and data structures*/
 /*gc creates the code line that the code generation part passes*/
 //gc(char *str);
 
+
 /*Registers a new label and returns the identifier*/
 int newLabel();
 
@@ -78,7 +79,7 @@ char pointerType(Symbol* symbol);
 
 void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op );
 
-void genPuts( FILE* yyout, cstr str );
+void genPuts( FILE* yyout, char* str );
 
 char* genNumericString( Symbol* symbol );
 

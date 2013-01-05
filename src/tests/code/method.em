@@ -19,8 +19,10 @@ a = 5
 b = 7
 result = sum( a, b )
 
+c = 'a'
+
 # Print the result.
-puts( "#{a} + #{b} = #{result}\n" )
+puts( "[#{c}]: #{a} + #{b} = #{result}\n" )
 
 # FIXME: this will have an bad output until error (FIXME) in genPuts be 
 # solved.

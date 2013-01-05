@@ -77,23 +77,30 @@ L putf_: {unsigned char *p=inv_str(&U(R1)); // invierte: nva. dir. real 1er char
 	}      
 
 L puts_: {
-	char *p=inv_str(&U(P(R7+4)));
+	//char *p=inv_str(&U(P(R7+4)));
+	char *str=inv_str(&U(R7+4));
+	//printf( "Mostrando [%s]\n", str );
 	int i = 0;
-	while( i < strlen(p) ){
-		if( p[i] != '@' ){
-			putchar( p[i] );
+	int valueOffset = 5 + strlen( str );
+ 
+	while( i < strlen(str) ){
+		if( str[i] != '%' ){
+			putchar( str[i] );
 			i++;
 		}else{
-			switch( p[i+2] ){
-				printf(p,I(R7+4));
-				case 'i':
-					printf( "%i", R[p[i+1]-(int)('0')] );
+			switch( str[i+2] ){
+				//printf(p,I(R7+4));
+				case 'I':
+					printf( "%i", I( R7+valueOffset ) );
+					valueOffset += 4;
 				break;
-				case 'f':
-					printf( "%f", (float)R[p[i+1]-(int)('0')] );
+				case 'F':
+					printf( "%f", F( R7+valueOffset ) );
+					valueOffset += 4;
 				break;
-				case 'c':
-					printf( "%c", R[p[i+1]-(int)('0')] );
+				case 'U':
+					printf( "%c", U( R7+valueOffset ) );
+					valueOffset += 1;
 				break;
 				default:
 					printf( "E" );
@@ -103,7 +110,7 @@ L puts_: {
 		}
 	}
 	//printf((char*)p);
-	reinv_str(p,&U(P(R7+4)));
+	reinv_str(str,&U(R7+4));
 	GT(P(R7));
 }      
 

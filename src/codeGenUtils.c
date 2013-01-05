@@ -22,7 +22,6 @@ int newLabel()
 }
 
 
-
 /**************************************************************************/
 /*Returns an available register						  */
 /**************************************************************************/
@@ -598,58 +597,81 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	}
 	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 	freeRegister(r1, 0);
-	freeSymbol(rightSide);	
+	freeSymbol(rightSide);
 	
 }
 
-// Entrada: R0=etiqueta de retorno
-//          R1=dirección de la ristra de formato
-//          R2=valor entero a visualizar (opcional según formato)
-// No modifica ningún registro ni la ristra de formato
 
-
-void genPuts( FILE* yyout, cstr str )
+void genArgumentsLoad( FILE* yyout, char* str, int stringOffset )
 {
-	// size = 4 (return label) + 4 (pointer to string) + 1 (null character) +
-	// strlen(str).
-	int i, size = 9 + strlen( str );
+	int valueOffset = stringOffset + strlen( str ) + 1;
+	int offset = 0;
+	int i = 0;
+	for( i=0; i<strlen( str ); i++ ){
+		if( str[i] == '%' ){
+			switch( str[i+2] ){
+				case 'I':
+					fprintf( yyout, "\t%c(R7+%d) = R%d;\n", str[i+2], valueOffset, str[i+1]-'0' );
+					valueOffset += 4;
+				break;
+				case 'U':
+					fprintf( yyout, "\t%c(R7+%d) = R%d;\n", str[i+2], valueOffset, str[i+1]-'0' );
+					valueOffset += 1;
+				break;
+				case 'F':
+					fprintf( yyout, "\t%c(R7+%d) = RR%d;\n", str[i+2], valueOffset, str[i+1]-'0' );
+					valueOffset += 4;
+				break;
+			}
+		}
+	}
+}
+
+
+void genPuts( FILE* yyout, char* str )
+{
+	// valuesOffset = 4 (return label) + 1 (null character) + strlen(str).
+	const int valuesOffset = 5 + strlen( str );
+
+	int i, argumentsSize;
+	int nValues = 0;
+
+	argumentsSize = valuesOffset + nValues*4;
 
 	// Print a comment to indicate the puts call's begin.
 	fprintf( yyout, "\n\t/* Call to puts - begin */\n" );
 
 	// Allocate memory for arguments
-	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", size );
+	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", argumentsSize );
 	
+
+	genArgumentsLoad( yyout, str, 4 );
+
 	// Arguments
+	int valueOffset = valuesOffset;
 	fprintf( yyout,"\t/* string [%s]*/\n", str );
 	for( i=0; i<strlen( str ); i++ ){
 		switch( str[i] ){
 			case '\n':
-				fprintf( yyout,"\tU(R7+%d) = '\\n';\n", 8+i );
+				fprintf( yyout,"\tU(R7+%d) = '\\n';\n", 4+i );
 			break;
 			case '\t':
-				fprintf( yyout,"\tU(R7+%d) = '\\t';\n", 8+i );
+				fprintf( yyout,"\tU(R7+%d) = '\\t';\n", 4+i );
 			break;
 			case '\\':
-				fprintf( yyout,"\tU(R7+%d) = '\\\\';\n", 8+i );
+				fprintf( yyout,"\tU(R7+%d) = '\\\\';\n", 4+i );
 			break;
 			case '\"':
-				fprintf( yyout,"\tU(R7+%d) = '\"';\n", 8+i );
+				fprintf( yyout,"\tU(R7+%d) = '\"';\n", 4+i );
 			break;
 			default:
-				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 8+i, str[i] );
+				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 4+i, str[i] );
 			break;
 		}
 	}
-	fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 8+i );
+	fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 4+i );
 	
 	int newLabel_ = newLabel();
-
-	// Pointer to string
-	// FIXME: esta orden esta puesta porque P(R7+4) = R7+8; no me lo pillaba la 
-	// maquina Q. Como ven, se usa el R4 por la cara.
-	fprintf( yyout, "\tR4 = R7 + 8;\n" );
-	fprintf( yyout, "\tP(R7+4) = R4; //Pointer to string\n" ); //+8
 
 	// Save return label
 	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
@@ -661,7 +683,7 @@ void genPuts( FILE* yyout, cstr str )
 	fprintf( yyout, "L %i:\n", newLabel_ );
 
 	// Free arguments memory
-	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", size );
+	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", argumentsSize );
 	
 	// Print a comment to indicate the puts call's end.
 	fprintf( yyout, "\t/* Call to puts - end */\n\n" );
@@ -677,6 +699,7 @@ void genPuts( FILE* yyout, cstr str )
 #define TYPE_ARRAY 7
 */
 
+
 char* genNumericString( Symbol* symbol )
 {
 	char *str = (char*)malloc( 4 );
@@ -691,19 +714,19 @@ char* genNumericString( Symbol* symbol )
 		type = ((struct Type*)(getArrayType( ((struct ExtraInfo*)(symbol->info))->variable )))->id;
 	}
 	
-	str[0] = '@';
-	str[1] = '0' + (char)reg;
+	str[0] = '%';
+	str[1] = '0'+(char)reg;
 
 	switch( type ){
 		case TYPE_INTEGER:
 		case TYPE_BOOLEAN:
-			str[2] = 'i';
+			str[2] = 'I';
 		break;
 		case TYPE_FLOAT:
-			str[2] = 'f';
+			str[2] = 'F';
 		break;
 		case TYPE_CHAR:
-			str[2] = 'c';
+			str[2] = 'U';
 		break;
 		default:
 			str[2] = 'E';

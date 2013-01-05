@@ -6,8 +6,12 @@ needed for the code generation part*/
 //The last two values are R6 and R7, because they are used by the
 //Q to track the variables and the stack, we do not allow the user
 //to used them.
-int registers[8] = {0,0,0,0,0,0,1,1};
-int nRegisters = 6;
+int intRegs[8] = {0,0,0,0,0,0,1,1};
+int nR = 6;
+
+int floatRegs[3] = {0,0,0};
+int nRR = 3;
+
 int nLabels = 0;
 unsigned int topAddress = Z;
 
@@ -30,29 +34,27 @@ int assignRegisters(int type)
 {
     int i=0;
 	/*Buscar un Registro*/
-    if ((type == 0) && (nRegisters>0))
+    if ((type == 0) && (nR>0))
     {
         for (i=0;i<6;i++)
         {
-            if (registers[i]==0)
+            if (intRegs[i]==0)
             {
-                registers[i] = 1;
-                nRegisters--;
+                intRegs[i] = 1;
+                nR--;
                 return i;
             }
         }
     }
-    else if ((type == 1) && (nRegisters>1)){
+    else if ((type == 1) && (nRR>0)){
     //{ers>1))
-        for (i=0;i<8;i=i+2) //0, 2, 4, 6, -> 0 1 2 3
+        for (i=0;i<4;i++)
         {
-            if (registers[i]==0 && registers[i+1] == 0)
+            if (floatRegs[i]==0)
             {
-                registers[i] = 1;
-
-				registers[i+1] = 1;
-                nRegisters = nRegisters - 2;
-                return (i/2);    //Devuelves el identificador no la posición en el vector
+                floatRegs[i] = 1;
+                nRR--;
+                return i;
             }
         }
     }
@@ -69,8 +71,12 @@ int assignRegisters(int type)
 int freeRegisters()
 {
     int i=0;
-    for (i=0;i<3;i=i++){
-        registers[i]=0;
+    for (i=0;i<3;i++){
+        intRegs[i] = 0;
+		  floatRegs[i] = 0;
+	}
+	for( i; i<6; i++ ){
+		intRegs[i] = 0;
 	}
 
 	return 0;
@@ -88,20 +94,19 @@ int freeRegister(int i, int type)
     if (i > 7) return -2;
     if ((type != 0) && (type != 1)) return -3;
 
-    if ((type == 0) && (nRegisters<6)){
-        registers[i]=0;
-		nRegisters++;
+    if ((type == 0) && (nR<6)){
+        intRegs[i]=0;
+			nR++;
+			printf( "Liberando registro R%d", i );
     }
-	else if ((type == 1) && (nRegisters<5))
+	else if ((type == 1) && (nRR<5))
 	{
-
-    	if ((i % 2) == 1) return -4;
-
-    	registers[i]=0;
-        registers[i+1]=0;
-
-		nRegisters = nRegisters+2;
+    	//if ((i % 2) == 1) return -4;
+    	floatRegs[i]=0;
+		nRR++;
+		printf( "Liberando registro RR%d", i );
     }
+	
     return 0;
 }
 
@@ -273,8 +278,8 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 						freeSymbol(leftSide->exprSymbol);
 					//Assignement var = expression
 					}else{	
-						fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-							leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+						fprintf(yyout,"\t%c(R6 - %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+							leftInfo->address, regType, rightInfo->nRegister, leftSide->varSymbol->name);
 					}		
 				}	
 			}
@@ -336,8 +341,19 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	int elementSize = 0;	
 	struct Symbol* returnSymbol = createExtraInfoSymbol(reg);	
 	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
-	aux->nRegister = reg;			
+	aux->nRegister = reg;
 	aux->variable = searchVariable(symType, name);
+
+	int isFloat = (pointerType(aux->variable) == 'F');
+	// FIXME: esto esta hecho a lo chanada.
+	if( isFloat ){
+		freeRegister( reg, 0 );
+		
+		reg = assignRegisters(1);
+		aux->nRegister = reg;
+		fprintf( yyout, "//floatRegister = %d\n", reg );
+	}
+
 	if(atribute->info == SYM_CLASS_VARIABLE){
 		//varSymbol gets the struct Symbol of the variable
 		aux->variable = getClassVar(aux->variable,atribute->name);
@@ -361,9 +377,15 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 				freeRegister( expReg, 0 );	
 				freeSymbol(atribute->exprSymbol);			
 			}else{
-				fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var %s\n",reg, 
-					pointerType(aux->variable), returnAddress(symType,aux->variable->name),
-					aux->variable->name);
+				if( isFloat ){
+					fprintf(yyout,"\tRR%d = %c(R6 - %d); //Loading value of var - %s\n",reg, 
+						pointerType(aux->variable), returnAddress(symType,aux->variable->name),
+						aux->variable->name);
+				}else{
+					fprintf(yyout,"\tR%d = %c(R6 - %d); //Loading value of var - %s\n",reg, 
+						pointerType(aux->variable), returnAddress(symType,aux->variable->name),
+						aux->variable->name);
+				}
 			}	
 		}else{
 			if( atribute->info == TYPE_ARRAY ){
@@ -661,7 +683,7 @@ void genPuts( FILE* yyout, cstr str )
 	argumentsSize = valuesOffset + nValues*4;
 
 	// Print a comment to indicate the puts call's begin.
-	fprintf( yyout, "\n\t/* Call to puts - begin */\n" );
+	fprintf( yyout, "\n\t/* Call to puts - begin [%s]*/\n", str );
 
 	// Allocate memory for arguments
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", argumentsSize );

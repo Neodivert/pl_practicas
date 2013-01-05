@@ -24,3 +24,9 @@ c = 'a'
 # Print the result.
 puts( "[#{c}]: #{a} + #{b} = #{result}\n" )
 
+
+g1 = 3.5
+g2 = 4.5
+g3 = g1 + g2
+
+puts( "g1 = #{g1} + #{g2} = #{g3}\n" );

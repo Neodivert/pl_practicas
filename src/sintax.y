@@ -32,7 +32,6 @@ int nArguments = 0;
 
 int nextCodeLabel = 0;
 
-int returnValueSet = 1;
 int insideIfLoop = 0;
 
 %}
@@ -152,7 +151,7 @@ code :
 // if method was already in symbols table (1) or not (0).
 method_definition : 
 	DEF IDENTIF { GC nextCodeLabel = newLabel(); fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); EGC $<methodInfo>$ = checkMethodDefinition( $2 ); } 
-	arguments_definition { GC genMethodBegin( yyout, $2 ); returnValueSet = 0; EGC; } 
+	arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } 
 	separator method_code END separator 
 		{	NGC 
 				if($<methodInfo>3->result == 0){
@@ -167,7 +166,6 @@ method_definition :
 			GC 
 				genMethodEnd( yyout, $2 ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
-				returnValueSet = 1;
 			EGC
 
 			free($<methodInfo>3);

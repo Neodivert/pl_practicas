@@ -400,7 +400,6 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 	int nRegister = ((struct ExtraInfo*)(literalInfo->info))->nRegister;
 	int	elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(varSymbol->info))->type->info))->arrayInfo->type->info))->size;
 
-	printf("El var symbol es %s\n", varSymbol->name);
 	switch(varSymbol->symType)
 	{
 	case SYM_GLOBAL:

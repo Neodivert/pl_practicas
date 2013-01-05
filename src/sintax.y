@@ -315,24 +315,27 @@ simple_method_call:
 // Check if every argument in method call match the corresponding argument in
 // method definition.
 arguments : 
-	 method_call_argument more_arguments 
+	 method_call_argument
+	 {
+		GC
+			genArgumentPass( yyout, $1, currentMethodCall, 0 );
+		EGC	 
+	 }
+	  more_arguments 
 							{ 
 								NGC
 								if(currentMethodCall != NULL){
-								  	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments - $2);
+								  	int result = checkMethodCallArguments(currentMethodCall, $1, nArguments - $3);
 									if(result == 0){
 										// Valid argument, count it.
-										$$ = $2 + 1;
+										$$ = $3 + 1;
 									}else{
 										// Invalid argument.
 										$$ = -1;
 									}	
 								}
 								ENGC
-								GC
-									genArgumentPass( yyout, $1, currentMethodCall, 0 );
-									//genParameterPass( yyout, $1 );
-								EGC
+
 							}		 
 	| method_call_argument  {
 								NGC
@@ -390,23 +393,26 @@ more_arguments :
 									genArgumentPass( yyout, $2, currentMethodCall, nArguments);
 								EGC 
 							}
-	| ',' method_call_argument more_arguments 
+	| ',' method_call_argument
+	{
+	GC 
+		nArguments--;
+		genArgumentPass( yyout, $2, currentMethodCall, nArguments );
+	EGC			
+	}
+	 more_arguments 
 			{ 
 				NGC
 				if(currentMethodCall != NULL)
 				{
-				  	int result = checkMethodCallArguments(currentMethodCall, $2, nArguments - $3);
+				  	int result = checkMethodCallArguments(currentMethodCall, $2, nArguments - $4);
 					if(result == 0){
-						$$ = $3 + 1;
+						$$ = $4 + 1;
 					}else{
 						$$ = -1;
 					}
 				}
 				ENGC
-				GC 
-					nArguments--;
-					genArgumentPass( yyout, $2, currentMethodCall, nArguments );
-				EGC		
 			}	             
 	;
 

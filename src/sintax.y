@@ -575,7 +575,13 @@ right_side :
 			$$ = $7;	  	
 		  EGC}
 	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
-	| '[' array_content ']' {$$ = checkArray($2->symbol, $2->info );}
+	| '[' array_content ']' { NGC $$ = checkArray($2->symbol, $2->info ); ENGC
+							GC
+								$$ = createExtraInfoSymbol(assignRegisters(0));
+								((struct ExtraInfo *)($$->info))->assignmentType = LOAD_ADDRESS;
+							EGC
+							freeSymbolInfo($2);
+							}
 	| get
 		{ $$ = searchType( $1 );
 			
@@ -631,8 +637,10 @@ get :
 
 // Here we check if all the array content has the same type.		
 array_content :   
-	literal { $$ = nullSymbolInfo(); $$->symbol = $1; $$->info = 1; }
-	| literal ',' array_content { $$ = checkArrayContent($1, $3); }
+	literal { NGC $$ = nullSymbolInfo(); $$->symbol = $1; $$->info = 1; ENGC
+		GC $$ = genArrayContent( yyout, $<symbolInfo>-1, $1, nullSymbolInfo());	EGC }
+	| array_content ',' literal	{ NGC $$ = checkArrayContent($3, $1); ENGC
+		  GC $$ = genArrayContent( yyout, $<symbolInfo>-1, $3, $1); EGC	}
 	;		      
 
 

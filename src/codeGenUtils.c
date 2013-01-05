@@ -210,10 +210,10 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 	//Left side is a global variable
 	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
 		//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.	
-		//Right side is Array.new or [e,e,..,e]
+		//Right side is Array.new
 		if( rightInfo->assignmentType == TYPE_ARRAY ){
 			for( i = 0; i < arraySize; i++ ){
-				fprintf(yyout,"\t%c(0x%x + %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
+				fprintf(yyout,"\t%c(0x%x + %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
 					leftInfo->address, elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
 			}
 		}else{		
@@ -240,7 +240,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 			//Right side is Array.new or [e,e,..,e]
 			if( rightInfo->assignmentType == TYPE_ARRAY ){
 				for( i = 0; i < arraySize; i++ ){	
-					fprintf(yyout,"\t%c(R6 - %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
+					fprintf(yyout,"\t%c(R6 - %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
 						leftInfo->address - elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
 				}	
 			}else{	
@@ -267,7 +267,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 			//Right side is Array.new or [e,e,..,e]
 			if( rightInfo->assignmentType == TYPE_ARRAY ){
 				for( i = 0; i < arraySize; i++ ){	
-					fprintf(yyout,"\t%c(R6 + %d) = R%d; //Inicializing %s array\n",pointerType(leftSide->varSymbol),
+					fprintf(yyout,"\t%c(R6 + %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
 						leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
 				}	
 			}else{				
@@ -380,6 +380,45 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	}	
 	freeSymbolInfo(atribute);
 	return returnSymbol;
+}
+
+
+struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* literalInfo,
+	struct SymbolInfo* arrayInfo )
+{
+	struct Symbol* varSymbol = leftSide->varSymbol;
+	int position = arrayInfo->info;
+	int address = ((struct Variable*)(varSymbol->info))->address;
+	int nRegister = ((struct ExtraInfo*)(literalInfo->info))->nRegister;
+	int	elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(varSymbol->info))->type->info))->arrayInfo->type->info))->size;
+
+	printf("El var symbol es %s\n", varSymbol->name);
+	switch(varSymbol->symType)
+	{
+	case SYM_GLOBAL:
+		fprintf(yyout,"\t%c(0x%x + %d) = R%d; //Initializing %s array\n",pointerType(varSymbol),
+			address, elementSize*position, nRegister, varSymbol->name);				
+		break;
+	case SYM_VARIABLE:
+		if(((struct Variable*)(varSymbol->info))->symSubtype == SYM_LOCAL){
+			fprintf(yyout,"\t%c(R6 + %d) = R%d; //Initializing %s array\n",pointerType(varSymbol),
+				elementSize*position - address, nRegister, varSymbol->name);	
+		}else{
+			fprintf(yyout,"\t%c(R6 - %d) = R%d; //Initializing %s array\n",pointerType(varSymbol),
+				elementSize*position + address, nRegister, varSymbol->name);		
+		}		
+		break;
+	case SYM_CONSTANT:
+		break;
+	default:
+		//Error
+		printf("Error in array content\n");
+		break;				
+	}
+	arrayInfo->info++;
+	freeRegister( ((struct ExtraInfo*)(literalInfo->info))->nRegister, 0 );	
+	freeSymbol(literalInfo);		
+	return arrayInfo;
 }
 
 /*                             Method definition                             */

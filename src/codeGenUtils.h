@@ -43,6 +43,9 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int Symtype, struct Symb
 //	- Local data allocation.
 void genMethodBegin( FILE* yyout, cstr methodName );
 
+struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* literalInfo,
+	struct SymbolInfo* arrayInfo ); 
+
 
 /*                            Method definition                              */
 

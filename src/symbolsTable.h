@@ -51,6 +51,9 @@ extern int compilationState;
 #define TYPE_CLASS 6
 #define TYPE_ARRAY 7
 
+// Values for assignmentType in struct ExtraInfo
+#define LOAD_ADDRESS 9
+
 /*                                Data structs                                */
 /******************************************************************************/
 

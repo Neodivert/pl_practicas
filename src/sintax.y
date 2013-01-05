@@ -318,7 +318,8 @@ arguments :
 	 method_call_argument
 	 {
 		GC
-			genArgumentPass( yyout, $1, currentMethodCall, 0 );
+			nArguments--;
+			genArgumentPass( yyout, $1, currentMethodCall, nArguments );
 		EGC	 
 	 }
 	  more_arguments 

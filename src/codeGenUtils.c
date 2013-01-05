@@ -415,7 +415,6 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 	int nRegister = ((struct ExtraInfo*)(literalInfo->info))->nRegister;
 	int	elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(varSymbol->info))->type->info))->arrayInfo->type->info))->size;
 
-	printf("El var symbol es %s\n", varSymbol->name);
 	switch(varSymbol->symType)
 	{
 	case SYM_GLOBAL:
@@ -548,14 +547,16 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 // - iRegister - index of register with the argument's value.
 // - method - called method symbol.
 // - iArgument - argument index.
-void genArgumentPass( FILE* yyout, int iRegister, Symbol* method, int iArgument )
+void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method, int iArgument )
 {
 	Symbol* argument = getMethodArgument( method, iArgument );
-
+	int iRegister = ((struct ExtraInfo*)(argumentSymbol->info))->nRegister;
 	int address = ((struct Variable*)( argument->info ) )->address;
 
 	// Get parameter.
 	fprintf( yyout,"\t%c(R7+%d) = R%d;\t// %iº Argument\n", pointerType( argument ), address, iRegister, iArgument+1 );
+	freeRegister( iRegister, 0 );
+	freeSymbol(argumentSymbol);	
 }
 
 
@@ -603,12 +604,12 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	if(r0 == 7){
 		r0 = assignRegisters(0);
 		((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
-		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
 	}
 	if(r1 == 7){
 		r1 = assignRegisters(0);
 		((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
-		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
 	}
 	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 	freeRegister(r1, 0);

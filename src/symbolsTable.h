@@ -45,8 +45,8 @@ extern int compilationState;
 // Values for id in struct Type
 #define TYPE_INTEGER 1
 #define TYPE_FLOAT 2
-#define TYPE_STRING 3
-#define TYPE_CHAR 4
+#define TYPE_CHAR 3
+#define TYPE_STRING 4
 #define TYPE_BOOLEAN 5
 #define TYPE_CLASS 6
 #define TYPE_ARRAY 7

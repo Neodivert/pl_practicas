@@ -79,7 +79,7 @@ char pointerType(Symbol* symbol);
 
 void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op );
 
-void genPuts( FILE* yyout, char* str );
+void genPuts( FILE* yyout, cstr str );
 
 char* genNumericString( Symbol* symbol );
 

@@ -721,25 +721,25 @@ literal :
 							nextRegisterOverflow = (nextRegisterOverflow++)%6;
 						}
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d = %d; //Loading integer %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d = %d; // Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }
 	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
 					GC 
-						int reg = assignRegisters(0); 
+						int reg = assignRegisters(1); 
 						$$ = createExtraInfoSymbol(reg);
-						fprintf(yyout, "\tR%d = %f; //Loading float %f\n", reg, floatVal, floatVal);
+						fprintf(yyout, "\tRR%d = %f; // Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d = %d; //Loading char %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d = %d; // Loading char %d\n", reg, arraySize, arraySize);
 					EGC }	
 	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
-						fprintf(yyout, "\tR%d = %d; //Loading bool %d\n", reg, arraySize, arraySize);
+						fprintf(yyout, "\tR%d = %d; // Loading bool %d\n", reg, arraySize, arraySize);
 					EGC }	
 	;
 	

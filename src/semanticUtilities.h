@@ -16,7 +16,7 @@ struct MethodInfo
 
 /*                                  1. Expressions                            */
 
-// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. 
+// Check if subexpressions' types s1 and s2 are both INTEGER, FLOAT or CHAR. 
 // Return value:
 //	s1 - if s1 and s2 are both INTEGER or FLOAT.
 // 	NULL - if s1 and s2 are different types (*)
@@ -24,9 +24,9 @@ struct MethodInfo
 // message).
 Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op);
 
-// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. 
+// Check if subexpressions types s1 and s2 are both INTEGER, FLOAT or CHAR.
 // Return value:
-// boolean type symbol - if s1 and s2 are both INTEGER or FLOAT.
+// boolean type symbol - if s1 and s2 are both INTEGER, FLOAT or CHAR.
 // 	NULL - if s1 and s2 are different types (*)
 // (*) If s1 and s2 are both non-NULL, this function also generates an error 
 // message).

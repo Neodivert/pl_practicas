@@ -2,9 +2,9 @@
 
 /*                                  1. Expressions                            */
 
-// Check if subexpressions' types s1 and s2 are both INTEGER or FLOAT. 
+// Check if subexpressions' types s1 and s2 are both INTEGER, FLOAT or CHAR. 
 // Return value:
-//	s1 - if s1 and s2 are both INTEGER or FLOAT.
+//	s1 - if s1 and s2 are both INTEGER, FLOAT or CHAR.
 // 	NULL - if s1 and s2 are different types (*)
 // (*) If s1 and s2 are both non-NULL, this function also generates an error 
 // message).
@@ -15,19 +15,20 @@ Symbol* checkAritmeticExpression(Symbol* s1, Symbol* s2, char *op){
 	}	
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
-	if((t1 == t2) && (t1 <= TYPE_FLOAT)){
-		// s1 and s2 are both integer or float.
+	if((t1 == t2) && (t1 <= TYPE_CHAR)){
+		// s1 and s2 are both integer, float or char.
 		return s1;
 	}else{
-		// s1 and s2 are either, unlike types, or both different than integer and float
+		// s1 and s2 are either, unlike types, or both different than integer, 
+		// float and char
 		yyerror("Type error: %s %s %s is not permited", s1->name, op, s2->name);
 		return NULL;
 	}
 }	
 
-// Check if subexpressions types s1 and s2 are both INTEGER or FLOAT. 
+// Check if subexpressions types s1 and s2 are both INTEGER, FLOAT or CHAR.
 // Return value:
-// boolean type symbol - if s1 and s2 are both INTEGER or FLOAT.
+// boolean type symbol - if s1 and s2 are both INTEGER, FLOAT or CHAR.
 // 	NULL - if s1 and s2 are different types (*)
 // (*) If s1 and s2 are both non-NULL, this function also generates an error 
 // message).
@@ -38,8 +39,8 @@ Symbol* checkRelationalExpression(Symbol* s1, Symbol* s2, char *op){
 	}		
 	t1 = ((struct Type *)(s1->info))->id;
 	t2 = ((struct Type *)(s2->info))->id;
-	//Factor and term are both integer or float.
-	if((t1 == t2) && (t1 <= TYPE_FLOAT)){
+	//Factor and term are both integer, float or char.
+	if((t1 == t2) && (t1 <= TYPE_CHAR)){
 		return searchType( TYPE_BOOLEAN );
 	}
 	else

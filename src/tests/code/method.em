@@ -24,5 +24,3 @@ c = 'a'
 # Print the result.
 puts( "[#{c}]: #{a} + #{b} = #{result}\n" )
 
-# FIXME: this will have an bad output until error (FIXME) in genPuts be 
-# solved.

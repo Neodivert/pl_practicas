@@ -12,20 +12,28 @@ while( integer != 0 ) do
 	puts( "Input integer: #{integer}\n" )
 end
 
-# FIXME: Finish character and float I/O.
+
 
 # Ask the user for integers until a 'x' is wrote.
 character = 'a'
-#while( character != 'x' ) do
-	#puts( "Input an char ('x' to exit): " )
-	#character = getc
-	#puts( "Input character: #{character}\n" )
-#end
+while( character != 'x' ) do
+	puts( "Input an char ('x' to exit): " )
+	character = getc
+	puts( "Input character: #{character}\n" )
+end
+
+a = 3.5
+b = 3.5
+c = a + b
+
+puts( "#{a} + #{b} = #{c}\n" );
+
+# FIXME: Finish and float I/O.
 
 # Ask the user for floats until a 0 is wrote.
-#float = 1.0
-#while( float != 0.0 ) do
-# 	puts( "Input an float: " )
-#	float = getf
-#	puts( "Input float: #{float}\n" )
-#end
+float = 1.0
+while( float != 0.0 ) do
+ 	puts( "Input an float: " )
+	float = getf
+	puts( "Input float: #{float}\n" )
+end

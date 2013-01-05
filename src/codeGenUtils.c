@@ -42,8 +42,8 @@ int assignRegisters(int type)
             }
         }
     }
-    else if ((type == 1) && (nRegisters>1))
-    {
+    else if ((type == 1) && (nRegisters>1)){
+    //{ers>1))
         for (i=0;i<8;i=i+2) //0, 2, 4, 6, -> 0 1 2 3
         {
             if (registers[i]==0 && registers[i+1] == 0)
@@ -205,6 +205,15 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 		arraySize = ((struct Type*)(leftInfo->type->info))->arrayInfo->nElements;
 		elementSize = ((struct Type*)(((struct Type*)(leftInfo->type->info))->arrayInfo->type->info))->size;
 	}		
+
+
+	char regType[3];
+	if( pointerType(leftSide->varSymbol) != 'F' ){
+		strcpy( regType, "R" );
+	}else{
+		strcpy( regType, "RR" );
+	}
+	fprintf( yyout, "\n//GENERANDO ASIGNACION [%s] - BEGIN\n", regType );
 	
 	//Left side is a global variable
 	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
@@ -263,7 +272,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 						freeRegister( reg, 0 );	
 						freeSymbol(leftSide->exprSymbol);
 					//Assignement var = expression
-					}else{			
+					}else{	
 						fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
 							leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
 					}		
@@ -291,8 +300,8 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 						freeSymbol(leftSide->exprSymbol);
 					//Assignement var = expression
 					}else{			
-						fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-							leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+						fprintf(yyout,"\t%c(R6 + %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+							leftInfo->address, regType, rightInfo->nRegister, leftSide->varSymbol->name);
 					}			
 				}
 			}
@@ -310,8 +319,14 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 		}
 	}
 
-	freeRegister( rightInfo->nRegister, 0 );
+	if( pointerType(leftSide->varSymbol) != 'F' ){
+		freeRegister( rightInfo->nRegister, 0 );
+	}else{
+		freeRegister( rightInfo->nRegister, 1 );
+	}
 	freeSymbolInfo(leftSide);
+
+	fprintf( yyout, "\n//GENERANDO ASIGNACION [%s] - END\n", regType );
 	return rightSide;
 }
 
@@ -601,8 +616,13 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	
 }
 
-
-void genArgumentsLoad( FILE* yyout, char* str, int stringOffset )
+// If there are variables to be shown in the puts, the string has patterns 
+// of the form "%<register><type>", where register indicates the index of 
+// the register keeping the value to show, and type indicates the type of
+// that value.
+// ie. %2i -> load an integer from register R2
+// ie. %3f -> load a float from register R3
+void genPutsValuesLoad( FILE* yyout, cstr str, int stringOffset )
 {
 	int valueOffset = stringOffset + strlen( str ) + 1;
 	int offset = 0;
@@ -628,12 +648,13 @@ void genArgumentsLoad( FILE* yyout, char* str, int stringOffset )
 }
 
 
-void genPuts( FILE* yyout, char* str )
+void genPuts( FILE* yyout, cstr str )
 {
 	// valuesOffset = 4 (return label) + 1 (null character) + strlen(str).
 	const int valuesOffset = 5 + strlen( str );
 
-	int i, argumentsSize;
+	int i, j;
+	int argumentsSize;
 	int nValues = 0;
 
 	argumentsSize = valuesOffset + nValues*4;
@@ -644,12 +665,17 @@ void genPuts( FILE* yyout, char* str )
 	// Allocate memory for arguments
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", argumentsSize );
 	
-
-	genArgumentsLoad( yyout, str, 4 );
+	// Registers to show
+	fprintf( yyout, "\t/* Call to puts - registers */\n" );
+	genPutsValuesLoad( yyout, str, 4 );
 
 	// Arguments
 	int valueOffset = valuesOffset;
-	fprintf( yyout,"\t/* string [%s]*/\n", str );
+
+	fprintf( yyout, "\t/* Call to puts - string */\n" );
+
+	//fprintf( yyout,"\tSTR( %d, \"%s\" );\n", R7+valuesOffset, str );
+	
 	for( i=0; i<strlen( str ); i++ ){
 		switch( str[i] ){
 			case '\n':
@@ -663,6 +689,9 @@ void genPuts( FILE* yyout, char* str )
 			break;
 			case '\"':
 				fprintf( yyout,"\tU(R7+%d) = '\"';\n", 4+i );
+			break;
+			case '\'':
+				fprintf( yyout,"\tU(R7+%d) = '\\'';\n", 4+i );
 			break;
 			default:
 				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 4+i, str[i] );
@@ -705,8 +734,6 @@ char* genNumericString( Symbol* symbol )
 	char *str = (char*)malloc( 4 );
 	int reg, type;
 
-	printf( "Generando string numerica - BEGIN\n" );
-
 	reg = ((struct ExtraInfo*)(symbol->info))->nRegister;
 	type = ((struct Type*)(((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->info))->id;
 
@@ -732,18 +759,7 @@ char* genNumericString( Symbol* symbol )
 			str[2] = 'E';
 		break;
 	}
-
 	str[3] = 0;
-	/*
-	printf( "Symbol name: [%s]\n", symbol->name );
-	printf( "Symbol type: [%i]\n", symbol->symType );
-	printf( "Symbol register: [%i]\n", reg );
-	printf( "Symbol var: [%p]\n", ((struct ExtraInfo*)(symbol->info))->variable );
-	printf( "Symbol var type name: [%s]\n", ((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->name );
-	printf( "Symbol var type id: [%i]\n", ((struct Type*)(((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->info))->id );
-	*/
-
-	printf( "Generando string numerica - END\n" );
 
 	return str;
 }

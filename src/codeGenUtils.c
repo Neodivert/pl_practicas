@@ -345,7 +345,7 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	aux->variable = searchVariable(symType, name);
 
 	int isFloat = (pointerType(aux->variable) == 'F');
-	// FIXME: esto esta hecho a lo chanada.
+	// FIXME: este if esta hecho a lo chanada.
 	if( isFloat ){
 		freeRegister( reg, 0 );
 		
@@ -741,17 +741,6 @@ void genPuts( FILE* yyout, cstr str )
 	fprintf( yyout, "\t/* Call to puts - end */\n\n" );
 }
 
-/*
-#define TYPE_INTEGER 1
-#define TYPE_FLOAT 2
-#define TYPE_STRING 3
-#define TYPE_CHAR 4
-#define TYPE_BOOLEAN 5
-#define TYPE_CLASS 6
-#define TYPE_ARRAY 7
-*/
-
-
 char* genNumericString( Symbol* symbol )
 {
 	char *str = (char*)malloc( 4 );
@@ -818,7 +807,7 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 		fprintf( yyout, "\tR%d = %c(R7+5);\t// Save returned value\n", reg, inputType );
 	}else{
 		// FIXME: Aun falla con los flotantes.
-		reg = 0;
+		//reg = 0;
 		fprintf( yyout, "\tRR%d = %c(R7+5);\t// Save returned value\n", reg, inputType );
 	}
 

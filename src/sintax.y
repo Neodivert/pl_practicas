@@ -566,7 +566,12 @@ atribute :
 // right_side returns its type (integer, boolean, array, class, etc).	
 right_side :
 	expression
-	| string { printf( "string = [%s]\n", $1 ); $$ = checkArray( searchType( TYPE_CHAR ), strlen( $1 ) ); }
+	| string { NGC printf( "string = [%s]\n", $1 ); 
+		$$ = checkArray( searchType( TYPE_CHAR ), strlen( $1 ) ); ENGC 
+		GC 								
+			$$ = createExtraInfoSymbol(assignRegisters(0));
+			((struct ExtraInfo *)($$->info))->assignmentType = LOAD_ADDRESS;
+		EGC }
 	//We save arraySize because otherwise it could be overwritten by literal
 	| ARRAY NEW '(' INTEGER ',' { $<integer>$ = arraySize; } literal ')' 
 		{ NGC $$ = checkArray( $7, $<integer>6); ENGC 

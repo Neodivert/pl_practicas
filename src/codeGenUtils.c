@@ -210,83 +210,92 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 	//Left side is a global variable
 	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
 		//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.	
-		//Right side is Array.new
-		if( rightInfo->assignmentType == TYPE_ARRAY ){
-			for( i = 0; i < arraySize; i++ ){
-				fprintf(yyout,"\t%c(0x%x + %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
-					leftInfo->address, elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+		//var = Array / Class
+		if( rightInfo->assignmentType == LOAD_ADDRESS ){
+			//FIXME Aqui deberiamos cargar la direccion de la variable, para arrays y clases
+		}else{
+			//Right side is Array.new
+			if( rightInfo->assignmentType == TYPE_ARRAY ){
+				for( i = 0; i < arraySize; i++ ){
+					fprintf(yyout,"\t%c(0x%x + %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
+						leftInfo->address, elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+				}
+			}else{		
+				//Assignement $var[expression] = expression
+				if( leftSide->info == TYPE_ARRAY ){
+					int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+					fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
+						elementSize, leftSide->varSymbol->name);
+					fprintf(yyout,"\t%c(0x%x + R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
+						leftInfo->address, reg, rightInfo->nRegister, leftSide->varSymbol->name);
+					freeRegister( reg, 0 );	
+					freeSymbol(leftSide->exprSymbol);
+				//Assignement $var = expression
+				}else{
+					fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+						leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);			
+				}		
 			}
-		}else{		
-			//Assignement $var[expression] = expression
-			if( leftSide->info == TYPE_ARRAY ){
-				int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
-				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
-					elementSize, leftSide->varSymbol->name);
-				fprintf(yyout,"\t%c(0x%x + R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
-					leftInfo->address, reg, rightInfo->nRegister, leftSide->varSymbol->name);
-				freeRegister( reg, 0 );	
-				freeSymbol(leftSide->exprSymbol);
-			//Assignement $var = expression
-			}else{
-				fprintf(yyout,"\t%c(0x%x) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-					leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);			
-			}		
-		}		
+		}			
 	//Left side not a global varialbe
 	}else if (leftSide->varSymbol->symType == SYM_VARIABLE){
 		//Obtenemos la direccion con el desplazamiento y almacenamos
-		//Left side is a local variable
-		if(((struct Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
-			//Right side is Array.new or [e,e,..,e]
-			if( rightInfo->assignmentType == TYPE_ARRAY ){
-				for( i = 0; i < arraySize; i++ ){	
-					fprintf(yyout,"\t%c(R6 - %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
-						leftInfo->address - elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+		if( rightInfo->assignmentType == LOAD_ADDRESS ){
+			//FIXME Aqui deberiamos cargar la direccion de la variable, para arrays y clases
+		}else{	
+			//Left side is a local variable
+			if(((struct Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
+				//Right side is Array.new or [e,e,..,e]
+				if( rightInfo->assignmentType == TYPE_ARRAY ){
+					for( i = 0; i < arraySize; i++ ){	
+						fprintf(yyout,"\t%c(R6 - %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
+							leftInfo->address - elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+					}	
+				}else{	
+					//Assignement var[expression] = expression
+					if( leftSide->info == TYPE_ARRAY ){
+						int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+						fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
+							elementSize, leftSide->varSymbol->name);
+						fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
+							leftInfo->address, leftSide->varSymbol->name);						
+						fprintf(yyout,"\t%c(R6 + R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
+							reg, rightInfo->nRegister, leftSide->varSymbol->name);
+						freeRegister( reg, 0 );	
+						freeSymbol(leftSide->exprSymbol);
+					//Assignement var = expression
+					}else{			
+						fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+							leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+					}		
 				}	
-			}else{	
-				//Assignement var[expression] = expression
-				if( leftSide->info == TYPE_ARRAY ){
-					int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
-					fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
-						elementSize, leftSide->varSymbol->name);
-					fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
-						leftInfo->address, leftSide->varSymbol->name);						
-					fprintf(yyout,"\t%c(R6 + R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
-						reg, rightInfo->nRegister, leftSide->varSymbol->name);
-					freeRegister( reg, 0 );	
-					freeSymbol(leftSide->exprSymbol);
-				//Assignement var = expression
-				}else{			
-					fprintf(yyout,"\t%c(R6 - %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-						leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
-				}		
-			}	
-		}
-		//Left side is an argument variable
-		else{
-			//Right side is Array.new or [e,e,..,e]
-			if( rightInfo->assignmentType == TYPE_ARRAY ){
-				for( i = 0; i < arraySize; i++ ){	
-					fprintf(yyout,"\t%c(R6 + %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
-						leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
-				}	
-			}else{				
-				//Assignement var[expression] = expression
-				if( leftSide->info == TYPE_ARRAY ){
-					int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
-					fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
-						elementSize, leftSide->varSymbol->name);
-					fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
-						leftInfo->address, leftSide->varSymbol->name);						
-					fprintf(yyout,"\t%c(R6 - R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
-						reg, rightInfo->nRegister, leftSide->varSymbol->name);
-					freeRegister( reg, 0 );	
-					freeSymbol(leftSide->exprSymbol);
-				//Assignement var = expression
-				}else{			
-					fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-						leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
-				}			
+			}
+			//Left side is an argument variable
+			else{
+				//Right side is Array.new or [e,e,..,e]
+				if( rightInfo->assignmentType == TYPE_ARRAY ){
+					for( i = 0; i < arraySize; i++ ){	
+						fprintf(yyout,"\t%c(R6 + %d) = R%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
+							leftInfo->address + elementSize*i, rightInfo->nRegister, leftSide->varSymbol->name);				
+					}	
+				}else{				
+					//Assignement var[expression] = expression
+					if( leftSide->info == TYPE_ARRAY ){
+						int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+						fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
+							elementSize, leftSide->varSymbol->name);
+						fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
+							leftInfo->address, leftSide->varSymbol->name);						
+						fprintf(yyout,"\t%c(R6 - R%d) = R%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
+							reg, rightInfo->nRegister, leftSide->varSymbol->name);
+						freeRegister( reg, 0 );	
+						freeSymbol(leftSide->exprSymbol);
+					//Assignement var = expression
+					}else{			
+						fprintf(yyout,"\t%c(R6 + %d) = R%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+							leftInfo->address, rightInfo->nRegister, leftSide->varSymbol->name);
+					}			
+				}
 			}
 		}
 	}

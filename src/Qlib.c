@@ -74,7 +74,9 @@ L putf_: {unsigned char *p=inv_str(&U(R1)); // invierte: nva. dir. real 1er char
 	  printf((char*)p,R2);             // traslada                 
           reinv_str(p,&U(R1));   	    // re-invierte                
 	  GT(R0);                           // retorna
-	}      
+	}     
+
+//#define DEBUG = 1 
 
 L puts_: {
 	//char *p=inv_str(&U(P(R7+4)));
@@ -83,20 +85,22 @@ L puts_: {
 	
 	//printf( "printf invocado [%s]...\n", str );
 	int i = 0;
-	//int valueOffset = I(R7+4);
-	int valueOffset = 9 + strlen( str );
+	int valueOffset = I(R7+4);
+	//int valueOffset = 9 + strlen( str );
 
-	//printf( "valueOffset = %d\n", valueOffset );
+	#ifdef DEBUG
+	printf( "valueOffset = %d\n", valueOffset );
 
-	/*
+	
 	for( i=I(R7+4)-1; i>=0; i-- ){
-		if( U(R7+i) > 10 ){
+		if( i > 8 && i < (9 + strlen(str)) ){
 			printf( "dir(%d) R7+%d: %c\n", R7+i, i, U(R7+i) );
 		}else{
 			printf( "dir(%d) R7+%d: %d\n", R7+i, i, U(R7+i) );
 		}
 	}
-	*/
+	#endif
+	
 	i = 0;
 	while( i < strlen(str) ){
 		if( str[i] != '%' ){
@@ -106,19 +110,28 @@ L puts_: {
 			switch( str[i+1] ){
 				//printf(p,I(R7+4));
 				case 'I':
-					
-					printf( "%i (i:R7+%d)", I( R7+valueOffset ), valueOffset );
-					valueOffset += 4;
+					valueOffset -= 4;
+					#ifdef DEBUG
+						printf( "%i (R7+%d)", I( R7+valueOffset ), valueOffset );
+					#else
+						printf( "%i", I( R7+valueOffset ) );
+					#endif
 				break;
 				case 'F':
-					
-					printf( "%f (f:R7+%d)", F( R7+valueOffset ), valueOffset );
-					valueOffset += 4;
+					valueOffset -= 4;
+					#ifdef DEBUG
+						printf( "%f (R7+%d)", F( R7+valueOffset ), valueOffset );
+					#else
+						printf( "%f", F( R7+valueOffset ) );
+					#endif
 				break;
 				case 'U':
-					
-					printf( "%c (c:R7+%d)", I( R7+valueOffset ), valueOffset );
-					valueOffset += 4;
+					valueOffset--;
+					#ifdef DEBUG
+						printf( "%c (R7+%d)", U( R7+valueOffset ), valueOffset );
+					#else
+						printf( "%c", U( R7+valueOffset ) );
+					#endif
 				break;
 				default:
 					printf( "E" );

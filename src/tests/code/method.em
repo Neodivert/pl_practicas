@@ -5,39 +5,60 @@
 ###############################################################################
 
 def f1( arg1, arg2, arg3 )
-	puts( "#{arg1} + #{arg2} = #{arg3}\n" )
+	puts( "vector (MET_ARG): #{arg1} + #{arg2} = #{arg3}\n" )
 end
 
-def f2( arg1, arg2, arg3 )
-	puts( "#{arg1} + #{arg2} = #{arg3}\n" )
+f1( 1, 2, 3 )
+
+def f2()
+	a = 1
+	b = 2
+	c = a + b
+	puts( "suma (MET_LOCAL): #{a} + #{b} = #{c}\n" )
 end
+
+f2()
 
 a1 = 25
 a2 = 50
-a3 = 75
+a3 = a1 + a2
 
-puts( "#{a1} + #{a2} = #{a3}\n" )
-f1( a1, a2, a3 )
+puts( "suma (MAIN): #{a1} + #{a2} = #{a3}\n" )
 
-b1 = 'a'
-b2 = 1
+b1 = 1
+b2 = 'a'
 b3 = 'b'
+b4 = 5.25
+b5 = 2
 
-puts( "#{b1} + #{b2} = #{b3}\n" )
-f2( b1, b2, b3 )
+puts( "vector (MAIN): #{b1}, #{b2}, #{b3}, #{b4}, #{b5}\n" )
+
+#f1( a1, a2, a3 )
+#f2()
+
+#def f3( arg1, arg2, arg3 )
+#	puts( "#{arg1} + #{arg2} = #{arg3}\n" )
+#end
+
+#b1 = 'a'
+#b2 = 1
+#b3 = 'b'
+
+#puts( "#{b1} + #{b2} = #{b3}\n" )
+#f3( b1, b2, b3 )
 
 
 
-def foo1(a, b, c, d, e, f, g, h)
-	puts("array: #{a} #{b} #{c} #{d} #{e} #{f} #{g} #{h}\n")
-end
+#def foo1(a, b, c, d, e, f, g, h)
+#	puts("array: #{a} #{b} #{c} #{d} #{e} #{f} #{g} #{h}\n")
+#end
 
-def foo2(a, b, c, d, e, f, g, h)
-	puts("array: #{a} #{b} #{c} #{d} #{e} #{f} #{g} #{h}\n")
-end
+#def foo2(a, b, c, d, e, f, g, h)
+#	puts("array: #{a} #{b} #{c} #{d} #{e} #{f} #{g} #{h}\n")
+#end
 
-foo1(1,3,5,7,2,4,6,8)
-foo2(1,'a',2,'b',3,'c',4,'d')
+#foo1(1,3,5,7,2,4,6,8)
+#foo2(1,'a',2,'b',3,'c',4,'d')
 
 #def foo3 ( a, b )
 #	a = 5

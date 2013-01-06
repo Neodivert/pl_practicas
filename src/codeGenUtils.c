@@ -647,7 +647,7 @@ char* genVariableInterpolation( FILE* yyout, Symbol* symbol )
 
 	char* str = genNumericString( symbol );
 
-	/*
+	
 	switch( type ){
 			case TYPE_INTEGER:
 				fprintf( yyout, "\tR7 = R7-4;\n" );
@@ -662,11 +662,11 @@ char* genVariableInterpolation( FILE* yyout, Symbol* symbol )
 				fprintf( yyout, "\tF(R7) = RR%d;\n", reg );
 			break;
 	}
-	*/
+	
 	//fprintf( yyout, "\t// genVariableInterpolation [%s] - BEGIN\n", info->variable->name );
 
-	fprintf( yyout, "\tR7 = R7-4;\n" );
-	fprintf( yyout, "\tI(R7) = R%d;\n", reg );
+	//fprintf( yyout, "\tR7 = R7-4;\n" );
+	//fprintf( yyout, "\tI(R7) = R%d;\n", reg );
 	
 	if( isFloat ){
 		freeRegister( reg, 1 );
@@ -759,11 +759,11 @@ void genPuts( FILE* yyout, cstr str )
 			break;
 			case '%':
 				nValues++;
-				//if( str[i+1] == 'U' ){
-				//	argumentsSize++;
-				//}else{
+				if( str[i+1] == 'U' ){
+					argumentsSize++;
+				}else{
 					argumentsSize += 4;
-				//}
+				}
 			default:
 				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 8+i, str[i] );
 			break;

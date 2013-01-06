@@ -88,7 +88,7 @@ L puts_: {
 			putchar( str[i] );
 			i++;
 		}else{
-			switch( str[i+2] ){
+			switch( str[i+1] ){
 				//printf(p,I(R7+4));
 				case 'I':
 					printf( "%i", I( R7+valueOffset ) );
@@ -106,7 +106,7 @@ L puts_: {
 					printf( "E" );
 				break;
 			}
-			i += 3;
+			i += 2;
 		}
 	}
 	//printf((char*)p);

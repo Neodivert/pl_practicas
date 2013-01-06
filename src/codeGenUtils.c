@@ -94,17 +94,17 @@ int freeRegister(int i, int type)
     if (i > 7) return -2;
     if ((type != 0) && (type != 1)) return -3;
 
-    if ((type == 0) && (nR<6)){
+    if ((type == 0) /*&& (nR<6)*/){
         intRegs[i]=0;
 			nR++;
-			printf( "Liberando registro R%d", i );
+			printf( "Liberando registro R%d - OK\n", i );
     }
-	else if ((type == 1) && (nRR<5))
+	else if ((type == 1) /*&& (nRR<5)*/)
 	{
     	//if ((i % 2) == 1) return -4;
     	floatRegs[i]=0;
 		nRR++;
-		printf( "Liberando registro RR%d", i );
+		printf( "Liberando registro RR%d - OK\n", i );
     }
 	
     return 0;
@@ -585,7 +585,6 @@ void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method
 // Gets the Q type corresponding to the type of the variable
 char pointerType(Symbol* symbol)
 {
-
 	int typeId;
 	struct Type* type = NULL;
 	
@@ -639,19 +638,60 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	
 }
 
+char* genVariableInterpolation( FILE* yyout, Symbol* symbol )
+{
+	struct ExtraInfo* info = (struct ExtraInfo*)(symbol->info);
+	int reg = info->nRegister;
+	int type = ((struct Type*)((struct Variable*)(info->variable->info))->type->info)->id;
+	int isFloat = (pointerType(info->variable) == 'F');
+
+	char* str = genNumericString( symbol );
+
+	switch( type ){
+			case TYPE_INTEGER:
+				fprintf( yyout, "\tR7 = R7-4;\n" );
+				fprintf( yyout, "\tI(R7) = R%d;\n", reg );
+			break;
+			case TYPE_CHAR:
+				fprintf( yyout, "\tR7 = R7-1;\n" );
+				fprintf( yyout, "\tU(R7) = R%d;\n", reg );
+			break;
+			case TYPE_FLOAT:
+				fprintf( yyout, "\tR7 = R7-4;\n" );
+				fprintf( yyout, "\tF(R7) = RR%d;\n", reg );
+			break;
+	}
+
+	fprintf( yyout, "// Liberando registro %d\n", reg );
+	printf( "genVariableInterpolation [%s] - BEGIN\n", symbol->name );
+	if( isFloat ){
+		freeRegister( reg, 1 );
+	}else{
+		freeRegister( reg, 0 );
+	}
+	printf( "genVariableInterpolation - END\n" );
+	freeSymbol( symbol );
+	//freeSymbolInfo();
+	//free( symbol );
+
+	return str;
+}
+
 // If there are variables to be shown in the puts, the string has patterns 
 // of the form "%<register><type>", where register indicates the index of 
 // the register keeping the value to show, and type indicates the type of
 // that value.
 // ie. %2i -> load an integer from register R2
 // ie. %3f -> load a float from register R3
-void genPutsValuesLoad( FILE* yyout, cstr str, int stringOffset )
+/*
+int genPutsValuesLoad( FILE* yyout, cstr str, int stringOffset  )
 {
 	int valueOffset = stringOffset + strlen( str ) + 1;
 	int offset = 0;
 	int i = 0;
 	for( i=0; i<strlen( str ); i++ ){
-		if( str[i] == '%' ){
+		if( str[i] == 1 ){
+			nValues++;
 			switch( str[i+2] ){
 				case 'I':
 					fprintf( yyout, "\t%c(R7+%d) = R%d;\n", str[i+2], valueOffset, str[i+1]-'0' );
@@ -668,19 +708,17 @@ void genPutsValuesLoad( FILE* yyout, cstr str, int stringOffset )
 			}
 		}
 	}
+	return valueOffset;
 }
-
+*/
 
 void genPuts( FILE* yyout, cstr str )
 {
-	// valuesOffset = 4 (return label) + 1 (null character) + strlen(str).
-	const int valuesOffset = 5 + strlen( str );
+	// argumentsSize = 4 (return label) + 1 (null character) + strlen(str).
+	int argumentsSize = 5 + strlen( str );
 
 	int i, j;
-	int argumentsSize;
-	int nValues = 0;
-
-	argumentsSize = valuesOffset + nValues*4;
+	//int nValues = 0;
 
 	// Print a comment to indicate the puts call's begin.
 	fprintf( yyout, "\n\t/* Call to puts - begin [%s]*/\n", str );
@@ -690,16 +728,15 @@ void genPuts( FILE* yyout, cstr str )
 	
 	// Registers to show
 	fprintf( yyout, "\t/* Call to puts - registers */\n" );
-	genPutsValuesLoad( yyout, str, 4 );
+	//genPutsValuesLoad( yyout, str, 4 );
 
 	// Arguments
-	int valueOffset = valuesOffset;
+	//int valueOffset = valuesOffset;
 
 	fprintf( yyout, "\t/* Call to puts - string */\n" );
 
 	//fprintf( yyout,"\tSTR( %d, \"%s\" );\n", R7+valuesOffset, str );
-	
-	for( i=0; i<strlen( str ); i++ ){
+	for( i=0; i<strlen(str); i++ ){
 		switch( str[i] ){
 			case '\n':
 				fprintf( yyout,"\tU(R7+%d) = '\\n';\n", 4+i );
@@ -716,6 +753,13 @@ void genPuts( FILE* yyout, cstr str )
 			case '\'':
 				fprintf( yyout,"\tU(R7+%d) = '\\'';\n", 4+i );
 			break;
+			case '%':
+				//nValues++;
+				if( str[i+1] == 'U' ){
+					argumentsSize++;
+				}else{
+					argumentsSize += 4;
+				}
 			default:
 				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 4+i, str[i] );
 			break;
@@ -743,7 +787,7 @@ void genPuts( FILE* yyout, cstr str )
 
 char* genNumericString( Symbol* symbol )
 {
-	char *str = (char*)malloc( 4 );
+	char *str = (char*)malloc( 3 );
 	int reg, type;
 
 	reg = ((struct ExtraInfo*)(symbol->info))->nRegister;
@@ -754,24 +798,23 @@ char* genNumericString( Symbol* symbol )
 	}
 	
 	str[0] = '%';
-	str[1] = '0'+(char)reg;
 
 	switch( type ){
 		case TYPE_INTEGER:
 		case TYPE_BOOLEAN:
-			str[2] = 'I';
+			str[1] = 'I';
 		break;
 		case TYPE_FLOAT:
-			str[2] = 'F';
+			str[1] = 'F';
 		break;
 		case TYPE_CHAR:
-			str[2] = 'U';
+			str[1] = 'U';
 		break;
 		default:
-			str[2] = 'E';
+			str[1] = 'E';
 		break;
 	}
-	str[3] = 0;
+	str[2] = 0;
 
 	return str;
 }

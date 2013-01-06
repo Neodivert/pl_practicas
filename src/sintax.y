@@ -767,7 +767,7 @@ substring_part :
 //simple variables
 string_struct :
 		/*START_STRUCT expression END_STRUCT
-		|*/ START_STRUCT factor END_STRUCT { GC char* str = genNumericString( $2 ); strcpy( $$, str ); printf( "\n\n$$=[%s]\n\n", $$ ); free( str ); EGC } // FIXME: si el factor es una variable falta comprobar que exista.
+		|*/ START_STRUCT factor END_STRUCT { GC char* str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str ); free( str ); EGC } // FIXME: si el factor es una variable falta comprobar que exista.
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%

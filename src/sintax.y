@@ -755,6 +755,7 @@ string :
 substring :
 	substring_part { GC strcpy( $$, $1 ); EGC }
 	| substring_part substring { GC strcpy( $$, $1 ); strcat( $$, $2 ); EGC }
+	//| substring substring_part { GC strcpy( $$, $2 ); strcat( $$, $1 ); EGC }
 	;
 	
 substring_part :

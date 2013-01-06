@@ -647,6 +647,7 @@ char* genVariableInterpolation( FILE* yyout, Symbol* symbol )
 
 	char* str = genNumericString( symbol );
 
+	/*
 	switch( type ){
 			case TYPE_INTEGER:
 				fprintf( yyout, "\tR7 = R7-4;\n" );
@@ -661,15 +662,18 @@ char* genVariableInterpolation( FILE* yyout, Symbol* symbol )
 				fprintf( yyout, "\tF(R7) = RR%d;\n", reg );
 			break;
 	}
+	*/
+	//fprintf( yyout, "\t// genVariableInterpolation [%s] - BEGIN\n", info->variable->name );
 
-	fprintf( yyout, "// Liberando registro %d\n", reg );
-	printf( "genVariableInterpolation [%s] - BEGIN\n", symbol->name );
+	fprintf( yyout, "\tR7 = R7-4;\n" );
+	fprintf( yyout, "\tI(R7) = R%d;\n", reg );
+	
 	if( isFloat ){
 		freeRegister( reg, 1 );
 	}else{
 		freeRegister( reg, 0 );
 	}
-	printf( "genVariableInterpolation - END\n" );
+	//fprintf( yyout, "\t// genVariableInterpolation - END\n" );
 	freeSymbol( symbol );
 	//freeSymbolInfo();
 	//free( symbol );
@@ -714,14 +718,14 @@ int genPutsValuesLoad( FILE* yyout, cstr str, int stringOffset  )
 
 void genPuts( FILE* yyout, cstr str )
 {
-	// argumentsSize = 4 (return label) + 1 (null character) + strlen(str).
-	int argumentsSize = 5 + strlen( str );
+	// argumentsSize = 4 (return label) 4 (n variables) + 1 (null character) + strlen(str).
+	int argumentsSize = 9 + strlen( str );
 
+	int nValues = 0;
 	int i, j;
-	//int nValues = 0;
-
+	
 	// Print a comment to indicate the puts call's begin.
-	fprintf( yyout, "\n\t/* Call to puts - begin [%s]*/\n", str );
+	fprintf( yyout, "\n\t/* Call to puts - begin [%s] (%d)*/\n", str, (int)strlen(str) );
 
 	// Allocate memory for arguments
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", argumentsSize );
@@ -739,35 +743,38 @@ void genPuts( FILE* yyout, cstr str )
 	for( i=0; i<strlen(str); i++ ){
 		switch( str[i] ){
 			case '\n':
-				fprintf( yyout,"\tU(R7+%d) = '\\n';\n", 4+i );
+				fprintf( yyout,"\tU(R7+%d) = '\\n';\n", 8+i );
 			break;
 			case '\t':
-				fprintf( yyout,"\tU(R7+%d) = '\\t';\n", 4+i );
+				fprintf( yyout,"\tU(R7+%d) = '\\t';\n", 8+i );
 			break;
 			case '\\':
-				fprintf( yyout,"\tU(R7+%d) = '\\\\';\n", 4+i );
+				fprintf( yyout,"\tU(R7+%d) = '\\\\';\n", 8+i );
 			break;
 			case '\"':
-				fprintf( yyout,"\tU(R7+%d) = '\"';\n", 4+i );
+				fprintf( yyout,"\tU(R7+%d) = '\"';\n", 8+i );
 			break;
 			case '\'':
-				fprintf( yyout,"\tU(R7+%d) = '\\'';\n", 4+i );
+				fprintf( yyout,"\tU(R7+%d) = '\\'';\n", 8+i );
 			break;
 			case '%':
-				//nValues++;
-				if( str[i+1] == 'U' ){
-					argumentsSize++;
-				}else{
+				nValues++;
+				//if( str[i+1] == 'U' ){
+				//	argumentsSize++;
+				//}else{
 					argumentsSize += 4;
-				}
+				//}
 			default:
-				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 4+i, str[i] );
+				fprintf( yyout,"\tU(R7+%d) = '%c';\n", 8+i, str[i] );
 			break;
 		}
 	}
-	fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 4+i );
+	fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 8+i );
 	
 	int newLabel_ = newLabel();
+
+	// Save return label
+	fprintf( yyout, "\tP(R7+4) = %i;\t// valueOffset\n", argumentsSize );
 
 	// Save return label
 	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );

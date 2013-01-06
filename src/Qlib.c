@@ -78,11 +78,26 @@ L putf_: {unsigned char *p=inv_str(&U(R1)); // invierte: nva. dir. real 1er char
 
 L puts_: {
 	//char *p=inv_str(&U(P(R7+4)));
-	char *str=inv_str(&U(R7+4));
+	char *str=inv_str(&U(R7+8));
 	//printf( "Mostrando [%s]\n", str );
+	
+	//printf( "printf invocado [%s]...\n", str );
 	int i = 0;
-	int valueOffset = 5 + strlen( str );
- 
+	//int valueOffset = I(R7+4);
+	int valueOffset = 9 + strlen( str );
+
+	//printf( "valueOffset = %d\n", valueOffset );
+
+	/*
+	for( i=I(R7+4)-1; i>=0; i-- ){
+		if( U(R7+i) > 10 ){
+			printf( "dir(%d) R7+%d: %c\n", R7+i, i, U(R7+i) );
+		}else{
+			printf( "dir(%d) R7+%d: %d\n", R7+i, i, U(R7+i) );
+		}
+	}
+	*/
+	i = 0;
 	while( i < strlen(str) ){
 		if( str[i] != '%' ){
 			putchar( str[i] );
@@ -91,16 +106,19 @@ L puts_: {
 			switch( str[i+1] ){
 				//printf(p,I(R7+4));
 				case 'I':
-					printf( "%i", I( R7+valueOffset ) );
+					
+					printf( "%i (i:R7+%d)", I( R7+valueOffset ), valueOffset );
 					valueOffset += 4;
 				break;
 				case 'F':
-					printf( "%f", F( R7+valueOffset ) );
+					
+					printf( "%f (f:R7+%d)", F( R7+valueOffset ), valueOffset );
 					valueOffset += 4;
 				break;
 				case 'U':
-					printf( "%c", U( R7+valueOffset ) );
-					valueOffset += 1;
+					
+					printf( "%c (c:R7+%d)", I( R7+valueOffset ), valueOffset );
+					valueOffset += 4;
 				break;
 				default:
 					printf( "E" );
@@ -109,8 +127,9 @@ L puts_: {
 			i += 2;
 		}
 	}
+	//printf( "printf invocado ...OK\n" );
 	//printf((char*)p);
-	reinv_str(str,&U(R7+4));
+	reinv_str(str,&U(R7+8));
 	GT(P(R7));
 }      
 

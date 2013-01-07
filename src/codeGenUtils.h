@@ -94,13 +94,11 @@ cstr genVariableInterpolation( FILE* yyout, Symbol* symbol );
 
 void genGetCall( FILE* yyout, char inputType, int reg );
 
-<<<<<<< HEAD
 void genPutsHead( FILE* yyout );
-=======
 
 /*				Overflow				*/
 int checkOverflow(FILE* yyout, int reg, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type);
->>>>>>> master
+
 
 int getType( Symbol* symbol );
 

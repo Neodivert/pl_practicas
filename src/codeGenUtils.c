@@ -591,15 +591,24 @@ void genMethodEnd( FILE* yyout, cstr methodName, int symType )
 // allocate local space).
 struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName )
 {
+	//Get current scope
 	struct Method* scope = getCurrentScope();
+	
+	//Get a label for the hidden method
 	int nextCodeLabel = newLabel(); 
+	
+	//Save the scope in the ExtraInfo struct
 	struct Symbol* currentScope = createExtraInfoSymbol(nextCodeLabel);
 	((struct ExtraInfo*)(currentScope->info))->variable = (struct Symbol*)scope;
-		
+	
+	//This is a method definition so do not execute yet	
 	fprintf( yyout,"\tGT(%d); //Jump to next code block\n", nextCodeLabel); 
 	
 	char *blockName = createBlockName(varName, argumentName);
+	
+	//Generate block definition using method function
 	genMethodBegin(yyout, (cstr)blockName, SYM_BLOCK);
+	
 	free(blockName);
 	return currentScope;
 }
@@ -609,9 +618,16 @@ void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName,struct Symbol* bl
 {
 	char *blockName = createBlockName(varName, argumentName);
 	struct ExtraInfo* extraInfo = (struct ExtraInfo*)(blockInfo->info);
+	
+	//Retrieve label for the execution of code
 	int nextCodeLabel = extraInfo->nRegister;
+	
+	//Retrive previous scope 
 	struct Method* method = (struct Method*)(extraInfo->variable);
+	
+	//Create block defintion end with method definition
 	genMethodEnd(yyout, (cstr)blockName, SYM_BLOCK);
+	
 	free(blockName);	
 	goInScope(method);
 	fprintf( yyout,"L %d: //Continue code block\n", nextCodeLabel);

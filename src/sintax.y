@@ -466,6 +466,7 @@ block_call :
 	{ NGC goInScope($<method>7); ENGC 
 	GC 
 		genBlockEnd(yyout, $1, $5, $<symbol>7 );
+		genBlockCall(yyout, $1, $5);
 		insideIfLoop--;
 		$$ = $<symbol>7;		 
 	EGC}

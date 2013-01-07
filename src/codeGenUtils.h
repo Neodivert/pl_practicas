@@ -6,6 +6,7 @@ the code generation. Also the global variables and data structures*/
 /*gc creates the code line that the code generation part passes*/
 //gc(char *str);
 
+typedef struct RegisterInfo RegisterInfo; 
 
 /*Registers a new label and returns the identifier*/
 int newLabel();
@@ -32,6 +33,12 @@ int getAllLocalsMain(FILE* yyout);
 /*Returns the actual address for storage in memory*/
 /*Also asigns it to the corresponding field in the symbols table*/
 unsigned int returnAddress(int symbolType, cstr id);
+
+/* Save current used registers to stack 
+void storeRegisters(FILE* yyout);
+
+/* Load registers form stack 
+void loadRegisters(FILE* yyout, int reg); */
 
 /*                            Assignement                              */
 

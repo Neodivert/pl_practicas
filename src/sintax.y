@@ -153,8 +153,16 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { GC nextCodeLabel = newLabel(); fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); EGC $<methodInfo>$ = checkMethodDefinition( $2 ); } 
-	arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } 
+	DEF IDENTIF 
+		{ GC 
+			nextCodeLabel = newLabel(); 
+			fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); 
+		EGC 
+		$<methodInfo>$ = checkMethodDefinition( $2 ); } 
+	arguments_definition 
+		{ GC 
+			genMethodBegin( yyout, $2 ); 
+		EGC } 
 	separator method_code END separator 
 		{	NGC 
 				if($<methodInfo>3->result == 0){
@@ -297,9 +305,13 @@ simple_method_call:
 					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
-			GC 
+			GC 				
 				int reg = assignRegisters(0); 
+<<<<<<< HEAD
 				$$ = createExtraInfoSymbol(reg,-1);
+=======
+				$$ = createExtraInfoSymbol(reg);				
+>>>>>>> master
 				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
 					struct Method* method = getCurrentScope();					
@@ -308,7 +320,7 @@ simple_method_call:
 						fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
 							pointerType(method->returnType), size, reg);
 					}
-				}				
+				}								
 			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok; $$ = NULL;}
 	;
@@ -377,7 +389,6 @@ struct ExtraInfo {
 };
 */
 
-// FIXME: Cuando use la info que devuelve expression, liberarla.
 more_arguments : 
 	',' method_call_argument {  
 								NGC

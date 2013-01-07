@@ -654,7 +654,7 @@ void showSymTable()
 	printf( "---------------------------------------------\n" );
 }
 
-#define DEBUG 1
+//#define DEBUG 1
 // Free the memory allocated for a symbol.
 void freeSymbol(Symbol* symbol)
 {

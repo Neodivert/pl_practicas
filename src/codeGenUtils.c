@@ -537,7 +537,14 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 void genMethodBegin( FILE* yyout, cstr methodName, int symType )
 {
    // Get the method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( symType, methodName )->info );
+	struct Method* method = NULL;
+	if(symType == SYM_METHOD){
+  		method = (struct Method *)( searchTopLevel( symType, methodName )->info );
+  	}else{ //It is a block
+  		method = (struct Method *)( searchVariable( symType, methodName )->info );
+  		goInScope(method);
+  		fillMethodDataSize(method);
+  	}
    
    // Print a comment to indicate the method definitions' begin.
 	fprintf( yyout, "\n\t/* Procedure [%s] - begin */\n", methodName );
@@ -557,7 +564,12 @@ void genMethodBegin( FILE* yyout, cstr methodName, int symType )
 void genMethodEnd( FILE* yyout, cstr methodName, int symType )
 {
 	// Get the method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( symType, methodName )->info );
+	struct Method* method = NULL;
+	if(symType == SYM_METHOD){
+  		method = (struct Method *)( searchTopLevel( symType, methodName )->info );
+  	}else{
+  		method = (struct Method *)( searchVariable( symType, methodName )->info );
+  	}	
 
 	// Free local memory.
 	fprintf( yyout,"\tR7 = R6;\t// Free local variables\n", method->localsSize );
@@ -579,21 +591,29 @@ void genMethodEnd( FILE* yyout, cstr methodName, int symType )
 // allocate local space).
 struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName )
 {
+	struct Method* scope = getCurrentScope();
 	int nextCodeLabel = newLabel(); 
+	struct Symbol* currentScope = createExtraInfoSymbol(nextCodeLabel);
+	((struct ExtraInfo*)(currentScope->info))->variable = (struct Symbol*)scope;
+		
 	fprintf( yyout,"\tGT(%d); //Jump to next code block\n", nextCodeLabel); 
 	
 	char *blockName = createBlockName(varName, argumentName);
 	genMethodBegin(yyout, (cstr)blockName, SYM_BLOCK);
 	free(blockName);
-	return createExtraInfoSymbol(nextCodeLabel);
+	return currentScope;
 }
 
 // Generate the code for a block "end" (free local data and return).
-void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, int nextCodeLabel)
+void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName,struct Symbol* blockInfo)
 {
 	char *blockName = createBlockName(varName, argumentName);
+	struct ExtraInfo* extraInfo = (struct ExtraInfo*)(blockInfo->info);
+	int nextCodeLabel = extraInfo->nRegister;
+	struct Method* method = (struct Method*)(extraInfo->variable);
 	genMethodEnd(yyout, (cstr)blockName, SYM_BLOCK);
 	free(blockName);	
+	goInScope(method);
 	fprintf( yyout,"L %d: //Continue code block\n", nextCodeLabel);
 }
 

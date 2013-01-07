@@ -64,7 +64,7 @@ void genMethodEnd( FILE* yyout, cstr methodName, int symType);
 struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName );
 
 // Generate the code for a block "end" (free local data and return).
-void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, int nextCodeLabel);
+void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, struct Symbol* blockInfo);
 
 
 /*                               Method call                                 */

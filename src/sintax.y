@@ -456,15 +456,16 @@ more_arguments :
 // doens't exist.
 block_call : 
 	IDENTIF EACH start_block '|' IDENTIF '|' 
-	{ NGC $<method>$ = checkBlockDefinition( $1, $5 ); ENGC 
+	{ 
+	NGC $<method>$ = checkBlockDefinition( $1, $5 ); ENGC 
 	GC insideIfLoop++;  $<symbol>$ = genBlockBegin(yyout, $1, $5); EGC 
-	} separator
+	} 
+		separator
 		method_code
 	end_block separator 
 	{ NGC goInScope($<method>7); ENGC 
 	GC 
-		struct ExtraInfo* blockInfo = (struct ExtraInfo*)($<symbol>7->info);
-		genBlockEnd(yyout, $1, $5, blockInfo->nRegister );
+		genBlockEnd(yyout, $1, $5, $<symbol>7 );
 		insideIfLoop--;
 		$$ = $<symbol>7;		 
 	EGC}

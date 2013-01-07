@@ -29,7 +29,9 @@ static char change = 0;
 
 extern int compilationState;
 
+//List of registers with links to the struct extraInfo associated to that register
 struct ExtraInfo* extraInfoPerRegister[8];
+struct ExtraInfo* extraInfoPerDoubleRegister[8];
 
 
 /*                                  Functions                                 */
@@ -56,8 +58,7 @@ Symbol* createSymbol ( int symType, cstr  name )
 	return symbol;
 }
 
-
-Symbol* createExtraInfoSymbol ( int nRegister )
+Symbol* createExtraInfoSymbol ( int nRegister, int isFloat)
 {
 	// Allocate memory for new symbol.
 	printf( "CEIS - 1\n" );
@@ -79,7 +80,9 @@ Symbol* createExtraInfoSymbol ( int nRegister )
 	((struct ExtraInfo*)(symbol->info))->variable = NULL;
 	((struct ExtraInfo*)(symbol->info))->assignmentType = TYPE_INTEGER;
 	//Copy the pointer into Register List Array
-	extraInfoPerRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
+	//TODO si es float se usa extraInfoPerDoubleRegister
+	if (isFloat == 0) extraInfoPerRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
+	else if(isFloat == 1) extraInfoPerDoubleRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
 
 	return symbol;
 }

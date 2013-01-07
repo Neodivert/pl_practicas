@@ -7,13 +7,19 @@ needed for the code generation part*/
 //Q to track the variables and the stack, we do not allow the user
 //to used them.
 int intRegs[8] = {0,0,0,0,0,0,1,1};
-int nR = 6;
+int LRURegs[6] = {0,1,2,3,4,5};
+int nR = 3;
+int nMaxR = 3;
 
 int floatRegs[3] = {0,0,0};
 int nRR = 3;
+int nMaxRR = 3;
 
 int nLabels = 0;
 unsigned int topAddress = Z;
+
+
+extern struct ExtraInfo* extraInfoPerRegister[8];
 
 const char regStr[][3] = { "R", "RR" };
 
@@ -21,6 +27,7 @@ cstr getRegStr( int isFloat )
 {
 	return regStr[isFloat];
 }
+
 
 /**************************************************************************/
 /*registers a new label and returns the identifier			  */
@@ -37,36 +44,59 @@ int newLabel()
 /*Returns an available register						  */
 /**************************************************************************/
 /*0 -> entero, 1-> Flotante*/
+
+void LRU(int reg){
+	int index,i,j;
+	int flag = 0;
+	if(reg != LRURegs[(nMaxR-1)]){
+		for(i=0;i<(nMaxR-1);i++){
+			if(LRURegs[i] == reg){
+				index = i;
+				flag = 1;
+			}
+			if (flag){
+				LRURegs[i] = LRURegs[i+1];
+			}
+		}
+	}
+	LRURegs[nMaxR-1] = reg;
+}
+
 int assignRegisters(int type)
 {
-    int i=0;
+    int i=0, aux, index;
+    int flag = 0;
+    int reg = -1;
 	/*Buscar un Registro*/
     if ((type == 0) && (nR>0))
     {
-        for (i=0;i<6;i++)
+        for (i=0;i<nMaxR;i++)
         {
             if (intRegs[i]==0)
             {
                 intRegs[i] = 1;
                 nR--;
-                return i;
+                reg = i;
+                break;
             }
         }
+        LRU(reg);
     }
     else if ((type == 1) && (nRR>0)){
     //{ers>1))
-        for (i=0;i<4;i++)
+        for (i=0;i<nMaxRR;i++)
         {
             if (floatRegs[i]==0)
             {
                 floatRegs[i] = 1;
                 nRR--;
-                return i;
+                reg = i;
+                break;
             }
         }
     }
 
-    return -1;   
+    return reg;   
     /*Si llegamos aquí es que no hay registros libres :(*/
     /*En caso de que no haya registros libres habrá que tirar de pila (A deliberar)*/
 }
@@ -80,11 +110,11 @@ int freeRegisters()
     int i=0;
     nR = 6;
     nRR = 3;
-    for (i=0;i<3;i++){
+    for (i=0;i<nMaxRR;i++){
         intRegs[i] = 0;
-		  floatRegs[i] = 0;
+		floatRegs[i] = 0;
 	}
-	for( i; i<6; i++ ){
+	for(i; i<nMaxR; i++ ){
 		intRegs[i] = 0;
 	}
 
@@ -383,15 +413,19 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 	return rightSide;
 }
 
+
 // FIXME: Terminar integracion con floats.
-struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute)
+struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow)
 {	
 	Symbol* variable = searchVariable(symType, name);
 	int isFloat_ = isFloat( variable );
 	int reg = assignRegisters( isFloat_ );
 	cstr regStr = getRegStr( isFloat_ );
+
 	int elementSize = 0;	
-	struct Symbol* returnSymbol = createExtraInfoSymbol(reg);	
+	if (isFloat_ == 0) reg = checkOverflow(yyout, reg, extraInfoPerRegister, nextRegisterOverflow, TYPE_INTEGER);
+	
+	struct Symbol* returnSymbol = createExtraInfoSymbol(reg, isFloat_);	
 	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
 	aux->nRegister = reg;
 	aux->variable = variable;
@@ -687,7 +721,6 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	int r0, r1;
 	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
 	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
-
 	int isFloat_ = isFloat( leftSide );
 
 	if( !isFloat_ ){
@@ -705,12 +738,12 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 		//freeRegister(r1, 0);
 	}else{
 		// TODO: patxi, tu que estabas con el derramado. Decidi marcar los flotantes en pila con 4. xD
-		if(r0 == 4){
+		if(r0 == 77){
 			r0 = assignRegisters(1);
 			((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
 			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
 		}
-		if(r1 == 4){
+		if(r1 == 77){
 			r1 = assignRegisters(1);
 			((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
 			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
@@ -942,6 +975,50 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 	fprintf( yyout, "\t/* Call to get (%c) - end */\n\n", inputType );
 }
 
+/*				Overflow				*/
+int checkOverflow(FILE* yyout, int reg, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type){
+
+	if (reg == -1)
+	{
+		switch(type)
+		{
+			case TYPE_INTEGER:
+			case TYPE_CHAR:
+			case TYPE_BOOLEAN:
+
+				//reg = extraInfoPerRegister[LRURegs[0]]->nRegister;
+				reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
+				fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//register overflow\n",reg);
+				//extraInfoPerRegister[LRURegs[0]]->nRegister = 7;
+				extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 7;
+				printf("nextReg almacenaria %d\n", *nextRegisterOverflow);
+				printf("LRU almacenaria %d\n",LRURegs[0]);
+				LRU(reg);
+				
+				*nextRegisterOverflow = ((*nextRegisterOverflow)+1)%nMaxR;
+
+			
+			break;
+			case TYPE_FLOAT:
+			
+				reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
+				fprintf(yyout,"\tR7 = R7-4;\n\tF(R7) = R%d;\t//register overflow\n",reg);
+				extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 77;
+				*nextRegisterOverflow = ((*nextRegisterOverflow)++)%nMaxRR;
+				
+			
+			break;
+			default:
+				reg = -1;
+			break;
+		}
+	}
+
+	return reg;
+	
+}
+
+
 // FIXME: Terminar integracion con floats.
 // FIXME: Y con las clases???
 // Esto soporta los arrays?
@@ -1013,3 +1090,4 @@ int isFloat( Symbol* symbol )
 {
 	return ( getType( symbol ) == TYPE_FLOAT );
 }
+

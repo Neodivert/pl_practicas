@@ -14,7 +14,9 @@ int yydebug=1; /* modo debug si -t */
 FILE *yyout; /*fichero compilado*/
 
 extern struct ExtraInfo* extraInfoPerRegister[8];
+extern struct ExtraInfo* extraInfoPerDoubleRegister[8];
 int nextRegisterOverflow = 0;
+int nextDoubleRegisterOverflow = 0;
 
 extern int compilationState; 
 int errors = 0;
@@ -303,13 +305,14 @@ simple_method_call:
 					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
+							
 			GC
 				int size, reg;
 				struct Symbol* type = ((struct Method *)(currentMethodCall->info))->returnType; 
 				if(type != NULL){
 					if(!isFloat(type)){					
 						reg = assignRegisters(0); 
-						$$ = createExtraInfoSymbol(reg);				
+						$$ = createExtraInfoSymbol(reg,-1);				
 						((struct ExtraInfo*)($$->info))->variable = type;
 						genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 						if(!insideIfLoop){
@@ -322,7 +325,7 @@ simple_method_call:
 						}				
 					}else{
 						reg = assignRegisters(1); 
-						$$ = createExtraInfoSymbol(reg);				
+						$$ = createExtraInfoSymbol(reg,-1);				
 						((struct ExtraInfo*)($$->info))->variable = type;
 						genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 						if(!insideIfLoop){
@@ -336,7 +339,7 @@ simple_method_call:
 					}	
 				}else{
 					reg = -1; 
-					$$ = createExtraInfoSymbol(reg);				
+					$$ = createExtraInfoSymbol(reg,-1);				
 					((struct ExtraInfo*)($$->info))->variable = type;
 					genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 					
 				}
@@ -597,7 +600,7 @@ right_side :
 	| string { NGC printf( "string = [%s]\n", $1 ); 
 		$$ = checkArray( searchType( TYPE_CHAR ), strlen( $1 ) ); ENGC 
 		GC 								
-			$$ = createExtraInfoSymbol(assignRegisters(0));
+			$$ = createExtraInfoSymbol(assignRegisters(0),-1);
 			((struct ExtraInfo *)($$->info))->assignmentType = LOAD_ADDRESS;
 		EGC }
 	//We save arraySize because otherwise it could be overwritten by literal
@@ -610,7 +613,7 @@ right_side :
 	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
 	| '[' array_content ']' { NGC $$ = checkArray($2->symbol, $2->info ); ENGC
 							GC
-								$$ = createExtraInfoSymbol(assignRegisters(0));
+								$$ = createExtraInfoSymbol(assignRegisters(0),-1);
 								((struct ExtraInfo *)($$->info))->assignmentType = LOAD_ADDRESS;
 							EGC
 							freeSymbolInfo($2);
@@ -626,7 +629,7 @@ right_side :
 					default: c = 'I'; break;
 				}
 				int reg = assignRegisters(0);
-				$$ = createExtraInfoSymbol(reg);
+				$$ = createExtraInfoSymbol(reg,-1);
 				genGetCall( yyout, c, reg );
 				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
 				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( $1 );
@@ -726,11 +729,22 @@ term :
 
 factor :
 	IDENTIF atribute { NGC $$ = getVariableType( SYM_VARIABLE, $1, $2 ); ENGC
-						GC 	$$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2); EGC
+						GC
+							$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+							if($2->info == SYM_CLASS_VARIABLE){
+								//varSymbol gets the struct Symbol of the variable
+								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
+							}
+							//int isFloat = isFloat($2->varSymbol);
+							int isFloat = (pointerType($2->varSymbol) == 'F');
+							printf("\n isFloat = %d\n",isFloat);
+							if (isFloat) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
+							else $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerRegister, &nextRegisterOverflow);
+						EGC
 			}
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
-    					GC $$ = genAccessVariable(yyout, $1, SYM_GLOBAL, $2);	EGC;}
+    					GC $$ = genAccessVariable(yyout, $1, SYM_GLOBAL, $2,NULL,NULL);	EGC;}
 	| literal 
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
 					GC	$$ = $2; EGC }
@@ -743,36 +757,37 @@ literal :
 	INTEGER		{ 	$$ = searchType( TYPE_INTEGER );
 					GC 
 						int reg = assignRegisters(0); 
-						if (reg == -1){
-							
-							reg = ((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister;
-							fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//Derramamos el registro\n",reg);
-							((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister = 7;
-							nextRegisterOverflow = (nextRegisterOverflow++)%6;
-						}
-						$$ = createExtraInfoSymbol(reg); 
+
+						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, TYPE_INTEGER);
+						$$ = createExtraInfoSymbol(reg, 0);  
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_INTEGER );
 						fprintf(yyout, "\tR%d = %d; // Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }
 	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
 					GC 
 						int reg = assignRegisters(1); 
-						$$ = createExtraInfoSymbol(reg);
+
+						reg = checkOverflow(yyout, reg, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow, TYPE_FLOAT);
+						$$ = createExtraInfoSymbol(reg, 1);
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_FLOAT );
 						fprintf(yyout, "\tRR%d = %f; // Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
 					GC 
 						int reg = assignRegisters(0); 
-						$$ = createExtraInfoSymbol(reg); 
+						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, TYPE_CHAR);
+						$$ = createExtraInfoSymbol(reg, 0);  
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_CHAR );
 						fprintf(yyout, "\tR%d = %d; // Loading char %d\n", reg, arraySize, arraySize);
 					EGC }	
 	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
 					GC 
-						int reg = assignRegisters(0); 
-						$$ = createExtraInfoSymbol(reg); 
+
+						int reg = assignRegisters(0);
+						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, TYPE_BOOLEAN); 
+						$$ = createExtraInfoSymbol(reg, 0); 
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_BOOLEAN );
+
 						fprintf(yyout, "\tR%d = %d; // Loading bool %d\n", reg, arraySize, arraySize);
 					EGC }	
 	;

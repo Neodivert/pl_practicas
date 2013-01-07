@@ -986,8 +986,8 @@ int getType( Symbol* symbol )
 
 	printf( "getType() - END\n" );
 
-	if( type->id < 0 || type->id > 1 ){
-		printf( "\n\ngetType ha devuelto algo diferente de 0 y 1 (%i)!!!\n\n", type->id );
+	if( type->id < 1 || type->id > 2 ){
+		printf( "\n\ngetType ha devuelto algo diferente de 1 (INTEGER) y 2 (FLOAT) (%i)!!!\n\n", type->id );
 	}
 	return type->id;
 }

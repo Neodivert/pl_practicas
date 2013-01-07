@@ -735,6 +735,28 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 	
 	genMethodCallBegin( yyout, blockName, SYM_BLOCK );
 	
+	struct Symbol* block = searchVariable( SYM_BLOCK, blockName );
+	
+	struct Symbol* variable = searchVariable( SYM_VARIABLE, varName );
+	struct Symbol* varType = ((struct Variable*)(variable->info))->type;
+	
+	int reg;
+	int varIsFloat = isFloat( variable );
+	reg = assignRegisters(varIsFloat);
+	
+	printf("Me dieron el registro %d\n", reg);
+	struct Symbol* extraInfo = createExtraInfoSymbol(reg);
+	((struct ExtraInfo*)(extraInfo->info))->variable = varType;
+	
+	if(!varIsFloat){
+		fprintf( yyout,"\tR%d = 1;\t// Load de mentira\n", reg );
+	}else{
+		fprintf( yyout,"\tRR%d = 1;\t// Load de mentira\n", reg );
+	}
+	genArgumentPass( yyout, extraInfo, block, 0 );
+	
+	genMethodCall(yyout, (struct Method*)(block->info), -1 );
+	
 	free(blockName);	
 
 }
@@ -1052,11 +1074,11 @@ int getType( Symbol* symbol )
 	struct Symbol* symVariable = NULL;
 	struct Type* type = NULL;
 
-	if( !symbol ){
+	/*if( !symbol ){
 		printf( "getType( NULL )\n" );
 	}else{
 		printf( "getType( %s:%i ) - BEGIN\n", symbol->name, symbol->symType );
-	}
+	}*/
 
 	switch( symbol->symType ){
 		case SYM_VARIABLE:

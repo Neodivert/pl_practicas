@@ -943,18 +943,26 @@ int getType( Symbol* symbol )
 	struct Symbol* symVariable = NULL;
 	struct Type* type = NULL;
 
+	if( symbol == NULL ){
+		printf( "\n\ngetType(NULL)\n\n" );
+	}
+
+	printf( "\n\ngetType( %i )\n\n", symbol->symType );
+
 	switch( symbol->symType ){
 		case SYM_VARIABLE:
 			type = ((struct Type*)((struct Variable*)(symbol->info))->type->info);
 		break;
 		case SYM_EXTRA_INFO:
 			symVariable = ((struct ExtraInfo*)(symbol->info))->variable;
+			return getType( symVariable );
+			/*
 			if( symVariable->symType == SYM_VARIABLE ){
 				type = ((struct Type*)((struct Variable*)(symVariable->info))->type->info);
 			}else{
 				type = ((struct Type*)(symVariable->info));
 			}
-			
+			*/
 		break;
 		case SYM_TYPE:
 			type = ((struct Type*)(symbol->info));

@@ -947,6 +947,7 @@ int getType( Symbol* symbol )
 		printf( "\n\ngetType(NULL)\n\n" );
 	}
 
+	printf("Akiq\n");
 	printf( "\n\ngetType( %i )\n\n", symbol->symType );
 
 	switch( symbol->symType ){

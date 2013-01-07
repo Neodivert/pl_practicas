@@ -73,6 +73,7 @@ Symbol* createExtraInfoSymbol ( int nRegister )
 	
 	symbol->info = (void *)malloc( sizeof(struct ExtraInfo) );
 	((struct ExtraInfo*)(symbol->info))->nRegister = nRegister;
+	((struct ExtraInfo*)(symbol->info))->variable = NULL;
 	((struct ExtraInfo*)(symbol->info))->assignmentType = TYPE_INTEGER;
 	//Copy the pointer into Register List Array
 	extraInfoPerRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));

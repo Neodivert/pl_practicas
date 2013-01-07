@@ -730,15 +730,17 @@ term :
 factor :
 	IDENTIF atribute { NGC $$ = getVariableType( SYM_VARIABLE, $1, $2 ); ENGC
 						GC
-							$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+							//$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+							$2->varSymbol = searchVariable(SYM_VARIABLE,(cstr)$1);
 							if($2->info == SYM_CLASS_VARIABLE){
 								//varSymbol gets the struct Symbol of the variable
 								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 							}
-							//int isFloat = isFloat($2->varSymbol);
-							int isFloat = (pointerType($2->varSymbol) == 'F');
-							printf("\n isFloat = %d\n",isFloat);
-							if (isFloat) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
+							printf( "Factor -> Llamando a isFloat\n" );
+							int isFloat_ = isFloat($2->varSymbol);
+							//int isFloat = (pointerType($2->varSymbol) == 'F');
+							printf("\n isFloat = %d\n",isFloat_);
+							if (isFloat_) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
 							else $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerRegister, &nextRegisterOverflow);
 						EGC
 			}

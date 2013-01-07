@@ -34,8 +34,9 @@ fv = [1.5, 1.75, 0.5]
 #fv[2] = fv[0] + fv[1]
 
 puts( "#{fv[0]}\n" )
-puts( "#{fv[1]}\n" )
+#puts( "#{fv[1]}\n" )
 puts( "#{fv[2]}\n" )
+
 #puts( "#{fv[3]}\n" )
 #puts( "#{fv[1]}, #{fv[2]}\n" )
 

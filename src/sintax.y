@@ -307,11 +307,8 @@ simple_method_call:
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
 			GC 				
 				int reg = assignRegisters(0); 
-<<<<<<< HEAD
 				$$ = createExtraInfoSymbol(reg,-1);
-=======
-				$$ = createExtraInfoSymbol(reg);				
->>>>>>> master
+
 				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
 					struct Method* method = getCurrentScope();					

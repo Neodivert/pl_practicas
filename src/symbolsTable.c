@@ -654,11 +654,12 @@ void showSymTable()
 	printf( "---------------------------------------------\n" );
 }
 
+#define DEBUG 1
 // Free the memory allocated for a symbol.
 void freeSymbol(Symbol* symbol)
 {
 	#ifdef DEBUG
-	printf( "Eliminando simbolo: [%s]\n", symbol->name );
+	printf( "Eliminando simbolo 1 (%i)\n", symbol->symType );
 	#endif
 	if(symbol->symType == SYM_TYPE)
 	{
@@ -675,9 +676,19 @@ void freeSymbol(Symbol* symbol)
 				free(type->classInfo);
 			}
 		}	
-	}	
+	}
+	#ifdef DEBUG
+	printf( "Eliminando simbolo 2\n" );
+	#endif
 	free(symbol->name);
-	free(symbol->info);
+	#ifdef DEBUG
+	printf( "Eliminando simbolo 3\n" );
+	#endif
+	if( symbol->info )
+		free(symbol->info);
+	#ifdef DEBUG
+	printf( "Eliminando simbolo 4\n" );
+	#endif
 	free(symbol);
 }
 

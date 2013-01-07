@@ -381,14 +381,19 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 
 // FIXME: Terminar integracion con floats.
 struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute)
-{
-	int reg = assignRegisters(0); 
+{	
+	Symbol* variable = searchVariable(symType, name);
+	int isFloat_ = isFloat( variable );
+	int reg = assignRegisters( isFloat_ );
+	cstr regStr = getRegStr( isFloat_ );
 	int elementSize = 0;	
 	struct Symbol* returnSymbol = createExtraInfoSymbol(reg);	
 	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
 	aux->nRegister = reg;
-	aux->variable = searchVariable(symType, name);
+	aux->variable = variable;
+	//aux->variable = searchVariable(symType, name);
 
+	/*
 	int isFloat_ = isFloat(returnSymbol);
 	// FIXME: este if esta hecho a lo chanada. Cambiarlo y usar getRegStr();
 	char regStr[3];
@@ -400,7 +405,7 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	}else{
 		strcpy( regStr, "R" );
 	}
-
+	*/
 	if(atribute->info == SYM_CLASS_VARIABLE){
 		//varSymbol gets the struct Symbol of the variable
 		aux->variable = getClassVar(aux->variable,atribute->name);
@@ -409,7 +414,6 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	if( atribute->info == TYPE_ARRAY ){
 		elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(aux->variable->info))->type->info))->arrayInfo->type->info))->size;
 	}	
-	
 	if( symType == SYM_VARIABLE )
 	{
 		if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
@@ -422,7 +426,11 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr (4)\n",regStr, reg, 
 					pointerType(aux->variable), expReg, aux->variable->name);	
 				freeRegister( expReg, isFloat_ );	
-				freeSymbol(atribute->exprSymbol);			
+				printf( "FS A1\n" );
+				printf( "atribute: %p\n", atribute );
+				printf( "atribute->exprSymbol: %s\n", atribute->exprSymbol->name );
+				freeSymbol(atribute->exprSymbol);	
+				printf( "FS A2\n" );		
 			}else{
 					fprintf(yyout,"\t%s%d = %c(R6 - %d); //Loading value of var - %s\n",regStr, reg, 
 						pointerType(aux->variable), returnAddress(symType,aux->variable->name),
@@ -438,9 +446,11 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr (5)\n",regStr, reg, 
 					pointerType(aux->variable), expReg, aux->variable->name);
 				freeRegister( expReg, isFloat_ );	
-				freeSymbol(atribute->exprSymbol);			
+				printf( "FS B1\n" );
+				freeSymbol(atribute->exprSymbol);
+				printf( "FS B2\n" );
 			}else{
-				fprintf(yyout,"\tR%d = %c(R6 + %d); //Loading value of var %s\n",reg, 
+				fprintf(yyout,"\t%s%d = %c(R6 + %d); //Loading value of var %s\n",regStr,reg, 
 					pointerType(aux->variable), returnAddress(symType,aux->variable->name),
 					aux->variable->name);
 			}			
@@ -454,17 +464,21 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 					elementSize, aux->variable->name);
 				fprintf(yyout,"\t%s%d = %c(0x%x + R%d); //Loading value of var %s[expr]\n",regStr, reg, pointerType(aux->variable),
 					returnAddress(symType,aux->variable->name), expReg, aux->variable->name);
-				freeRegister( expReg, isFloat_ );	
+				freeRegister( expReg, isFloat_ );
+				printf( "FS C1\n" );	
 				freeSymbol(atribute->exprSymbol);
+				printf( "FS C2\n" );
 			}else{			
-			fprintf(yyout,"\tR%d = %c(0x%x); //Loading value of var %s\n", reg, pointerType(aux->variable), 
+			fprintf(yyout,"\t%s%d = %c(0x%x); //Loading value of var %s\n", regStr, reg, pointerType(aux->variable), 
 				returnAddress(symType,aux->variable->name), aux->variable->name);	
 			}
 		//FIXME Las constantes van aqui			
 		}else{
 		}
 	}	
+	printf( "FSI D1\n" );
 	freeSymbolInfo(atribute);
+	printf( "FSI D2\n" );
 	return returnSymbol;
 }
 
@@ -675,7 +689,10 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	int r0, r1;
 	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
 	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
-	if( !isFloat( leftSide ) ){
+
+	int isFloat_ = isFloat( leftSide );
+
+	if( !isFloat_ ){
 		if(r0 == 7){
 			r0 = assignRegisters(0);
 			((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
@@ -687,7 +704,7 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
 		}
 		fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
-		freeRegister(r1, 0);
+		//freeRegister(r1, 0);
 	}else{
 		// TODO: patxi, tu que estabas con el derramado. Decidi marcar los flotantes en pila con 4. xD
 		if(r0 == 4){
@@ -701,9 +718,10 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
 		}
 		fprintf(yyout, "\tRR%d = RR%d %s RR%d;\n", r0, r0,op, r1);
-		freeRegister(r1, 1);
+		//freeRegister(r1, 1);
 	}
 	
+	freeRegister( r1, isFloat_ );
 	freeSymbol(rightSide);
 }
 
@@ -944,6 +962,12 @@ int getType( Symbol* symbol )
 	struct Symbol* symVariable = NULL;
 	struct Type* type = NULL;
 
+	if( !symbol ){
+		printf( "getType( NULL )\n" );
+	}else{
+		printf( "getType( %s:%i ) - BEGIN\n", symbol->name, symbol->symType );
+	}
+
 	switch( symbol->symType ){
 		case SYM_VARIABLE:
 			type = ((struct Type*)((struct Variable*)(symbol->info))->type->info);
@@ -971,6 +995,8 @@ int getType( Symbol* symbol )
 	if( type->id == TYPE_ARRAY ){
 		type = ((struct Type*)(type->arrayInfo->type->info));
 	}	
+
+	printf( "getType() - END\n" );
 
 	if( type->id < 0 || type->id > 1 ){
 		printf( "\n\ngetType ha devuelto algo diferente de 0 y 1 (%i)!!!\n\n", type->id );

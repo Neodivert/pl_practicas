@@ -70,7 +70,7 @@ void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, struct Symbol* b
 /*                               Method call                                 */
 
 // Generate the code for a method call "begin" (arguments memory allocation).
-void genMethodCallBegin( FILE* yyout, cstr methodName );
+void genMethodCallBegin( FILE* yyout, cstr methodName, int symType );
 
 // Generate the code for a method call (save base and return label and call
 // method).
@@ -81,6 +81,9 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg );
 // - method - called method symbol.
 // - iArgument - argument index.
 void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method, int iArgument );
+
+//Generate all the calls to the block
+void genBlockCall( FILE* yyout, cstr varName, cstr argumentName ); 
 
 /*Returns the code that correspond to the storage of the type passed*/
 /*as parameter*/

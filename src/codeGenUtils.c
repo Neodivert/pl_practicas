@@ -637,10 +637,15 @@ void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName,struct Symbol* bl
 /*                               Method call                                 */
 
 // Generate the code for a method call "begin" (arguments memory allocation).
-void genMethodCallBegin( FILE* yyout, cstr methodName )
+void genMethodCallBegin( FILE* yyout, cstr methodName, int symType )
 {
-	// Get the called method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+	// Get the method's info from symbols' table.
+	struct Method* method = NULL;
+	if(symType == SYM_METHOD){
+  		method = (struct Method *)( searchTopLevel( symType, methodName )->info );
+  	}else{
+  		method = (struct Method *)( searchVariable( symType, methodName )->info );
+  	}	
 
 	// Print a comment to indicate the method call's begin.
 	fprintf( yyout, "\n\t/* Call to procedure [%s] - begin */\n", methodName );
@@ -723,6 +728,16 @@ void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method
 	freeSymbol(argumentSymbol);
 }
 
+//Generate all the calls to the block
+void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
+{
+	char *blockName = createBlockName(varName, argumentName);
+	
+	genMethodCallBegin( yyout, blockName, SYM_BLOCK );
+	
+	free(blockName);	
+
+}
 
 // Gets the Q type corresponding to the type of the variable
 char pointerType(Symbol* symbol)

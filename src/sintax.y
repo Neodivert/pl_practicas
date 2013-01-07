@@ -301,7 +301,7 @@ simple_method_call:
 					}
 					$<symbol>$ = currentMethodCall;
 
-					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
+					GC genMethodCallBegin( yyout, $1, SYM_METHOD ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
 			GC

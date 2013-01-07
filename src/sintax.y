@@ -291,7 +291,7 @@ simple_method_call:
 					}
 					$<symbol>$ = currentMethodCall;
 
-					GC genMethodCallBegin( yyout, $1 ); EGC
+					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
 			GC 
@@ -318,7 +318,6 @@ arguments :
 	 method_call_argument
 	 {
 		GC
-			nArguments--;
 			genArgumentPass( yyout, $1, currentMethodCall, nArguments );
 		EGC	 
 	 }
@@ -352,7 +351,7 @@ arguments :
 								}
 								ENGC
 								GC
-									genArgumentPass( yyout, $1, currentMethodCall, 0 );
+									genArgumentPass( yyout, $1, currentMethodCall, nArguments );
 								EGC
 						   }
 	| {$$ = 0;}
@@ -390,14 +389,14 @@ more_arguments :
 								}
 								ENGC
 								GC
-									nArguments--;
+									nArguments++;
 									genArgumentPass( yyout, $2, currentMethodCall, nArguments);
 								EGC 
 							}
 	| ',' method_call_argument
 	{
 	GC 
-		nArguments--;
+		nArguments++;
 		genArgumentPass( yyout, $2, currentMethodCall, nArguments );
 	EGC			
 	}

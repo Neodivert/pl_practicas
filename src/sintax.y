@@ -303,19 +303,44 @@ simple_method_call:
 					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
-			GC 				
-				int reg = assignRegisters(0); 
-				$$ = createExtraInfoSymbol(reg);				
-				((struct ExtraInfo*)($$->info))->variable = ((struct Method *)(currentMethodCall->info))->returnType;
-				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
-				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
-					struct Method* method = getCurrentScope();					
-					if(method->returnType){	
-						int size = method->argumentsSize;									
-						fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
-							pointerType(method->returnType), size, reg);
-					}
-				}								
+			GC
+				int size, reg;
+				struct Symbol* type = ((struct Method *)(currentMethodCall->info))->returnType; 
+				if(type != NULL){
+					if(!isFloat(type)){					
+						reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg);				
+						((struct ExtraInfo*)($$->info))->variable = type;
+						genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
+						if(!insideIfLoop){
+							struct Method* method = getCurrentScope();					
+							if(method->returnType){	
+								size = method->argumentsSize;								
+								fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
+									pointerType(method->returnType), size, reg);
+							}
+						}				
+					}else{
+						reg = assignRegisters(1); 
+						$$ = createExtraInfoSymbol(reg);				
+						((struct ExtraInfo*)($$->info))->variable = type;
+						genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
+						if(!insideIfLoop){
+							struct Method* method = getCurrentScope();					
+							if(method->returnType){	
+								size = method->argumentsSize;								
+								fprintf(yyout,"\t%c(R6+%d) = RR%d; //Store return value\n",
+									pointerType(method->returnType), size, reg);
+							}
+						}					
+					}	
+				}else{
+					reg = -1; 
+					$$ = createExtraInfoSymbol(reg);				
+					((struct ExtraInfo*)($$->info))->variable = type;
+					genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 					
+				}
+							
 			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok; $$ = NULL;}
 	;

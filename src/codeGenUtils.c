@@ -223,7 +223,7 @@ void storeRegisters(FILE* yyout)
 	{
 		if(floatRegs[i] == 1){
 			fprintf(yyout, "\tR7 = R7 - 4;\t//Locate space is stack for one register\n");
-			fprintf(yyout, "\tI(R7) = RR%d;\t//Store RR%d in stack before method call\n", i, i);
+			fprintf(yyout, "\tF(R7) = RR%d;\t//Store RR%d in stack before method call\n", i, i);
 		}
 	}	
 }
@@ -243,7 +243,7 @@ void loadRegisters(FILE* yyout, int reg, int freg)
 	for(i = 2; i >= 0; i--)
 	{
 		if(floatRegs[i] == 1 && freg != i){
-			fprintf(yyout, "\tRR%d = I(R7);\t//Load RR%d after method call\n", i, i);
+			fprintf(yyout, "\tRR%d = F(R7);\t//Load RR%d after method call\n", i, i);
 			fprintf(yyout, "\tR7 = R7 + 4;\t//Free space in stack for one register\n");	
 		}
 	}	
@@ -366,9 +366,16 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 		struct Method* method = getCurrentScope();
 	
 		if(method->returnType){	
-			int size = method->argumentsSize;									
-			fprintf(yyout,"\t%c(R6 + %d) = R%d; //Store return value\n",
-				pointerType(method->returnType), size, reg);
+			int size = method->argumentsSize;	
+			if(!isFloat(method->returnType) && !isFloat_){												
+				fprintf(yyout,"\t%c(R6 + %d) = R%d; //Store return value\n",
+					pointerType(method->returnType), size, reg);
+			}else{
+				if(isFloat(method->returnType) && isFloat_){
+					fprintf(yyout,"\t%c(R6 + %d) = RR%d; //Store return value\n",
+						pointerType(method->returnType), size, reg);				
+				}
+			}		
 		}
 	}
 
@@ -585,6 +592,7 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 {
 	int newLabel_ = newLabel();
 	int totalSize = method->argumentsSize;
+	int freg = -1;
 	
 	// Save base
 	fprintf( yyout, "\tP(R7+4) = R6;\t// Save base\n" );
@@ -600,17 +608,24 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 	fprintf( yyout, "L %i:\n", newLabel_ );
 	
 	if(method->returnType){
+		if(!isFloat(method->returnType)){
 		// Save return value
 		fprintf( yyout, "\tR%d = %c(R7+%d); // Get return value\n", reg, 
-			pointerType(method->returnType), totalSize);	
-		totalSize += ((struct Type*)(method->returnType->info))->size;	
+			pointerType(method->returnType), totalSize);		
+		}else{
+		// Save return value
+		fprintf( yyout, "\tRR%d = %c(R7+%d); // Get return value\n", reg, 
+			pointerType(method->returnType), totalSize);		
+			freg = reg;
+			reg = -1;				
+		}	
+		totalSize += ((struct Type*)(method->returnType->info))->size;
 	}
 	// Free arguments memory
 	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments and return value\n", totalSize );
 
 	// Load the used registers from the stack
-	//FIXME Cambiar el 4 por el valor real del registro float
-	loadRegisters(yyout, reg, 4);	
+	loadRegisters(yyout, reg, freg);	
 	// Print a comment to indicate the method call's end.
 	fprintf( yyout, "\t/* Call to procedure - end */\n\n" );
 }

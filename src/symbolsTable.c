@@ -793,6 +793,17 @@ void setNArguments( int n ){
 
 /*                                  7. Others                                 */
 
+// Generate a name for block whose name is "name" and argument is "argName".
+char *createBlockName(cstr name, cstr argName)
+{
+	char *blockName = (char *)malloc(sizeof(char) * 50);
+	blockName[0] = '\0';
+	strcat(blockName, name);
+	strcat(blockName, "_");
+	strcat(blockName, argName);
+	return blockName;
+}
+
 // Return the type of the elements of array type "variable". If unknown, return
 // NULL.
 Symbol* getArrayType(Symbol* variable)

@@ -46,11 +46,6 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 
 struct Symbol* genAccessVariable(FILE* yyout,cstr name, int Symtype, struct SymbolInfo* atribute); 
 
-// Generate the code for a method "begin"
-//	- Method label.
-//	- Local data allocation.
-void genMethodBegin( FILE* yyout, cstr methodName );
-
 struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* literalInfo,
 	struct SymbolInfo* arrayInfo ); 
 
@@ -59,10 +54,17 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 
 // Generate the code for a method "begin" (set method label and new base, and
 // allocate local space).
-void genMethodBegin( FILE* yyout, cstr methodName );
+void genMethodBegin( FILE* yyout, cstr methodName, int symType);
 
 // Generate the code for a method "end" (free local data and return).
 void genMethodEnd( FILE* yyout, cstr methodName );
+
+// Generate the code for a block "begin" (set method label and new base, and
+// allocate local space).
+struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName );
+
+// Generate the code for a block "end" (free local data and return).
+void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, int nextCodeLabel);
 
 
 /*                               Method call                                 */

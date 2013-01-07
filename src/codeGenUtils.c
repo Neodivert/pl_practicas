@@ -513,10 +513,10 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 
 // Generate the code for a method "begin" (set method label and new base, and
 // allocate local space).
-void genMethodBegin( FILE* yyout, cstr methodName )
+void genMethodBegin( FILE* yyout, cstr methodName, int symType )
 {
    // Get the method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+   struct Method* method = (struct Method *)( searchTopLevel( symType, methodName )->info );
    
    // Print a comment to indicate the method definitions' begin.
 	fprintf( yyout, "\n\t/* Procedure [%s] - begin */\n", methodName );
@@ -554,6 +554,25 @@ void genMethodEnd( FILE* yyout, cstr methodName )
 	fprintf( yyout, "\t/* Procedure [%s] - end */\n\n", methodName );
 }
 
+// Generate the code for a block "begin" (set method label and new base, and
+// allocate local space).
+struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName )
+{
+	int nextCodeLabel = newLabel(); 
+	fprintf( yyout,"\tGT(%d); //Jump to next code block\n", nextCodeLabel); 
+	
+	char *blockName = createBlockName(varName, argumentName);
+	genMethodBegin(yyout, (cstr)blockName, SYM_BLOCK);
+	free(blockName);
+	return createExtraInfoSymbol(nextCodeLabel);
+}
+
+// Generate the code for a block "end" (free local data and return).
+void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, int nextCodeLabel)
+{
+	fprintf( yyout,"L %d: //Continue code block\n", nextCodeLabel);
+}
+
 
 /*                               Method call                                 */
 
@@ -578,6 +597,8 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 		
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments and return value\n", totalSize );
 }
+
+
 
 // Generate the code for a method call (save base and return label and call
 // method).

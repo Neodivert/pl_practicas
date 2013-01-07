@@ -174,7 +174,7 @@ method_definition :
 			ENGC
 			goInScope( $<methodInfo>3->scope );
 			GC 
-				genMethodEnd( yyout, $2 ); 
+				genMethodEnd( yyout, $2, SYM_METHOD ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
 			EGC
 
@@ -198,7 +198,7 @@ method_definition :
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);	
 
 			GC 
-				genMethodEnd( yyout, $2 ); 
+				genMethodEnd( yyout, $2, SYM_METHOD ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
 			EGC
 	

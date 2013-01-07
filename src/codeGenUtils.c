@@ -554,10 +554,10 @@ void genMethodBegin( FILE* yyout, cstr methodName, int symType )
 
 
 // Generate the code for a method "end" (free local data and return).
-void genMethodEnd( FILE* yyout, cstr methodName )
+void genMethodEnd( FILE* yyout, cstr methodName, int symType )
 {
 	// Get the method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+   struct Method* method = (struct Method *)( searchTopLevel( symType, methodName )->info );
 
 	// Free local memory.
 	fprintf( yyout,"\tR7 = R6;\t// Free local variables\n", method->localsSize );
@@ -591,6 +591,9 @@ struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName )
 // Generate the code for a block "end" (free local data and return).
 void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, int nextCodeLabel)
 {
+	char *blockName = createBlockName(varName, argumentName);
+	genMethodEnd(yyout, (cstr)blockName, SYM_BLOCK);
+	free(blockName);	
 	fprintf( yyout,"L %d: //Continue code block\n", nextCodeLabel);
 }
 

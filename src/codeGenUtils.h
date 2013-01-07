@@ -57,7 +57,7 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 void genMethodBegin( FILE* yyout, cstr methodName, int symType);
 
 // Generate the code for a method "end" (free local data and return).
-void genMethodEnd( FILE* yyout, cstr methodName );
+void genMethodEnd( FILE* yyout, cstr methodName, int symType);
 
 // Generate the code for a block "begin" (set method label and new base, and
 // allocate local space).

@@ -116,6 +116,7 @@ int insideIfLoop = 0;
 %left AND
 %left OR
 
+
 %%
 
 program : 
@@ -658,35 +659,35 @@ relational_operator :
 // its operator's type, otherwise type does not change
 expression :
 	logical_expression 
-	| logical_expression OR expression {NGC  $$ = checkLogicalExpression($1, $3, "or"); ENGC
+	| expression OR logical_expression   {NGC  $$ = checkLogicalExpression($1, $3, "or"); ENGC
 										GC genOperation(yyout, $1, $3, "||"); EGC }
 	;
 logical_expression :
 	relational_expression
-	| relational_expression AND logical_expression {NGC $$ = checkLogicalExpression($1, $3, "and"); ENGC
+	| logical_expression AND relational_expression   {NGC $$ = checkLogicalExpression($1, $3, "and"); ENGC
 													GC genOperation(yyout, $1, $3, "&&"); EGC }
 	;
 	
 relational_expression :
 	aritmetic_expression
-	| aritmetic_expression relational_operator relational_expression 
+	| relational_expression relational_operator aritmetic_expression   
 		{NGC $$ = checkRelationalExpression($1, $3, $2); ENGC
 		GC genOperation(yyout, $1, $3, $2); EGC}
 	;
 
 aritmetic_expression :
 	term
-	| term '+' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "+"); ENGC
+	| aritmetic_expression '+' term {NGC $$ = checkAritmeticExpression($1, $3, "+"); ENGC
 									GC genOperation(yyout, $1, $3, "+"); EGC }
-	| term '-' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "-"); ENGC
+	| aritmetic_expression '-' term {NGC $$ = checkAritmeticExpression($1, $3, "-"); ENGC
 									GC genOperation(yyout, $1, $3, "-"); EGC }
 	;
 	
 term :
 	factor 
-	| factor '*' term { NGC $$ = checkAritmeticExpression($1, $3, "*"); ENGC
+	| term '*' factor { NGC $$ = checkAritmeticExpression($1, $3, "*"); ENGC
 						GC genOperation(yyout, $1, $3, "*"); EGC }
-	| factor '/' term { NGC $$ = checkAritmeticExpression($1, $3, "/"); ENGC
+	| term '/' factor { NGC $$ = checkAritmeticExpression($1, $3, "/"); ENGC
 						GC genOperation(yyout, $1, $3, "/"); EGC }
 	;
 

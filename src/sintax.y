@@ -375,7 +375,6 @@ struct ExtraInfo {
 };
 */
 
-// FIXME: Cuando use la info que devuelve expression, liberarla.
 more_arguments : 
 	',' method_call_argument {  
 								NGC

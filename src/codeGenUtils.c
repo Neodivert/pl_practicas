@@ -232,7 +232,7 @@ void storeRegisters(FILE* yyout)
 void loadRegisters(FILE* yyout, int reg, int freg)
 {
 	int i;
-	for(i = 0; i < 5; i++)
+	for(i = 5; i >= 0; i--)
 	{
 		if(intRegs[i] == 1 && reg != i){
 			fprintf(yyout, "\tR%d = I(R7);\t//Load R%d after method call\n", i, i);
@@ -240,7 +240,7 @@ void loadRegisters(FILE* yyout, int reg, int freg)
 		}
 	}
 	
-	for(i = 0; i < 2; i++)
+	for(i = 2; i >= 0; i--)
 	{
 		if(floatRegs[i] == 1 && freg != i){
 			fprintf(yyout, "\tRR%d = I(R7);\t//Load RR%d after method call\n", i, i);

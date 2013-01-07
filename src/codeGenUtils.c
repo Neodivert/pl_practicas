@@ -733,31 +733,45 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 {
 	char *blockName = createBlockName(varName, argumentName);
 	
-	genMethodCallBegin( yyout, blockName, SYM_BLOCK );
-	
 	struct Symbol* block = searchVariable( SYM_BLOCK, blockName );
 	
 	struct Symbol* variable = searchVariable( SYM_VARIABLE, varName );
 	struct Symbol* varType = ((struct Variable*)(variable->info))->type;
+	struct SymbolInfo* info = NULL;
 	
-	int reg;
+	int reg, expReg, i;
 	int varIsFloat = isFloat( variable );
-	reg = assignRegisters(varIsFloat);
+	int size = ((struct Type*)(varType->info))->arrayInfo->nElements;
+	//reg = assignRegisters(varIsFloat);
+	for( i = 0; i < size;i++){
+		expReg = assignRegisters(0);
+
+		struct Symbol* extraInfo;// = createExtraInfoSymbol(reg);
+		//((struct ExtraInfo*)(extraInfo->info))->variable = varType;
 	
-	printf("Me dieron el registro %d\n", reg);
-	struct Symbol* extraInfo = createExtraInfoSymbol(reg);
-	((struct ExtraInfo*)(extraInfo->info))->variable = varType;
+		struct Symbol* expExtraInfo = createExtraInfoSymbol(expReg);
 	
-	if(!varIsFloat){
-		//genAccessVariable(yyout, $1, SYM_VARIABLE, $2);
-		fprintf( yyout,"\tR%d = 1;\t// Load de mentira\n", reg );
-	}else{
-		fprintf( yyout,"\tRR%d = 1;\t// Load de mentira\n", reg );
+		((struct ExtraInfo*)(extraInfo->info))->variable = searchType(TYPE_INTEGER);	
+
+		genMethodCallBegin( yyout, blockName, SYM_BLOCK );
+		
+		fprintf( yyout,"\tR%d = %d;\t// Loading literal %d\n", expReg, i, i);
+	
+		if(!varIsFloat){
+			info = malloc(sizeof(struct SymbolInfo));
+			info->symbol = NULL;
+			info->info = TYPE_ARRAY; 
+			info->name = NULL;
+			info->exprSymbol = expExtraInfo;
+		
+			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info);
+		}else{
+			fprintf( yyout,"\tRR%d = 1;\t// Load de mentira\n", reg );
+		}
+		genArgumentPass( yyout, extraInfo, block, 0 );
+	
+		genMethodCall(yyout, (struct Method*)(block->info), -1 );
 	}
-	genArgumentPass( yyout, extraInfo, block, 0 );
-	
-	genMethodCall(yyout, (struct Method*)(block->info), -1 );
-	
 	free(blockName);	
 
 }

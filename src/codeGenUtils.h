@@ -93,3 +93,9 @@ char* genNumericString( Symbol* symbol );
 char* genVariableInterpolation( FILE* yyout, Symbol* symbol );
 
 void genGetCall( FILE* yyout, char inputType, int reg );
+
+int getType( Symbol* symbol );
+
+int isFloat( Symbol* symbol );
+
+

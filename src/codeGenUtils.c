@@ -937,18 +937,12 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 }
 
 // FIXME: Terminar integracion con floats.
+// FIXME: Y con las clases???
 // Esto soporta los arrays?
 int getType( Symbol* symbol )
 {
 	struct Symbol* symVariable = NULL;
 	struct Type* type = NULL;
-
-	if( symbol == NULL ){
-		printf( "\n\ngetType(NULL)\n\n" );
-	}
-
-	printf("Akiq\n");
-	printf( "\n\ngetType( %i )\n\n", symbol->symType );
 
 	switch( symbol->symType ){
 		case SYM_VARIABLE:

@@ -14,7 +14,9 @@ int yydebug=1; /* modo debug si -t */
 FILE *yyout; /*fichero compilado*/
 
 extern struct ExtraInfo* extraInfoPerRegister[8];
+extern struct ExtraInfo* extraInfoPerDoubleRegister[8];
 int nextRegisterOverflow = 0;
+int nextDoubleRegisterOverflow = 0;
 
 extern int compilationState; 
 int errors = 0;
@@ -693,7 +695,15 @@ term :
 
 factor :
 	IDENTIF atribute { NGC $$ = getVariableType( SYM_VARIABLE, $1, $2 ); ENGC
-						GC 	$$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2); EGC
+						GC
+							$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
+							if($2->info == SYM_CLASS_VARIABLE){
+								//varSymbol gets the struct Symbol of the variable
+								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
+							}
+							int isFloat = isFloat($2->varSymbol);
+							$$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2,struct extraInfo* extraInfoPerRegister = NULL, int* nextRegisterOverflow = 0, int isFloat = -1));
+						EGC
 			}
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
@@ -710,31 +720,37 @@ literal :
 	INTEGER		{ $$ = searchType( TYPE_INTEGER ); 
 					GC 
 						int reg = assignRegisters(0); 
-						if (reg == -1){
+						
+						/*if (reg == -1){
 							
 							reg = ((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister;
 							fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//Derramamos el registro\n",reg);
 							((struct ExtraInfo*)(extraInfoPerRegister[nextRegisterOverflow]))->nRegister = 7;
 							nextRegisterOverflow = (nextRegisterOverflow++)%6;
-						}
+						}*/
+						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, type);
 						$$ = createExtraInfoSymbol(reg); 
+						((struct ExtraInfo*)($$))->variable = 
 						fprintf(yyout, "\tR%d = %d; // Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }
 	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
 					GC 
 						int reg = assignRegisters(1); 
+						reg = checkOverflow(yyout, reg, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow, type);
 						$$ = createExtraInfoSymbol(reg);
 						fprintf(yyout, "\tRR%d = %f; // Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
 					GC 
 						int reg = assignRegisters(0); 
+						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, type);
 						$$ = createExtraInfoSymbol(reg); 
 						fprintf(yyout, "\tR%d = %d; // Loading char %d\n", reg, arraySize, arraySize);
 					EGC }	
 	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
 					GC 
-						int reg = assignRegisters(0); 
+						int reg = assignRegisters(0);
+						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, type); 
 						$$ = createExtraInfoSymbol(reg); 
 						fprintf(yyout, "\tR%d = %d; // Loading bool %d\n", reg, arraySize, arraySize);
 					EGC }	

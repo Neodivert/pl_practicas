@@ -8,9 +8,11 @@ needed for the code generation part*/
 //to used them.
 int intRegs[8] = {0,0,0,0,0,0,1,1};
 int nR = 6;
+int nMaxR = 6;
 
 int floatRegs[3] = {0,0,0};
 int nRR = 3;
+int nMaxRR = 3;
 
 int nLabels = 0;
 unsigned int topAddress = Z;
@@ -335,10 +337,13 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 	return rightSide;
 }
 
-struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute)
+struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct extraInfo* extraInfoPerRegister, int* nextRegisterOverflow, int isFloat)
 {
 	int reg = assignRegisters(0); 
 	int elementSize = 0;	
+	if (isFloat == 0) reg = checkOverflow(FILE* yyout, int reg, extraInfoPerRegister, int* nextRegisterOverflow, int type);
+	else if (isFloat == 1) reg = checkOverflow(FILE* yyout, int reg, extraInfoPerRegister, int* nextRegisterOverflow, int type);
+	
 	struct Symbol* returnSymbol = createExtraInfoSymbol(reg);	
 	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
 	aux->nRegister = reg;
@@ -622,16 +627,27 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	int r0, r1;
 	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
 	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
+	
 	if(r0 == 7){
 		r0 = assignRegisters(0);
 		((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
-		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0);
+	}else if (r0 = 77){
+		r0 = assignRegisters(1);
+		((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
+		fprintf(yyout, "\tR%d = F(R7);\n\tR7 = R7 + 4;\n", r0);
 	}
+	
 	if(r1 == 7){
 		r1 = assignRegisters(0);
 		((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
-		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
+		fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1);
+	}else if (r1 = 77){
+		r1 = assignRegisters(1);
+		((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
+		fprintf(yyout, "\tR%d = F(R7);\n\tR7 = R7 + 4;\n", r1);
 	}
+	
 	fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 	freeRegister(r1, 0);
 	freeSymbol(rightSide);
@@ -867,3 +883,51 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 	// Print a comment to indicate the puts call's end.
 	fprintf( yyout, "\t/* Call to get (%c) - end */\n\n", inputType );
 }
+
+/*				Overflow				*/
+int checkOverflow(FILE* yyout, int reg, struct extraInfo* extraInfoPerRegister, int* nextRegisterOverflow, int type){
+
+	switch(type)
+		case TYPE_INTEGER:
+		case TYPE_CHAR:
+		case TYPE_BOOLEAN:
+			
+			reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
+			fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//register overflow\n",reg);
+			extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 7;
+			*nextRegisterOverflow = ((*nextRegisterOverflow)++)%nMaxR;
+			
+		break;
+		case TYPE_FLOAT:
+		
+			reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
+			fprintf(yyout,"\tR7 = R7-4;\n\tF(R7) = R%d;\t//register overflow\n",reg);
+			extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 77;
+			*nextRegisterOverflow = ((*nextRegisterOverflow)++)%nMaxRR;
+			
+		break;
+		default:
+			reg = -1;
+		break;
+	}
+	
+	return reg;
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

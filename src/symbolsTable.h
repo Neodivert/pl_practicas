@@ -137,7 +137,7 @@ struct SymbolInfo
 // Create a "empty and generic" symbol defining only its symType and name.
 Symbol* createSymbol ( int symType, cstr name );
 
-Symbol* createExtraInfoSymbol ( int nRegister );
+Symbol* createExtraInfoSymbol ( int nRegister, int isFloat = 0 );
 
 // Insert symbol in symbols table.
 void insertSymbol( Symbol *symb );

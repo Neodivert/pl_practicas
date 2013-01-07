@@ -71,6 +71,8 @@ int assignRegisters(int type)
 int freeRegisters()
 {
     int i=0;
+    nR = 6;
+    nRR = 3;
     for (i=0;i<3;i++){
         intRegs[i] = 0;
 		  floatRegs[i] = 0;
@@ -196,6 +198,47 @@ unsigned int returnAddress(int symbolType,cstr id)
 {
 	Symbol* variable = searchVariable(symbolType, id);
 	return ((struct Variable*)(variable->info))->address;
+}
+
+/* Gets the current usage state of all the registers and sets them all to free*/
+RegisterInfo* getRegisterState()
+{
+	RegisterInfo* registerInfo = malloc( sizeof( RegisterInfo ) );
+	int i;
+	
+	registerInfo->nR = nR;
+	for(i = 0; i < 7; i++)
+	{
+		registerInfo->intRegs[i] = intRegs[i];  
+	}
+	
+	registerInfo->nRR = nRR;
+	for(i = 0; i < 2; i++)
+	{
+		registerInfo->floatRegs[i] = floatRegs[i];  
+	}	
+	
+	return registerInfo;
+}
+
+/* Sets the usage state of the registers according to the information in registerInfo*/
+void setRegisterState( RegisterInfo* registerInfo )
+{
+
+	int i;
+	
+	nR = registerInfo->nR ;
+	for(i = 0; i < 7; i++)
+	{
+		intRegs[i] = registerInfo->intRegs[i];  
+	}
+	
+	nRR = registerInfo->nRR;
+	for(i = 0; i < 2; i++)
+	{
+		floatRegs[i] = registerInfo->floatRegs[i];  
+	}	
+
 }
 
 /*                            Assignement                              */

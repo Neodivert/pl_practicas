@@ -44,7 +44,7 @@ void loadRegisters(FILE* yyout, int reg); */
 
 struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop);
 
-struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int isFloat);
+struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow);
 
 // Generate the code for a method "begin"
 //	- Method label.
@@ -94,5 +94,12 @@ char* genVariableInterpolation( FILE* yyout, Symbol* symbol );
 
 void genGetCall( FILE* yyout, char inputType, int reg );
 
+
 /*				Overflow				*/
 int checkOverflow(FILE* yyout, int reg, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type);
+
+int getType( Symbol* symbol );
+
+int isFloat( Symbol* symbol );
+
+

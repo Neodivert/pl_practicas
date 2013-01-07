@@ -306,6 +306,7 @@ simple_method_call:
 			GC 				
 				int reg = assignRegisters(0); 
 				$$ = createExtraInfoSymbol(reg);				
+				((struct ExtraInfo*)($$->info))->variable = ((struct Method *)(currentMethodCall->info))->returnType;
 				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
 					struct Method* method = getCurrentScope();					

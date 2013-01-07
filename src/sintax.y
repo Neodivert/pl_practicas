@@ -39,7 +39,7 @@ int insideIfLoop = 0;
 // Possible data returned by a token or no terminal.
 %union { int integer; char string[30]; struct Symbol *symbol; 
 	struct MethodInfo *methodInfo; struct Method* method;
-	struct SymbolInfo* symbolInfo; struct RegisterInfo* registerInfo;}
+	struct SymbolInfo* symbolInfo;}
 
 // No terminals returning a value.
 %type <symbol> expression
@@ -151,8 +151,16 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { GC nextCodeLabel = newLabel(); fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); EGC $<methodInfo>$ = checkMethodDefinition( $2 ); } 
-	arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } 
+	DEF IDENTIF 
+		{ GC 
+			nextCodeLabel = newLabel(); 
+			fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); 
+		EGC 
+		$<methodInfo>$ = checkMethodDefinition( $2 ); } 
+	arguments_definition 
+		{ GC 
+			genMethodBegin( yyout, $2 ); 
+		EGC } 
 	separator method_code END separator 
 		{	NGC 
 				if($<methodInfo>3->result == 0){
@@ -295,9 +303,9 @@ simple_method_call:
 					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
-			GC 
+			GC 				
 				int reg = assignRegisters(0); 
-				$$ = createExtraInfoSymbol(reg);
+				$$ = createExtraInfoSymbol(reg);				
 				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
 					struct Method* method = getCurrentScope();					
@@ -306,7 +314,7 @@ simple_method_call:
 						fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
 							pointerType(method->returnType), size, reg);
 					}
-				}				
+				}								
 			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok; $$ = NULL;}
 	;

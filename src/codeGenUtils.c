@@ -218,10 +218,18 @@ void storeRegisters(FILE* yyout)
 			fprintf(yyout, "\tI(R7) = R%d;\t//Store R%d in stack before method call\n", i, i);
 		}
 	}
+	
+	for(i = 0; i < 2; i++)
+	{
+		if(floatRegs[i] == 1){
+			fprintf(yyout, "\tR7 = R7 - 4;\t//Locate space is stack for one register\n");
+			fprintf(yyout, "\tI(R7) = RR%d;\t//Store RR%d in stack before method call\n", i, i);
+		}
+	}	
 }
 
 /* Load registers form stack */
-void loadRegisters(FILE* yyout, int reg)
+void loadRegisters(FILE* yyout, int reg, int freg)
 {
 	int i;
 	for(i = 0; i < 5; i++)
@@ -231,6 +239,14 @@ void loadRegisters(FILE* yyout, int reg)
 			fprintf(yyout, "\tR7 = R7 + 4;\t//Free space in stack for one register\n");			
 		}
 	}
+	
+	for(i = 0; i < 2; i++)
+	{
+		if(floatRegs[i] == 1 && freg != i){
+			fprintf(yyout, "\tRR%d = I(R7);\t//Load RR%d after method call\n", i, i);
+			fprintf(yyout, "\tR7 = R7 + 4;\t//Free space in stack for one register\n");	
+		}
+	}	
 }
 
 /*                            Assignement                              */
@@ -593,7 +609,8 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments and return value\n", totalSize );
 
 	// Load the used registers from the stack
-	loadRegisters(yyout, reg);	
+	//FIXME Cambiar el 4 por el valor real del registro float
+	loadRegisters(yyout, reg, 4);	
 	// Print a comment to indicate the method call's end.
 	fprintf( yyout, "\t/* Call to procedure - end */\n\n" );
 }

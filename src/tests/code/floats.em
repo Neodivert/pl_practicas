@@ -11,9 +11,16 @@
 
 #foo(2,3,4,5,6,7,8,9,10,11,12,13)
 
+def suma( arg1, arg2 )
+	suma = arg1 + arg2
+
+	puts( "#{arg1} + #{arg2} = #{suma}\n" )
+end
+
 a = 1.25
 b = 2.50
 c = a + b
+suma( a, b )
 
 puts( "#{a} + #{b} = #{c}\n" )
 

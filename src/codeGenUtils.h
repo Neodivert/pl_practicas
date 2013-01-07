@@ -37,8 +37,7 @@ unsigned int returnAddress(int symbolType, cstr id);
 
 struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop);
 
-struct Symbol* genAccessVariable(FILE* yyout,cstr name, int Symtype, struct SymbolInfo* atribute); 
-struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct extraInfo* extraInfoPerRegister = NULL, int* nextRegisterOverflow = 0, int isFloat = -1)
+struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int isFloat);
 
 // Generate the code for a method "begin"
 //	- Method label.
@@ -89,4 +88,4 @@ char* genVariableInterpolation( FILE* yyout, Symbol* symbol );
 void genGetCall( FILE* yyout, char inputType, int reg );
 
 /*				Overflow				*/
-int checkOverflow(FILE* yyout, int reg, struct ExtraInfo* extraInfoPerRegister, int* nextRegisterOverflow, int type);
+int checkOverflow(FILE* yyout, int reg, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type);

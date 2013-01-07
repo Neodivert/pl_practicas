@@ -58,8 +58,6 @@ Symbol* createSymbol ( int symType, cstr  name )
 	return symbol;
 }
 
-
-
 Symbol* createExtraInfoSymbol ( int nRegister, int isFloat)
 {
 	// Allocate memory for new symbol.
@@ -79,8 +77,8 @@ Symbol* createExtraInfoSymbol ( int nRegister, int isFloat)
 	((struct ExtraInfo*)(symbol->info))->assignmentType = TYPE_INTEGER;
 	//Copy the pointer into Register List Array
 	//TODO si es float se usa extraInfoPerDoubleRegister
-	if (!isFloat) extraInfoPerRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
-	else extraInfoPerDoubleRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
+	if (isFloat == 0) extraInfoPerRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
+	else if(isFloat == 1) extraInfoPerDoubleRegister[nRegister] = ((struct ExtraInfo*)(symbol->info));
 
 	return symbol;
 }

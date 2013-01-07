@@ -749,6 +749,7 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 	((struct ExtraInfo*)(extraInfo->info))->variable = varType;
 	
 	if(!varIsFloat){
+		//genAccessVariable(yyout, $1, SYM_VARIABLE, $2);
 		fprintf( yyout,"\tR%d = 1;\t// Load de mentira\n", reg );
 	}else{
 		fprintf( yyout,"\tRR%d = 1;\t// Load de mentira\n", reg );

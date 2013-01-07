@@ -304,18 +304,44 @@ simple_method_call:
 					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
-			GC 				
-				int reg = assignRegisters(0); 
-				$$ = createExtraInfoSymbol(reg);				
-				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
-				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
-					struct Method* method = getCurrentScope();					
-					if(method->returnType){	
-						int size = method->argumentsSize;									
-						fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
-							pointerType(method->returnType), size, reg);
-					}
-				}								
+			GC
+				int size, reg;
+				struct Symbol* type = ((struct Method *)(currentMethodCall->info))->returnType; 
+				if(type != NULL){
+					if(!isFloat(type)){					
+						reg = assignRegisters(0); 
+						$$ = createExtraInfoSymbol(reg);				
+						((struct ExtraInfo*)($$->info))->variable = type;
+						genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
+						if(!insideIfLoop){
+							struct Method* method = getCurrentScope();					
+							if(method->returnType){	
+								size = method->argumentsSize;								
+								fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
+									pointerType(method->returnType), size, reg);
+							}
+						}				
+					}else{
+						reg = assignRegisters(1); 
+						$$ = createExtraInfoSymbol(reg);				
+						((struct ExtraInfo*)($$->info))->variable = type;
+						genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
+						if(!insideIfLoop){
+							struct Method* method = getCurrentScope();					
+							if(method->returnType){	
+								size = method->argumentsSize;								
+								fprintf(yyout,"\t%c(R6+%d) = RR%d; //Store return value\n",
+									pointerType(method->returnType), size, reg);
+							}
+						}					
+					}	
+				}else{
+					reg = -1; 
+					$$ = createExtraInfoSymbol(reg);				
+					((struct ExtraInfo*)($$->info))->variable = type;
+					genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 					
+				}
+							
 			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok; $$ = NULL;}
 	;
@@ -725,7 +751,7 @@ factor :
 	;
 
 literal : 
-	INTEGER		{ $$ = searchType( TYPE_INTEGER ); 
+	INTEGER		{ 	$$ = searchType( TYPE_INTEGER );
 					GC 
 						int reg = assignRegisters(0); 
 						if (reg == -1){
@@ -736,24 +762,28 @@ literal :
 							nextRegisterOverflow = (nextRegisterOverflow++)%6;
 						}
 						$$ = createExtraInfoSymbol(reg); 
+						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_INTEGER );
 						fprintf(yyout, "\tR%d = %d; // Loading integer %d\n", reg, arraySize, arraySize);
 					EGC }
 	| FLOAT		{ $$ = searchType( TYPE_FLOAT ); 					
 					GC 
 						int reg = assignRegisters(1); 
 						$$ = createExtraInfoSymbol(reg);
+						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_FLOAT );
 						fprintf(yyout, "\tRR%d = %f; // Loading float %f\n", reg, floatVal, floatVal);
 					EGC }
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
+						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_CHAR );
 						fprintf(yyout, "\tR%d = %d; // Loading char %d\n", reg, arraySize, arraySize);
 					EGC }	
 	| BOOL		{ $$ = searchType( TYPE_BOOLEAN );
 					GC 
 						int reg = assignRegisters(0); 
 						$$ = createExtraInfoSymbol(reg); 
+						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_BOOLEAN );
 						fprintf(yyout, "\tR%d = %d; // Loading bool %d\n", reg, arraySize, arraySize);
 					EGC }	
 	;

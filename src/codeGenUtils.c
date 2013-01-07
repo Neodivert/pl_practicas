@@ -78,6 +78,8 @@ int assignRegisters(int type)
 int freeRegisters()
 {
     int i=0;
+    nR = 6;
+    nRR = 3;
     for (i=0;i<3;i++){
         intRegs[i] = 0;
 		  floatRegs[i] = 0;
@@ -203,6 +205,32 @@ unsigned int returnAddress(int symbolType,cstr id)
 {
 	Symbol* variable = searchVariable(symbolType, id);
 	return ((struct Variable*)(variable->info))->address;
+}
+
+/* Save current used registers to stack */
+void storeRegisters(FILE* yyout)
+{
+	int i;
+	for(i = 0; i < 5; i++)
+	{
+		if(intRegs[i] == 1){
+			fprintf(yyout, "\tR7 = R7 - 4;\t//Locate space is stack for one register\n");
+			fprintf(yyout, "\tI(R7) = R%d;\t//Store R%d in stack before method call\n", i, i);
+		}
+	}
+}
+
+/* Load registers form stack */
+void loadRegisters(FILE* yyout, int reg)
+{
+	int i;
+	for(i = 0; i < 5; i++)
+	{
+		if(intRegs[i] == 1 && reg != i){
+			fprintf(yyout, "\tR%d = I(R7);\t//Load R%d after method call\n", i, i);
+			fprintf(yyout, "\tR7 = R7 + 4;\t//Free space in stack for one register\n");			
+		}
+	}
 }
 
 /*                            Assignement                              */
@@ -528,6 +556,10 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 	if(method->returnType){
 		totalSize += ((struct Type*)(method->returnType->info))->size;
 	}	
+	
+	//Store used registers is stack
+	storeRegisters(yyout);
+		
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments and return value\n", totalSize );
 }
 
@@ -537,20 +569,19 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 {
 	int newLabel_ = newLabel();
 	int totalSize = method->argumentsSize;
-
+	
 	// Save base
 	fprintf( yyout, "\tP(R7+4) = R6;\t// Save base\n" );
 
 	// Save return label
 	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
 
+	
 	// Call method
 	fprintf( yyout, "\tGT(%i);\t// Call method\n", method->label );
 
 	// Set return label
 	fprintf( yyout, "L %i:\n", newLabel_ );
-
-	
 	
 	if(method->returnType){
 		// Save return value
@@ -561,6 +592,8 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 	// Free arguments memory
 	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments and return value\n", totalSize );
 
+	// Load the used registers from the stack
+	loadRegisters(yyout, reg);	
 	// Print a comment to indicate the method call's end.
 	fprintf( yyout, "\t/* Call to procedure - end */\n\n" );
 }

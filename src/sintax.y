@@ -116,6 +116,7 @@ int insideIfLoop = 0;
 %left AND
 %left OR
 
+
 %%
 
 program : 
@@ -150,8 +151,16 @@ code :
 // a pointer to method's info (scope) and an integer (result) which indicates
 // if method was already in symbols table (1) or not (0).
 method_definition : 
-	DEF IDENTIF { GC nextCodeLabel = newLabel(); fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); EGC $<methodInfo>$ = checkMethodDefinition( $2 ); } 
-	arguments_definition { GC genMethodBegin( yyout, $2 ); EGC; } 
+	DEF IDENTIF 
+		{ GC 
+			nextCodeLabel = newLabel(); 
+			fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel); 
+		EGC 
+		$<methodInfo>$ = checkMethodDefinition( $2 ); } 
+	arguments_definition 
+		{ GC 
+			genMethodBegin( yyout, $2 ); 
+		EGC } 
 	separator method_code END separator 
 		{	NGC 
 				if($<methodInfo>3->result == 0){
@@ -294,9 +303,9 @@ simple_method_call:
 					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
-			GC 
+			GC 				
 				int reg = assignRegisters(0); 
-				$$ = createExtraInfoSymbol(reg);
+				$$ = createExtraInfoSymbol(reg);				
 				genMethodCall( yyout, (struct Method* )(currentMethodCall->info), reg ); 
 				if(!insideIfLoop && ((struct Method *)(currentMethodCall->info))->returnType){
 					struct Method* method = getCurrentScope();					
@@ -305,7 +314,7 @@ simple_method_call:
 						fprintf(yyout,"\t%c(R6+%d) = R%d; //Store return value\n",
 							pointerType(method->returnType), size, reg);
 					}
-				}				
+				}								
 			EGC }  
 	| IDENTIF  error separator {yyerror( "Sintax error on method call %s", $1 ); yyerrok; $$ = NULL;}
 	;
@@ -374,7 +383,6 @@ struct ExtraInfo {
 };
 */
 
-// FIXME: Cuando use la info que devuelve expression, liberarla.
 more_arguments : 
 	',' method_call_argument {  
 								NGC
@@ -658,35 +666,35 @@ relational_operator :
 // its operator's type, otherwise type does not change
 expression :
 	logical_expression 
-	| logical_expression OR expression {NGC  $$ = checkLogicalExpression($1, $3, "or"); ENGC
+	| expression OR logical_expression   {NGC  $$ = checkLogicalExpression($1, $3, "or"); ENGC
 										GC genOperation(yyout, $1, $3, "||"); EGC }
 	;
 logical_expression :
 	relational_expression
-	| relational_expression AND logical_expression {NGC $$ = checkLogicalExpression($1, $3, "and"); ENGC
+	| logical_expression AND relational_expression   {NGC $$ = checkLogicalExpression($1, $3, "and"); ENGC
 													GC genOperation(yyout, $1, $3, "&&"); EGC }
 	;
 	
 relational_expression :
 	aritmetic_expression
-	| aritmetic_expression relational_operator relational_expression 
+	| relational_expression relational_operator aritmetic_expression   
 		{NGC $$ = checkRelationalExpression($1, $3, $2); ENGC
 		GC genOperation(yyout, $1, $3, $2); EGC}
 	;
 
 aritmetic_expression :
 	term
-	| term '+' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "+"); ENGC
+	| aritmetic_expression '+' term {NGC $$ = checkAritmeticExpression($1, $3, "+"); ENGC
 									GC genOperation(yyout, $1, $3, "+"); EGC }
-	| term '-' aritmetic_expression {NGC $$ = checkAritmeticExpression($1, $3, "-"); ENGC
+	| aritmetic_expression '-' term {NGC $$ = checkAritmeticExpression($1, $3, "-"); ENGC
 									GC genOperation(yyout, $1, $3, "-"); EGC }
 	;
 	
 term :
 	factor 
-	| factor '*' term { NGC $$ = checkAritmeticExpression($1, $3, "*"); ENGC
+	| term '*' factor { NGC $$ = checkAritmeticExpression($1, $3, "*"); ENGC
 						GC genOperation(yyout, $1, $3, "*"); EGC }
-	| factor '/' term { NGC $$ = checkAritmeticExpression($1, $3, "/"); ENGC
+	| term '/' factor { NGC $$ = checkAritmeticExpression($1, $3, "/"); ENGC
 						GC genOperation(yyout, $1, $3, "/"); EGC }
 	;
 

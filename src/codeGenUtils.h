@@ -88,11 +88,13 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 
 void genPuts( FILE* yyout, cstr str );
 
-char* genNumericString( Symbol* symbol );
+cstr genNumericString( Symbol* symbol );
 
-char* genVariableInterpolation( FILE* yyout, Symbol* symbol );
+cstr genVariableInterpolation( FILE* yyout, Symbol* symbol );
 
 void genGetCall( FILE* yyout, char inputType, int reg );
+
+void genPutsHead( FILE* yyout );
 
 int getType( Symbol* symbol );
 

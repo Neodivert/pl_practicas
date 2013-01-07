@@ -780,7 +780,7 @@ literal :
 // FIXME: en el fichero de prueba es.em se invoca muchas veces a geti y a puts,
 // y los registros acaban acabandose y da error. Solucionar.
 // FIXME: peta con strings largas.
-puts : PUTS '(' string ')' separator { GC genPuts( yyout, $3 ); EGC }
+puts : PUTS { GC genPutsHead( yyout ); EGC } '(' string ')' separator { GC genPuts( yyout, $4 ); EGC }
 	| PUTS error separator { yyerror("Wrong arguments in puts"), yyerrok; }
 	;
 string :
@@ -805,7 +805,7 @@ substring_part :
 //simple variables
 string_struct :
 		/*START_STRUCT expression END_STRUCT
-		|*/ START_STRUCT factor END_STRUCT { GC char* str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str ); free( str ); EGC } // FIXME: si el factor es una variable falta comprobar que exista.
+		|*/ START_STRUCT factor END_STRUCT { GC cstr str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str ); EGC } // FIXME: si el factor es una variable falta comprobar que exista.
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%

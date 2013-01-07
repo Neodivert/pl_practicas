@@ -265,8 +265,6 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 
 	int isFloat_ = isFloat(leftSide->varSymbol);
 	cstr regStr = getRegStr( isFloat_ );
-
-	fprintf( yyout, "\n//GENERANDO ASIGNACION [%s] - BEGIN\n", regStr );
 	
 	//Left side is a global variable
 	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
@@ -382,7 +380,6 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 	freeRegister( rightInfo->nRegister, isFloat_ );
 	freeSymbolInfo(leftSide);
 
-	fprintf( yyout, "\n//GENERANDO ASIGNACION [%s] - END\n", regStr );
 	return rightSide;
 }
 
@@ -398,21 +395,7 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
 	aux->nRegister = reg;
 	aux->variable = variable;
-	//aux->variable = searchVariable(symType, name);
 
-	/*
-	int isFloat_ = isFloat(returnSymbol);
-	// FIXME: este if esta hecho a lo chanada. Cambiarlo y usar getRegStr();
-	char regStr[3];
-	if( isFloat_ ){
-		strcpy( regStr, "RR" );
-		freeRegister( reg, 0 );
-		reg = assignRegisters(1);
-		aux->nRegister = reg;
-	}else{
-		strcpy( regStr, "R" );
-	}
-	*/
 	if(atribute->info == SYM_CLASS_VARIABLE){
 		//varSymbol gets the struct Symbol of the variable
 		aux->variable = getClassVar(aux->variable,atribute->name);
@@ -435,8 +418,8 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 				freeRegister( expReg, isFloat_ );	
 				printf( "FS A1\n" );
 				printf( "atribute: %p\n", atribute );
-				printf( "atribute->exprSymbol: %s\n", atribute->exprSymbol->name );
-				freeSymbol(atribute->exprSymbol);	
+				printf( "atribute->exprSymbol->name: %s\n", atribute->exprSymbol->name );
+				freeSymbol(atribute->exprSymbol);
 				printf( "FS A2\n" );		
 			}else{
 					fprintf(yyout,"\t%s%d = %c(R6 - %d); //Loading value of var - %s\n",regStr, reg, 
@@ -740,15 +723,15 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 	freeSymbol(rightSide);
 }
 
-char* genVariableInterpolation( FILE* yyout, Symbol* symbol )
+cstr genVariableInterpolation( FILE* yyout, Symbol* symbol )
 {
 	struct ExtraInfo* info = (struct ExtraInfo*)(symbol->info);
 	int reg = info->nRegister;
 	//int type = ((struct Type*)((struct Variable*)(info->variable->info))->type->info)->id;
 	int type = getType( symbol );
-	int isFloat = (pointerType(info->variable) == 'F');
+	int isFloat_ = isFloat( symbol ); // (pointerType(info->variable) == 'F');
 	
-	char* str = genNumericString( symbol );
+	cstr str = genNumericString( symbol );
 
 	switch( type ){
 			case TYPE_INTEGER:
@@ -769,8 +752,8 @@ char* genVariableInterpolation( FILE* yyout, Symbol* symbol )
 
 	//fprintf( yyout, "\tR7 = R7-4;\n" );
 	//fprintf( yyout, "\tI(R7) = R%d;\n", reg );
-	
-	freeRegister( reg, isFloat );
+
+	freeRegister( reg, isFloat_ );
 	//fprintf( yyout, "\t// genVariableInterpolation - END\n" );
 	freeSymbol( symbol );
 	//freeSymbolInfo();
@@ -814,6 +797,12 @@ int genPutsValuesLoad( FILE* yyout, cstr str, int stringOffset  )
 }
 */
 
+void genPutsHead( FILE* yyout )
+{
+	// Print a comment to indicate the puts call's begin.
+	fprintf( yyout, "\n\t/* Call to puts - begin*/\n" );
+}
+
 void genPuts( FILE* yyout, cstr str )
 {
 	// argumentsSize = 4 (return label) 4 (n variables) + 1 (null character) + strlen(str).
@@ -822,22 +811,11 @@ void genPuts( FILE* yyout, cstr str )
 	int nValues = 0;
 	int i, j;
 	
-	// Print a comment to indicate the puts call's begin.
-	fprintf( yyout, "\n\t/* Call to puts - begin [%s] (%d)*/\n", str, (int)strlen(str) );
-
 	// Allocate memory for arguments
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", argumentsSize );
 	
-	// Registers to show
-	fprintf( yyout, "\t/* Call to puts - registers */\n" );
-	//genPutsValuesLoad( yyout, str, 4 );
-
-	// Arguments
-	//int valueOffset = valuesOffset;
-
+	// Pass string to puts.
 	fprintf( yyout, "\t/* Call to puts - string */\n" );
-
-	//fprintf( yyout,"\tSTR( %d, \"%s\" );\n", R7+valuesOffset, str );
 	for( i=0; i<strlen(str); i++ ){
 		switch( str[i] ){
 			case '\n':
@@ -872,7 +850,7 @@ void genPuts( FILE* yyout, cstr str )
 	int newLabel_ = newLabel();
 
 	// Save return label
-	fprintf( yyout, "\tP(R7+4) = %i;\t// valueOffset\n", argumentsSize );
+	fprintf( yyout, "\tP(R7+4) = %i;\t// Set arguments size (string + values)\n", argumentsSize );
 
 	// Save return label
 	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
@@ -890,9 +868,9 @@ void genPuts( FILE* yyout, cstr str )
 	fprintf( yyout, "\t/* Call to puts - end */\n\n" );
 }
 
-char* genNumericString( Symbol* symbol )
+cstr genNumericString( Symbol* symbol )
 {
-	char *str = (char*)malloc( 3 );
+	static char str[][3] = { "%I", "%F", "%U", "%E" };
 	int reg, type;
 
 	reg = ((struct ExtraInfo*)(symbol->info))->nRegister;
@@ -904,27 +882,22 @@ char* genNumericString( Symbol* symbol )
 	}
 	*/
 	type = getType( symbol );
-	
-	str[0] = '%';
 
 	switch( type ){
 		case TYPE_INTEGER:
 		case TYPE_BOOLEAN:
-			str[1] = 'I';
+			return str[0];
 		break;
 		case TYPE_FLOAT:
-			str[1] = 'F';
+			return str[1];
 		break;
 		case TYPE_CHAR:
-			str[1] = 'U';
+			return str[2];
 		break;
 		default:
-			str[1] = 'E';
+			return str[3];
 		break;
 	}
-	str[2] = 0;
-
-	return str;
 }
 
 

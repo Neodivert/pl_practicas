@@ -60,8 +60,9 @@ Symbol* createSymbol ( int symType, cstr  name )
 Symbol* createExtraInfoSymbol ( int nRegister )
 {
 	// Allocate memory for new symbol.
+	printf( "CEIS - 1\n" );
 	Symbol *symbol = (Symbol *)malloc( sizeof( Symbol ) );
-
+	printf( "CEIS - 2\n" );
 	// Set symbol's type and name.
 	symbol->symType = SYM_EXTRA_INFO;
 	symbol->name = NULL;
@@ -71,7 +72,9 @@ Symbol* createExtraInfoSymbol ( int nRegister )
 	symbol->prev = NULL;
 	symbol->next = NULL;
 	
-	symbol->info = (void *)malloc( sizeof(struct ExtraInfo) );
+	printf( "CEIS - 3\n" );
+	symbol->info = (struct ExtraInfo *)malloc( sizeof(struct ExtraInfo) );
+	printf( "CEIS - 4\n" );
 	((struct ExtraInfo*)(symbol->info))->nRegister = nRegister;
 	((struct ExtraInfo*)(symbol->info))->variable = NULL;
 	((struct ExtraInfo*)(symbol->info))->assignmentType = TYPE_INTEGER;

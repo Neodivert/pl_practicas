@@ -39,7 +39,7 @@ int insideIfLoop = 0;
 %}
 
 // Possible data returned by a token or no terminal.
-%union { int integer; char string[30]; struct Symbol *symbol; 
+%union { int integer; char string[512]; struct Symbol *symbol; 
 	struct MethodInfo *methodInfo; struct Method* method;
 	struct SymbolInfo* symbolInfo;}
 

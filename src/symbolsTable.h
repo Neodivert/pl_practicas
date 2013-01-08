@@ -28,7 +28,7 @@ extern int compilationState;
 /*                                   Constants                                */
 /******************************************************************************/
 
-// Values for in struct Symbol symType
+// Values for in Symbol symType
 #define SYM_TYPE 1
 #define SYM_VARIABLE 2
 #define SYM_CONSTANT 3
@@ -38,11 +38,11 @@ extern int compilationState;
 #define SYM_BLOCK 7
 #define SYM_EXTRA_INFO 8
 
-// Values for in struct Variable symSubtype
+// Values for in Variable symSubtype
 #define SYM_LOCAL 1
 #define SYM_ARG 2
 
-// Values for id in struct Type
+// Values for id in Type
 #define TYPE_INTEGER 1
 #define TYPE_FLOAT 2
 #define TYPE_CHAR 3
@@ -51,7 +51,7 @@ extern int compilationState;
 #define TYPE_CLASS 6
 #define TYPE_ARRAY 7
 
-// Values for assignmentType in struct ExtraInfo
+// Values for assignmentType in ExtraInfo
 #define LOAD_ADDRESS 9
 
 /*                                Data structs                                */
@@ -70,7 +70,6 @@ struct Symbol
 	char firstChild;
 	struct Symbol *prev, *next;
 };	
-
 typedef struct Symbol Symbol; 
 
 struct Type {
@@ -82,22 +81,26 @@ struct Type {
 		struct ClassType* classInfo;   // If id == TYPE_ARRAY, this points to first element.
    	};
 };
+typedef struct Type Type;
 
 struct ArrayType {
 	Symbol* type;
 	unsigned int nElements;
 };
+typedef struct ArrayType ArrayType;
 
 struct ClassType{
 	unsigned int nElements;
-	struct Symbol **elements;
+	Symbol **elements;
 };
+typedef struct ClassType ClassType;
 
 struct Variable {
    	Symbol* type;
    	int symSubtype; // SUBTYPE_LOCAL, SUBTYPE_ARG
 	int address;
 };
+typedef struct Variable Variable;
 
 struct Method {
 	int nArguments;
@@ -109,12 +112,14 @@ struct Method {
 
 	int label;
 };
+typedef struct Method Method;
 
 struct ExtraInfo {
 	int assignmentType;
 	int nRegister;
-	struct Symbol* variable; 
+	Symbol* variable; 
 };
+typedef struct ExtraInfo ExtraInfo;
 
 typedef const char* const cstr;
 
@@ -127,7 +132,7 @@ struct SymbolInfo
 	char *name;
 	int nRegister;
 };
-
+typedef struct SymbolInfo SymbolInfo;
 
 /*                                  Functions                                 */
 /******************************************************************************/
@@ -149,7 +154,7 @@ Symbol* createVariable( int symType, cstr name);
 // and return it. If not found, create and return it.
 // The "attribute" argument indicates if the variable is simple, or an array or
 // class element.
-Symbol* getCreateVariable( int symType, cstr name, struct SymbolInfo* attribute);
+Symbol* getCreateVariable( int symType, cstr name, SymbolInfo* attribute);
 
 // Create a array type symbol for a array of size n whose elements are of type
 // "type". 
@@ -187,14 +192,14 @@ Symbol* searchType( int id );
 Symbol* searchVariable( int symType, cstr name );
 
 // Search in symbols table for a method "name".
-struct Symbol* searchTopLevel(int symType, const char* const name );
+Symbol* searchTopLevel(int symType, const char* const name );
 
 // Search in symbols table for the n-th argument of method "method".
 Symbol* searchNArgument(Symbol *method, int n);
 
 //Searchs for the next Global Variable record in the current global variable registration
 //without knowing the name
-struct Symbol* nextGlobalVariablePointer();
+Symbol* nextGlobalVariablePointer();
 
 
 
@@ -214,7 +219,7 @@ void freeSymbol(Symbol*);
 void freeSymbTable();
 
 // Free the memory allocated for a symbol info.
-void freeSymbolInfo(struct SymbolInfo* symbol);
+void freeSymbolInfo(SymbolInfo* symbol);
 
 
 /*                         5. Global "change" management                      */
@@ -232,13 +237,13 @@ const char getChange();
 /*                        6. Last defined method management                   */
 
 // Return a pointer to the last defined method / block.
-struct Method* getCurrentScope();
+Method* getCurrentScope();
 
 // Set method as the last defined method
-void goInScope( struct Method *method );
+void goInScope( Method *method );
 
 // Get the parent scope in actual position
-struct Method *getParentScope();
+Method *getParentScope();
 
 // Set the last defined method's number of arguments to n. 
 void setNArguments( int n );
@@ -250,11 +255,11 @@ void setNArguments( int n );
 // NULL.
 Symbol* getArrayType(Symbol* variable);  
 
-Symbol* getVariableType(int symType, cstr name, struct SymbolInfo* symbolInfo );
+Symbol* getVariableType(int symType, cstr name, SymbolInfo* symbolInfo );
 
-struct Symbol* getClassVar( struct Symbol* variable, const char* const atributeName);
+Symbol* getClassVar( Symbol* variable, const char* const atributeName);
 
-struct Symbol* getReturnType( struct Symbol* method);
+Symbol* getReturnType( Symbol* method);
 
 void createPutsGetcExitCode();
 

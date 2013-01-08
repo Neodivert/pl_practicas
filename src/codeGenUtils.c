@@ -19,7 +19,7 @@ int nLabels = 0;
 unsigned int topAddress = Z;
 
 
-extern struct ExtraInfo* extraInfoPerRegister[8];
+extern ExtraInfo* extraInfoPerRegister[8];
 
 const char regStr[][3] = { "R", "RR" };
 
@@ -163,7 +163,7 @@ int variableCodeGeneration;
 int getAllGlobals(FILE* yyout)
 {
 
-	struct Symbol* currentGlobal = NULL;
+	Symbol* currentGlobal = NULL;
 	
 	currentGlobal = nextGlobalVariablePointer();
 
@@ -174,11 +174,11 @@ int getAllGlobals(FILE* yyout)
 	int type = 0;
 	while(currentGlobal!=NULL)
 	{
-		size = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->size;
-		type = ((struct Type*)(((struct Variable*)(currentGlobal->info))->type->info))->id;
+		size = ((Type*)(((Variable*)(currentGlobal->info))->type->info))->size;
+		type = ((Type*)(((Variable*)(currentGlobal->info))->type->info))->id;
 	
 		topAddress = topAddress - size;
-		((struct Variable*)(currentGlobal->info))->address = topAddress;
+		((Variable*)(currentGlobal->info))->address = topAddress;
 
 		if(type == TYPE_STRING){
 		//TODO PENDIENTE DE OBTENER EL TAMAÑO Y MULTIPLICAR		
@@ -218,7 +218,7 @@ int getAllGlobals(FILE* yyout)
 int getAllLocalsMain(FILE* yyout)
 {
 	fillMainMethodDataSize();
-	struct Method* main = getCurrentScope();
+	Method* main = getCurrentScope();
 	// New base.
 	fprintf( yyout,"\tR6 = R7;\t// New base\n", main->label );
 
@@ -234,7 +234,7 @@ int getAllLocalsMain(FILE* yyout)
 unsigned int returnAddress(int symbolType,cstr id)
 {
 	Symbol* variable = searchVariable(symbolType, id);
-	return ((struct Variable*)(variable->info))->address;
+	return ((Variable*)(variable->info))->address;
 }
 
 /* Save current used registers to stack */
@@ -282,15 +282,15 @@ void loadRegisters(FILE* yyout, int reg, int freg)
 /*                            Assignement                              */
 
 // FIXME: Terminar integracion con floats.
-struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop)
+Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int insideIfLoop)
 {
-	struct ExtraInfo* rightInfo = (struct ExtraInfo*)(rightSide->info);
-	struct Variable* leftInfo = (struct Variable*)(leftSide->varSymbol->info);
+	ExtraInfo* rightInfo = (ExtraInfo*)(rightSide->info);
+	Variable* leftInfo = (Variable*)(leftSide->varSymbol->info);
 	int i, arraySize, elementSize;
 
 	if( rightInfo->assignmentType == TYPE_ARRAY || leftSide->info == TYPE_ARRAY ){
-		arraySize = ((struct Type*)(leftInfo->type->info))->arrayInfo->nElements;
-		elementSize = ((struct Type*)(((struct Type*)(leftInfo->type->info))->arrayInfo->type->info))->size;
+		arraySize = ((Type*)(leftInfo->type->info))->arrayInfo->nElements;
+		elementSize = ((Type*)(((Type*)(leftInfo->type->info))->arrayInfo->type->info))->size;
 	}		
 
 	int isFloat_ = isFloat(leftSide->varSymbol);
@@ -312,7 +312,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 			}else{		
 				//Assignement $var[expression] = expression
 				if( leftSide->info == TYPE_ARRAY ){
-					int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+					int reg = ((ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
 					fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
 						elementSize, leftSide->varSymbol->name);
 					fprintf(yyout,"\t%c(0x%x + R%d) = R%d; //%s[expr] = expr (1)\n",pointerType(leftSide->varSymbol),
@@ -333,7 +333,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 			//FIXME Aqui deberiamos cargar la direccion de la variable, para arrays y clases
 		}else{	
 			//Left side is a local variable
-			if(((struct Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
+			if(((Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
 				//Right side is Array.new or [e,e,..,e]
 				if( rightInfo->assignmentType == TYPE_ARRAY ){
 					for( i = 0; i < arraySize; i++ ){	
@@ -343,7 +343,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 				}else{	
 					//Assignement var[expression] = expression
 					if( leftSide->info == TYPE_ARRAY ){
-						int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+						int reg = ((ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
 						fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
 							elementSize, leftSide->varSymbol->name);
 						fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
@@ -370,7 +370,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 				}else{				
 					//Assignement var[expression] = expression
 					if( leftSide->info == TYPE_ARRAY ){
-						int reg = ((struct ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
+						int reg = ((ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
 						fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
 							elementSize, leftSide->varSymbol->name);
 						fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
@@ -391,7 +391,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 
 	if(!insideIfLoop){
 		int reg = rightInfo->nRegister;
-		struct Method* method = getCurrentScope();
+		Method* method = getCurrentScope();
 	
 		if(method->returnType){	
 			int size = method->argumentsSize;	
@@ -415,7 +415,7 @@ struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct S
 
 
 // FIXME: Terminar integracion con floats.
-struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow)
+Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow)
 {	
 	Symbol* variable = searchVariable(symType, name);
 	int isFloat_ = isFloat( variable );
@@ -425,24 +425,24 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 	int elementSize = 0;	
 	if (isFloat_ == 0) reg = checkOverflow(yyout, reg, extraInfoPerRegister, nextRegisterOverflow, TYPE_INTEGER);
 	
-	struct Symbol* returnSymbol = createExtraInfoSymbol(reg, isFloat_);	
-	struct ExtraInfo* aux = (struct ExtraInfo*)(returnSymbol->info); 	
+	Symbol* returnSymbol = createExtraInfoSymbol(reg, isFloat_);	
+	ExtraInfo* aux = (ExtraInfo*)(returnSymbol->info); 	
 	aux->nRegister = reg;
 	aux->variable = variable;
 
 	if(atribute->info == SYM_CLASS_VARIABLE){
-		//varSymbol gets the struct Symbol of the variable
+		//varSymbol gets the Symbol of the variable
 		aux->variable = getClassVar(aux->variable,atribute->name);
 	}			
 
 	if( atribute->info == TYPE_ARRAY ){
-		elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(aux->variable->info))->type->info))->arrayInfo->type->info))->size;
+		elementSize = ((Type*)(((Type*)(((Variable*)(aux->variable->info))->type->info))->arrayInfo->type->info))->size;
 	}	
 	if( symType == SYM_VARIABLE )
 	{
-		if(((struct Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
+		if(((Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
 			if( atribute->info == TYPE_ARRAY ){
-				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
+				int expReg = ((ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
 				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
 					elementSize, aux->variable->name);
 				fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",expReg, expReg,
@@ -462,7 +462,7 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 			}	
 		}else{
 			if( atribute->info == TYPE_ARRAY ){
-				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
+				int expReg = ((ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
 				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
 					elementSize, aux->variable->name);
 				fprintf(yyout, "\tR%d = R%d + %d; //Calculate local %s position\n",expReg, expReg,
@@ -483,7 +483,7 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 		if( symType == SYM_GLOBAL )
 		{
 			if( atribute->info == TYPE_ARRAY ){
-				int expReg = ((struct ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
+				int expReg = ((ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
 				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
 					elementSize, aux->variable->name);
 				fprintf(yyout,"\t%s%d = %c(0x%x + R%d); //Loading value of var %s[expr]\n",regStr, reg, pointerType(aux->variable),
@@ -507,14 +507,14 @@ struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct Symb
 }
 
 
-struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* literalInfo,
-	struct SymbolInfo* arrayInfo )
+SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalInfo,
+	SymbolInfo* arrayInfo )
 {
-	struct Symbol* varSymbol = leftSide->varSymbol;
+	Symbol* varSymbol = leftSide->varSymbol;
 	int position = arrayInfo->info;
-	int address = ((struct Variable*)(varSymbol->info))->address;
-	int nRegister = ((struct ExtraInfo*)(literalInfo->info))->nRegister;
-	int	elementSize = ((struct Type*)(((struct Type*)(((struct Variable*)(varSymbol->info))->type->info))->arrayInfo->type->info))->size;
+	int address = ((Variable*)(varSymbol->info))->address;
+	int nRegister = ((ExtraInfo*)(literalInfo->info))->nRegister;
+	int	elementSize = ((Type*)(((Type*)(((Variable*)(varSymbol->info))->type->info))->arrayInfo->type->info))->size;
 
 	int isFloat_ = isFloat(leftSide->varSymbol);
 	cstr regStr = getRegStr( isFloat_ );
@@ -526,7 +526,7 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 			address, elementSize*position, regStr, nRegister, varSymbol->name);				
 		break;
 	case SYM_VARIABLE:
-		if(((struct Variable*)(varSymbol->info))->symSubtype == SYM_LOCAL){
+		if(((Variable*)(varSymbol->info))->symSubtype == SYM_LOCAL){
 			fprintf(yyout,"\t%c(R6 + %d) = %s%d; //Initializing %s array (A5)\n",pointerType(varSymbol),
 				elementSize*position - address, regStr, nRegister, varSymbol->name);	
 		}else{
@@ -542,7 +542,7 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 		break;				
 	}
 	arrayInfo->info++;
-	freeRegister( ((struct ExtraInfo*)(literalInfo->info))->nRegister, isFloat_ );	
+	freeRegister( ((ExtraInfo*)(literalInfo->info))->nRegister, isFloat_ );	
 	freeSymbol(literalInfo);		
 	return arrayInfo;
 }
@@ -554,7 +554,7 @@ struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, st
 void genMethodBegin( FILE* yyout, cstr methodName )
 {
    // Get the method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+   Method* method = (Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
    
    // Print a comment to indicate the method definitions' begin.
 	fprintf( yyout, "\n\t/* Procedure [%s] - begin */\n", methodName );
@@ -574,7 +574,7 @@ void genMethodBegin( FILE* yyout, cstr methodName )
 void genMethodEnd( FILE* yyout, cstr methodName )
 {
 	// Get the method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+   Method* method = (Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
 
 	// Free local memory.
 	fprintf( yyout,"\tR7 = R6;\t// Free local variables\n", method->localsSize );
@@ -599,7 +599,7 @@ void genMethodEnd( FILE* yyout, cstr methodName )
 void genMethodCallBegin( FILE* yyout, cstr methodName )
 {
 	// Get the called method's info from symbols' table.
-   struct Method* method = (struct Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+   Method* method = (Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
 
 	// Print a comment to indicate the method call's begin.
 	fprintf( yyout, "\n\t/* Call to procedure [%s] - begin */\n", methodName );
@@ -608,7 +608,7 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 	// label).
 	int totalSize = method->argumentsSize;
 	if(method->returnType){
-		totalSize += ((struct Type*)(method->returnType->info))->size;
+		totalSize += ((Type*)(method->returnType->info))->size;
 	}	
 	
 	//Store used registers is stack
@@ -619,7 +619,7 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 
 // Generate the code for a method call (save base and return label and call
 // method).
-void genMethodCall( FILE* yyout, struct Method* method, int reg )
+void genMethodCall( FILE* yyout, Method* method, int reg )
 {
 	int newLabel_ = newLabel();
 	int totalSize = method->argumentsSize;
@@ -650,7 +650,7 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 			freg = reg;
 			reg = -1;				
 		}	
-		totalSize += ((struct Type*)(method->returnType->info))->size;
+		totalSize += ((Type*)(method->returnType->info))->size;
 	}
 	// Free arguments memory
 	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments and return value\n", totalSize );
@@ -665,11 +665,11 @@ void genMethodCall( FILE* yyout, struct Method* method, int reg )
 // - iRegister - index of register with the argument's value.
 // - method - called method symbol.
 // - iArgument - argument index.
-void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method, int iArgument )
+void genArgumentPass( FILE* yyout, Symbol* argumentSymbol, Symbol* method, int iArgument )
 {
 	Symbol* argument = getMethodArgument( method, iArgument );
-	int iRegister = ((struct ExtraInfo*)(argumentSymbol->info))->nRegister;
-	int address = ((struct Variable*)( argument->info ) )->address;
+	int iRegister = ((ExtraInfo*)(argumentSymbol->info))->nRegister;
+	int address = ((Variable*)( argument->info ) )->address;
 
 	int isFloat_ = isFloat( argumentSymbol );
 	cstr regStr = getRegStr( isFloat_ );
@@ -685,19 +685,19 @@ void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method
 char pointerType(Symbol* symbol)
 {
 	int typeId;
-	struct Type* type = NULL;
+	Type* type = NULL;
 	
 	if(symbol->symType == SYM_TYPE){
 		// Symbol is a type
-		type = (struct Type*)(symbol->info);		
+		type = (Type*)(symbol->info);		
 	}else{ // symbol is a variable
-		type = (struct Type*)(((struct Variable*)(symbol->info))->type->info);
+		type = (Type*)(((Variable*)(symbol->info))->type->info);
 	}
 	
 	typeId = type->id;
 	
 	if(typeId == TYPE_ARRAY){
-		typeId = ((struct Type*)(type->arrayInfo->type->info))->id;
+		typeId = ((Type*)(type->arrayInfo->type->info))->id;
 	}
 	
 	switch( typeId ){
@@ -716,23 +716,23 @@ char pointerType(Symbol* symbol)
 }
 
 
-void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op )
+void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 {
 	int r0, r1;
-	r0 = ((struct ExtraInfo*)(leftSide->info))->nRegister;
-	r1 = ((struct ExtraInfo*)(rightSide->info))->nRegister;
+	r0 = ((ExtraInfo*)(leftSide->info))->nRegister;
+	r1 = ((ExtraInfo*)(rightSide->info))->nRegister;
 	int isFloat_ = isFloat( leftSide );
 
 	if( !isFloat_ ){
 		if(r0 == 7){
 			r0 = assignRegisters(0);
-			((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
-			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
+			((ExtraInfo*)(leftSide->info))->nRegister = r0;
+			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((ExtraInfo*)(leftSide->info))->variable)*/);
 		}
 		if(r1 == 7){
 			r1 = assignRegisters(0);
-			((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
-			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
+			((ExtraInfo*)(leftSide->info))->nRegister = r1;
+			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((ExtraInfo*)(rightSide->info))->variable)*/);
 		}
 		fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 		//freeRegister(r1, 0);
@@ -740,13 +740,13 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 		// TODO: patxi, tu que estabas con el derramado. Decidi marcar los flotantes en pila con 4. xD
 		if(r0 == 77){
 			r0 = assignRegisters(1);
-			((struct ExtraInfo*)(leftSide->info))->nRegister = r0;
-			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((struct ExtraInfo*)(leftSide->info))->variable)*/);
+			((ExtraInfo*)(leftSide->info))->nRegister = r0;
+			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((ExtraInfo*)(leftSide->info))->variable)*/);
 		}
 		if(r1 == 77){
 			r1 = assignRegisters(1);
-			((struct ExtraInfo*)(leftSide->info))->nRegister = r1;
-			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((struct ExtraInfo*)(rightSide->info))->variable)*/);
+			((ExtraInfo*)(leftSide->info))->nRegister = r1;
+			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((ExtraInfo*)(rightSide->info))->variable)*/);
 		}
 		fprintf(yyout, "\tRR%d = RR%d %s RR%d;\n", r0, r0,op, r1);
 		//freeRegister(r1, 1);
@@ -758,9 +758,9 @@ void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide
 
 cstr genVariableInterpolation( FILE* yyout, Symbol* symbol )
 {
-	struct ExtraInfo* info = (struct ExtraInfo*)(symbol->info);
+	ExtraInfo* info = (ExtraInfo*)(symbol->info);
 	int reg = info->nRegister;
-	//int type = ((struct Type*)((struct Variable*)(info->variable->info))->type->info)->id;
+	//int type = ((Type*)((Variable*)(info->variable->info))->type->info)->id;
 	int type = getType( symbol );
 	int isFloat_ = isFloat( symbol ); // (pointerType(info->variable) == 'F');
 	
@@ -906,12 +906,12 @@ cstr genNumericString( Symbol* symbol )
 	static char str[][3] = { "%I", "%F", "%U", "%E" };
 	int reg, type;
 
-	reg = ((struct ExtraInfo*)(symbol->info))->nRegister;
+	reg = ((ExtraInfo*)(symbol->info))->nRegister;
 	/*
-	type = ((struct Type*)(((struct Variable*)(((struct ExtraInfo*)(symbol->info))->variable->info))->type->info))->id;
+	type = ((Type*)(((Variable*)(((ExtraInfo*)(symbol->info))->variable->info))->type->info))->id;
 
 	if(type == TYPE_ARRAY){
-		type = ((struct Type*)(getArrayType( ((struct ExtraInfo*)(symbol->info))->variable )))->id;
+		type = ((Type*)(getArrayType( ((ExtraInfo*)(symbol->info))->variable )))->id;
 	}
 	*/
 	type = getType( symbol );
@@ -976,7 +976,7 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 }
 
 /*				Overflow				*/
-int checkOverflow(FILE* yyout, int reg, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type){
+int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type){
 
 	if (reg == -1)
 	{
@@ -1024,8 +1024,8 @@ int checkOverflow(FILE* yyout, int reg, struct ExtraInfo** extraInfoPerRegister,
 // Esto soporta los arrays?
 int getType( Symbol* symbol )
 {
-	struct Symbol* symVariable = NULL;
-	struct Type* type = NULL;
+	Symbol* symVariable = NULL;
+	Type* type = NULL;
 
 	if( !symbol ){
 		printf( "getType( NULL )\n" );
@@ -1035,21 +1035,21 @@ int getType( Symbol* symbol )
 
 	switch( symbol->symType ){
 		case SYM_VARIABLE:
-			type = ((struct Type*)((struct Variable*)(symbol->info))->type->info);
+			type = ((Type*)((Variable*)(symbol->info))->type->info);
 		break;
 		case SYM_EXTRA_INFO:
-			symVariable = ((struct ExtraInfo*)(symbol->info))->variable;
+			symVariable = ((ExtraInfo*)(symbol->info))->variable;
 			return getType( symVariable );
 			/*
 			if( symVariable->symType == SYM_VARIABLE ){
-				type = ((struct Type*)((struct Variable*)(symVariable->info))->type->info);
+				type = ((Type*)((Variable*)(symVariable->info))->type->info);
 			}else{
-				type = ((struct Type*)(symVariable->info));
+				type = ((Type*)(symVariable->info));
 			}
 			*/
 		break;
 		case SYM_TYPE:
-			type = ((struct Type*)(symbol->info));
+			type = ((Type*)(symbol->info));
 		break;
 		default:
 			printf( "\n\ngetType ha devuelto -1!!!\n\n" );
@@ -1058,7 +1058,7 @@ int getType( Symbol* symbol )
 	}
 
 	if( type->id == TYPE_ARRAY ){
-		type = ((struct Type*)(type->arrayInfo->type->info));
+		type = ((Type*)(type->arrayInfo->type->info));
 	}	
 
 	printf( "getType() - END\n" );
@@ -1070,17 +1070,17 @@ int getType( Symbol* symbol )
 }
 
 /*
-struct Type {
+Type {
 	int id;
 	unsigned int size;
 	union 
 	{
-		struct ArrayType* arrayInfo; // Used if id == TYPE_ARRAY;
-		struct ClassType* classInfo;   // If id == TYPE_ARRAY, this points to first element.
+		ArrayType* arrayInfo; // Used if id == TYPE_ARRAY;
+		ClassType* classInfo;   // If id == TYPE_ARRAY, this points to first element.
    	};
 };
 
-struct ArrayType {
+ArrayType {
 	Symbol* type;
 	unsigned int nElements;
 };

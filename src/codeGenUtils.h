@@ -42,17 +42,17 @@ void loadRegisters(FILE* yyout, int reg); */
 
 /*                            Assignement                              */
 
-struct Symbol* genAssignement(FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* rightSide, int insideIfLoop);
+Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int insideIfLoop);
 
-struct Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, struct SymbolInfo* atribute, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow);
+Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow);
 
 // Generate the code for a method "begin"
 //	- Method label.
 //	- Local data allocation.
 void genMethodBegin( FILE* yyout, cstr methodName );
 
-struct SymbolInfo* genArrayContent( FILE* yyout, struct SymbolInfo* leftSide, struct Symbol* literalInfo,
-	struct SymbolInfo* arrayInfo ); 
+SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalInfo,
+	SymbolInfo* arrayInfo ); 
 
 
 /*                            Method definition                              */
@@ -72,19 +72,19 @@ void genMethodCallBegin( FILE* yyout, cstr methodName );
 
 // Generate the code for a method call (save base and return label and call
 // method).
-void genMethodCall( FILE* yyout, struct Method* method, int reg );
+void genMethodCall( FILE* yyout, Method* method, int reg );
 
 // Generate the code for a parameter pass. Arguments:
 // - iRegister - index of register with the argument's value.
 // - method - called method symbol.
 // - iArgument - argument index.
-void genArgumentPass( FILE* yyout, struct Symbol* argumentSymbol, Symbol* method, int iArgument );
+void genArgumentPass( FILE* yyout, Symbol* argumentSymbol, Symbol* method, int iArgument );
 
 /*Returns the code that correspond to the storage of the type passed*/
 /*as parameter*/
 char pointerType(Symbol* symbol);
 
-void genOperation(FILE* yyout, struct Symbol* leftSide, struct Symbol* rightSide, char* op );
+void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op );
 
 void genPuts( FILE* yyout, cstr str );
 
@@ -97,7 +97,7 @@ void genGetCall( FILE* yyout, char inputType, int reg );
 void genPutsHead( FILE* yyout );
 
 /*				Overflow				*/
-int checkOverflow(FILE* yyout, int reg, struct ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type);
+int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type);
 
 
 int getType( Symbol* symbol );

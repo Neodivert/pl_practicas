@@ -8,6 +8,8 @@ the code generation. Also the global variables and data structures*/
 
 typedef struct RegisterInfo RegisterInfo; 
 
+
+
 /*Registers a new label and returns the identifier*/
 int newLabel();
 
@@ -86,22 +88,37 @@ char pointerType(Symbol* symbol);
 
 void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op );
 
-void genPuts( FILE* yyout, cstr str );
+/*                                  I/O                                      */
 
-cstr genNumericString( Symbol* symbol );
+// Generate a comment indicating the start of a puts call.
+void genPutsCallHeader( FILE* yyout );
 
+// Generate the code for a puts call (variable interpolation are not handle 
+// here).
+void genPutsCall( FILE* yyout, cstr str );
+
+// Generate code for a "#{<variable>}" pattern in string literals. Also return 
+// an "interpolationMark" ("%I", "%F", "%U", "%E") so grammar can build the
+// string literal that will be past to the puts call.
 cstr genVariableInterpolation( FILE* yyout, Symbol* symbol );
 
+// Generate code for a call to a member of the "get" family of functions (geti, 
+// getf, etc). 
+// The argument "inputType" can be 'I' (geti), 'F' (getf) or 'U' (getu).
 void genGetCall( FILE* yyout, char inputType, int reg );
 
-void genPutsHead( FILE* yyout );
 
 /*				Overflow				*/
 int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type);
 
+/*                              Auxiliar functions                           */
 
+// If symbol refers to a variable/value (directly or indirectly), return its 
+// type.
 int getType( Symbol* symbol );
 
+// Return 1 if symbol refers to a float variable (directly or indirectly). 
+// Otherwise return 0.
 int isFloat( Symbol* symbol );
 
 

@@ -736,10 +736,10 @@ factor :
 								//varSymbol gets the struct Symbol of the variable
 								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 							}
-							printf( "Factor -> Llamando a isFloat\n" );
+							DEBUG_MSG( "Factor -> Llamando a isFloat\n", $1 );
 							int isFloat_ = isFloat($2->varSymbol);
 							//int isFloat = (pointerType($2->varSymbol) == 'F');
-							printf("\n isFloat = %d\n",isFloat_);
+							DEBUG_MSG("\n isFloat = %d\n",isFloat_);
 							if (isFloat_) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
 							else $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerRegister, &nextRegisterOverflow);
 						EGC
@@ -797,7 +797,7 @@ literal :
 // FIXME: en el fichero de prueba es.em se invoca muchas veces a geti y a puts,
 // y los registros acaban acabandose y da error. Solucionar.
 // FIXME: peta con strings largas.
-puts : PUTS { GC genPutsHead( yyout ); EGC } '(' string ')' separator { GC genPuts( yyout, $4 ); EGC }
+puts : PUTS { GC genPutsCallHeader( yyout ); EGC } '(' string ')' separator { GC genPutsCall( yyout, $4 ); EGC }
 	| PUTS error separator { yyerror("Wrong arguments in puts"), yyerrok; }
 	;
 string :
@@ -809,7 +809,6 @@ string :
 substring :
 	substring_part { GC strcpy( $$, $1 ); EGC }
 	| substring_part substring { GC strcpy( $$, $1 ); strcat( $$, $2 ); EGC }
-	//| substring substring_part { GC strcpy( $$, $2 ); strcat( $$, $1 ); EGC }
 	;
 	
 substring_part :
@@ -820,12 +819,16 @@ substring_part :
 	
 //TODO Lexical analizer does not allow expression on strings, so here we are only getting
 //simple variables
+// FIXME: Interpolations are marked as "%I", "%F", "%U", and we use "%" to check
+// this, so by now, we don't "allow" '%' in string literals.
 string_struct :
 		/*START_STRUCT expression END_STRUCT
 		|*/ START_STRUCT factor END_STRUCT { GC cstr str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str ); EGC } // FIXME: si el factor es una variable falta comprobar que exista.
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%
+
+#define DEBUG 1
   
 int main(int argc, char** argv) {
    extern int errno;
@@ -834,6 +837,8 @@ int main(int argc, char** argv) {
 	compilationState = 0;
 	initializeSymTable();
 	struct Method *mainScope = getCurrentScope();
+
+	DEBUG_MSG( "hola %i", i )
 
 	//Filling symbol table
 	if (argc>1)yyin=fopen(argv[1],"r");

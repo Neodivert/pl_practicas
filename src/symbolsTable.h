@@ -9,6 +9,13 @@ static const int MAX_SIZE = 30;
 
 extern int compilationState; 
 
+#define DEBUG 1
+#ifdef DEBUG
+	#define DEBUG_MSG(msg,var) printf(msg,var);
+#else
+	#define DEBUG_MSG(msg,var)
+#endif
+
 #define FST if( compilationState == 0 ){
 #define EFST }
 

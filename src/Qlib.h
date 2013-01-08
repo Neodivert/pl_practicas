@@ -29,6 +29,6 @@
 #define exit_    -10    // NOTA: a eliminar en futuras versiones, mantenido por compatibilidad
 #define new_     -11    // asigna o libera espacio en heap
 #define putf_    -12    // visualiza ristra y/o entero
-#define puts_		-13
+#define puts_		-13	// Call to puts.
 
-#define get_	-14
+#define get_	-14		// Call to geti / getf / getu

@@ -78,20 +78,25 @@ L putf_: {unsigned char *p=inv_str(&U(R1)); // invierte: nva. dir. real 1er char
 
 //#define DEBUG = 1 
 
+// Print a string literal with interpolated variables. This function expects
+// the arguments to be passed using the stack and with the following order:
+// 1. Interpolated variables
+// 2. String literal
+// 3. Stack size
+// 4. Return label <- R7
 L puts_: {
-	//char *p=inv_str(&U(P(R7+4)));
+	// Reverse string literal (Q mem -> C mem). 
 	char *str=inv_str(&U(R7+8));
-	//printf( "Mostrando [%s]\n", str );
-	
-	//printf( "printf invocado [%s]...\n", str );
 	int i = 0;
-	int valueOffset = I(R7+4);
-	//int valueOffset = 9 + strlen( str );
 
+	// First interpolated variable is at the bottom of the stack, so get the
+	// stack total size to access variables in order.
+	int valueOffset = I(R7+4);
+
+	// DEBUG - Show stack contents.
 	#ifdef DEBUG
 	printf( "valueOffset = %d\n", valueOffset );
 
-	
 	for( i=I(R7+4)-1; i>=0; i-- ){
 		if( i > 8 && i < (9 + strlen(str)) ){
 			printf( "dir(%d) R7+%d: %c\n", R7+i, i, U(R7+i) );
@@ -101,6 +106,7 @@ L puts_: {
 	}
 	#endif
 	
+	// Print the string, while handling the variable interpolations.
 	i = 0;
 	while( i < strlen(str) ){
 		if( str[i] != '%' ){
@@ -108,7 +114,6 @@ L puts_: {
 			i++;
 		}else{
 			switch( str[i+1] ){
-				//printf(p,I(R7+4));
 				case 'I':
 					valueOffset -= 4;
 					#ifdef DEBUG
@@ -140,19 +145,29 @@ L puts_: {
 			i += 2;
 		}
 	}
-	//printf( "printf invocado ...OK\n" );
-	//printf((char*)p);
+	// Reverse again the string literal (C mem -> Q mem).
 	reinv_str(str,&U(R7+8));
+
+	// Return to caller.
 	GT(P(R7));
 }      
 
+
+// Get input from user. This function expects the arguments to be passed using 
+// the stack and with the following order:
+// 1. Allocated memory for returning the input. - 1 / 4 bytes
+// 2. Type of input ('I', 'F', 'U') - 1 byte
+// 4. Return label (4 bytes) <- R7
 L get_: {
 	char input[30];
+
+	// Get expected input type.
 	char inputType = U(R7+4);
 
+	// Get the input.
 	fgets( input, 29, stdin );
 
-	printf( "get de tipo [%c]\n", inputType );
+	// Process the input value by its type.
 	switch( inputType ){
 		case 'U':
 			U(R7+5) = input[0];
@@ -168,6 +183,7 @@ L get_: {
 		break;
 	}
 
+	// Return to caller.
 	GT(P(R7));
 }
 

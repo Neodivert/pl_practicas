@@ -29,6 +29,7 @@ cstr getRegStr( int isFloat )
 }
 
 
+
 /**************************************************************************/
 /*registers a new label and returns the identifier			  */
 /**************************************************************************/
@@ -136,14 +137,14 @@ int freeRegister(int i, int type)
     if ((type == 0) /*&& (nR<6)*/){
         intRegs[i]=0;
 			nR++;
-			printf( "Liberando registro R%d - OK\n", i );
+			DEBUG_MSG( "Liberando registro R%d - OK\n", i );
     }
 	else if ((type == 1) /*&& (nRR<5)*/)
 	{
     	//if ((i % 2) == 1) return -4;
     	floatRegs[i]=0;
 		nRR++;
-		printf( "Liberando registro RR%d - OK\n", i );
+		DEBUG_MSG( "Liberando registro RR%d - OK\n", i );
     }
 	
     return 0;
@@ -450,11 +451,11 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr (4)\n",regStr, reg, 
 					pointerType(aux->variable), expReg, aux->variable->name);	
 				freeRegister( expReg, isFloat_ );	
-				printf( "FS A1\n" );
-				printf( "atribute: %p\n", atribute );
-				printf( "atribute->exprSymbol->name: %s\n", atribute->exprSymbol->name );
+				DEBUG_MSG( "FS A1\n", reg );
+				DEBUG_MSG( "atribute: %p\n", atribute );
+				DEBUG_MSG( "atribute->exprSymbol->name: %s\n", atribute->exprSymbol->name );
 				freeSymbol(atribute->exprSymbol);
-				printf( "FS A2\n" );		
+				DEBUG_MSG( "FS A2\n", reg );		
 			}else{
 					fprintf(yyout,"\t%s%d = %c(R6 - %d); //Loading value of var - %s\n",regStr, reg, 
 						pointerType(aux->variable), returnAddress(symType,aux->variable->name),
@@ -470,9 +471,9 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr (5)\n",regStr, reg, 
 					pointerType(aux->variable), expReg, aux->variable->name);
 				freeRegister( expReg, isFloat_ );	
-				printf( "FS B1\n" );
+				DEBUG_MSG( "FS B1\n", reg );
 				freeSymbol(atribute->exprSymbol);
-				printf( "FS B2\n" );
+				DEBUG_MSG( "FS B2\n", reg );
 			}else{
 				fprintf(yyout,"\t%s%d = %c(R6 + %d); //Loading value of var %s\n",regStr,reg, 
 					pointerType(aux->variable), returnAddress(symType,aux->variable->name),
@@ -489,9 +490,9 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 				fprintf(yyout,"\t%s%d = %c(0x%x + R%d); //Loading value of var %s[expr]\n",regStr, reg, pointerType(aux->variable),
 					returnAddress(symType,aux->variable->name), expReg, aux->variable->name);
 				freeRegister( expReg, isFloat_ );
-				printf( "FS C1\n" );	
+				DEBUG_MSG( "FS C1\n", reg );	
 				freeSymbol(atribute->exprSymbol);
-				printf( "FS C2\n" );
+				DEBUG_MSG( "FS C2\n", reg );
 			}else{			
 			fprintf(yyout,"\t%s%d = %c(0x%x); //Loading value of var %s\n", regStr, reg, pointerType(aux->variable), 
 				returnAddress(symType,aux->variable->name), aux->variable->name);	
@@ -500,9 +501,9 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 		}else{
 		}
 	}	
-	printf( "FSI D1\n" );
+	DEBUG_MSG( "FSI D1\n", reg );
 	freeSymbolInfo(atribute);
-	printf( "FSI D2\n" );
+	DEBUG_MSG( "FSI D2\n", reg );
 	return returnSymbol;
 }
 
@@ -737,7 +738,6 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 		fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 		//freeRegister(r1, 0);
 	}else{
-		// TODO: patxi, tu que estabas con el derramado. Decidi marcar los flotantes en pila con 4. xD
 		if(r0 == 77){
 			r0 = assignRegisters(1);
 			((ExtraInfo*)(leftSide->info))->nRegister = r0;
@@ -756,98 +756,35 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 	freeSymbol(rightSide);
 }
 
-cstr genVariableInterpolation( FILE* yyout, Symbol* symbol )
-{
-	ExtraInfo* info = (ExtraInfo*)(symbol->info);
-	int reg = info->nRegister;
-	//int type = ((Type*)((Variable*)(info->variable->info))->type->info)->id;
-	int type = getType( symbol );
-	int isFloat_ = isFloat( symbol ); // (pointerType(info->variable) == 'F');
-	
-	cstr str = genNumericString( symbol );
 
-	switch( type ){
-			case TYPE_INTEGER:
-				fprintf( yyout, "\tR7 = R7-4;\n" );
-				fprintf( yyout, "\tI(R7) = R%d;\n", reg );
-			break;
-			case TYPE_CHAR:
-				fprintf( yyout, "\tR7 = R7-1;\n" );
-				fprintf( yyout, "\tU(R7) = R%d;\n", reg );
-			break;
-			case TYPE_FLOAT:
-				fprintf( yyout, "\tR7 = R7-4;\n" );
-				fprintf( yyout, "\tF(R7) = RR%d;\n", reg );
-			break;
-	}
-	
-	//fprintf( yyout, "\t// genVariableInterpolation [%s] - BEGIN\n", info->variable->name );
+/*                                  I/O                                      */
 
-	//fprintf( yyout, "\tR7 = R7-4;\n" );
-	//fprintf( yyout, "\tI(R7) = R%d;\n", reg );
-
-	freeRegister( reg, isFloat_ );
-	//fprintf( yyout, "\t// genVariableInterpolation - END\n" );
-	freeSymbol( symbol );
-	//freeSymbolInfo();
-	//free( symbol );
-
-	return str;
-}
-
-// If there are variables to be shown in the puts, the string has patterns 
-// of the form "%<register><type>", where register indicates the index of 
-// the register keeping the value to show, and type indicates the type of
-// that value.
-// ie. %2i -> load an integer from register R2
-// ie. %3f -> load a float from register R3
-/*
-int genPutsValuesLoad( FILE* yyout, cstr str, int stringOffset  )
-{
-	int valueOffset = stringOffset + strlen( str ) + 1;
-	int offset = 0;
-	int i = 0;
-	for( i=0; i<strlen( str ); i++ ){
-		if( str[i] == 1 ){
-			nValues++;
-			switch( str[i+2] ){
-				case 'I':
-					fprintf( yyout, "\t%c(R7+%d) = R%d;\n", str[i+2], valueOffset, str[i+1]-'0' );
-					valueOffset += 4;
-				break;
-				case 'U':
-					fprintf( yyout, "\t%c(R7+%d) = R%d;\n", str[i+2], valueOffset, str[i+1]-'0' );
-					valueOffset += 1;
-				break;
-				case 'F':
-					fprintf( yyout, "\t%c(R7+%d) = RR%d;\n", str[i+2], valueOffset, str[i+1]-'0' );
-					valueOffset += 4;
-				break;
-			}
-		}
-	}
-	return valueOffset;
-}
-*/
-
-void genPutsHead( FILE* yyout )
+// Generate a comment indicating the start of a puts call.
+void genPutsCallHeader( FILE* yyout )
 {
 	// Print a comment to indicate the puts call's begin.
 	fprintf( yyout, "\n\t/* Call to puts - begin*/\n" );
 }
 
-void genPuts( FILE* yyout, cstr str )
-{
-	// argumentsSize = 4 (return label) 4 (n variables) + 1 (null character) + strlen(str).
-	int argumentsSize = 9 + strlen( str );
 
-	int nValues = 0;
-	int i, j;
+// Generate the code for a puts call (variable interpolation are not handle 
+// here).
+void genPutsCall( FILE* yyout, cstr str )
+{
+	// argumentsSize = 4 (return label) 4 (n variables) + 1 (null character) 
+	// + strlen(str).
+	// (*) Code for variables pass to puts is generated before calling this
+	// method. That's why we don't allocate memory here for them. However,
+	// once puts is called, all the memory has to be deallocated, so as the 
+	// string literal is processed, we calculate the real "argumentsSize" for
+	// futher deallocation.
+	int argumentsSize = 9 + strlen( str );
+	int i;
 	
-	// Allocate memory for arguments
+	// Allocate memory for arguments.
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments\n", argumentsSize );
 	
-	// Pass string to puts.
+	// Process string literal and pass it to puts.
 	fprintf( yyout, "\t/* Call to puts - string */\n" );
 	for( i=0; i<strlen(str); i++ ){
 		switch( str[i] ){
@@ -867,7 +804,6 @@ void genPuts( FILE* yyout, cstr str )
 				fprintf( yyout,"\tU(R7+%d) = '\\'';\n", 8+i );
 			break;
 			case '%':
-				nValues++;
 				if( str[i+1] == 'U' ){
 					argumentsSize++;
 				}else{
@@ -878,62 +814,79 @@ void genPuts( FILE* yyout, cstr str )
 			break;
 		}
 	}
-	fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 8+i );
+	fprintf( yyout,"\tU(R7+%d) = '\\000';\n", 8+i ); // Null character.
 	
 	int newLabel_ = newLabel();
 
-	// Save return label
+	// Save arguments size.
 	fprintf( yyout, "\tP(R7+4) = %i;\t// Set arguments size (string + values)\n", argumentsSize );
 
-	// Save return label
+	// Save return label.
 	fprintf( yyout, "\tP(R7) = %i;\t// Save return label\n", newLabel_ );
 
-	// Call method
+	// Call method.
 	fprintf( yyout, "\tGT(-13);\t// Call puts\n" );
 
-	// Set return label
+	// Set return label.
 	fprintf( yyout, "L %i:\n", newLabel_ );
 
-	// Free arguments memory
+	// Free arguments memory.
 	fprintf( yyout,"\tR7 = R7 + %d;\t// Free memory for arguments\n", argumentsSize );
 	
 	// Print a comment to indicate the puts call's end.
 	fprintf( yyout, "\t/* Call to puts - end */\n\n" );
 }
 
-cstr genNumericString( Symbol* symbol )
+
+// Generate code for a "#{<variable>}" pattern in string literals. Also return 
+// an "interpolationMark" ("%I", "%F", "%U", "%E") so grammar can build the
+// string literal that will be past to the puts call.
+cstr genVariableInterpolation( FILE* yyout, Symbol* symbol )
 {
-	static char str[][3] = { "%I", "%F", "%U", "%E" };
-	int reg, type;
+	static char interpolationMarks[][3] = { "%I", "%F", "%U", "%E" };
 
-	reg = ((ExtraInfo*)(symbol->info))->nRegister;
-	/*
-	type = ((Type*)(((Variable*)(((ExtraInfo*)(symbol->info))->variable->info))->type->info))->id;
+	// Get type and register of symbol.
+	ExtraInfo* info = (ExtraInfo*)(symbol->info);
+	int reg = info->nRegister;
+	int type = getType( symbol );
+	int isFloat_ = isFloat( symbol );
 
-	if(type == TYPE_ARRAY){
-		type = ((Type*)(getArrayType( ((ExtraInfo*)(symbol->info))->variable )))->id;
-	}
-	*/
-	type = getType( symbol );
-
+	// Generate code for passing the variable to puts. Also index the 
+	// interpolationMarks vector.
+	int mark = 0;
 	switch( type ){
-		case TYPE_INTEGER:
-		case TYPE_BOOLEAN:
-			return str[0];
-		break;
-		case TYPE_FLOAT:
-			return str[1];
-		break;
-		case TYPE_CHAR:
-			return str[2];
-		break;
-		default:
-			return str[3];
-		break;
+			case TYPE_INTEGER:
+				fprintf( yyout, "\tR7 = R7-4;\n" );
+				fprintf( yyout, "\tI(R7) = R%d;\n", reg );
+				mark = 0;
+			break;
+			case TYPE_FLOAT:
+				fprintf( yyout, "\tR7 = R7-4;\n" );
+				fprintf( yyout, "\tF(R7) = RR%d;\n", reg );
+				mark = 1;
+			break;
+			case TYPE_CHAR:
+				fprintf( yyout, "\tR7 = R7-1;\n" );
+				fprintf( yyout, "\tU(R7) = R%d;\n", reg );
+				mark = 2;
+			break;
+			default:
+				// FIXME: Better idea about showing error?
+				// FIXME: Outside this is not tested.
+				mark = 3;
+			break;
 	}
+	
+	// Free resources and return the interpolation mark.
+	// FIXME: Good idea free them here?
+	freeRegister( reg, isFloat_ );
+	freeSymbol( symbol );
+	return interpolationMarks[mark];
 }
 
-
+// Generate code for a call to a member of the "get" family of functions (geti, 
+// getf, etc). 
+// The argument "inputType" can be 'I' (geti), 'F' (getf) or 'U' (getu).
 void genGetCall( FILE* yyout, char inputType, int reg )
 {
 	// size = 4 (used register) 4 (return label) + 1 (inputType)
@@ -1018,21 +971,28 @@ int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* n
 	
 }
 
+/*                              Auxiliar functions                           */
 
+// If symbol refers to a variable/value (directly or indirectly), return its 
+// type.
 // FIXME: Terminar integracion con floats.
 // FIXME: Y con las clases???
-// Esto soporta los arrays?
+// FIXME: Hasta ahora no se comprueba desde fuera que getType devuelva -1
+// o no.
 int getType( Symbol* symbol )
 {
 	Symbol* symVariable = NULL;
 	Type* type = NULL;
 
+	// If symbol is NULL, return.
 	if( !symbol ){
-		printf( "getType( NULL )\n" );
-	}else{
-		printf( "getType( %s:%i ) - BEGIN\n", symbol->name, symbol->symType );
+		DEBUG_MSG( "getType( NULL ) - Returning\n", type );
+		return -1;
 	}
 
+	DEBUG_MSG( "getType( %i ) - BEGIN\n", symbol->symType );
+
+	// Access to the type struct of the symbol.
 	switch( symbol->symType ){
 		case SYM_VARIABLE:
 			type = ((Type*)((Variable*)(symbol->info))->type->info);
@@ -1052,40 +1012,24 @@ int getType( Symbol* symbol )
 			type = ((Type*)(symbol->info));
 		break;
 		default:
-			printf( "\n\ngetType ha devuelto -1!!!\n\n" );
+			DEBUG_MSG( "\n\ngetType returned -1!!!\n\n", type );
 			return -1;
 		break;
 	}
-
 	if( type->id == TYPE_ARRAY ){
 		type = ((Type*)(type->arrayInfo->type->info));
 	}	
 
-	printf( "getType() - END\n" );
+	DEBUG_MSG( "getType() - END\n", type );
 
 	if( type->id < 1 || type->id > 2 ){
-		printf( "\n\ngetType ha devuelto algo diferente de 1 (INTEGER) y 2 (FLOAT) (%i)!!!\n\n", type->id );
+		DEBUG_MSG( "\n\ngetType something different to 1 (INTEGER) and 2 (FLOAT) (%i)!!!\n\n", type->id );
 	}
 	return type->id;
 }
 
-/*
-Type {
-	int id;
-	unsigned int size;
-	union 
-	{
-		ArrayType* arrayInfo; // Used if id == TYPE_ARRAY;
-		ClassType* classInfo;   // If id == TYPE_ARRAY, this points to first element.
-   	};
-};
-
-ArrayType {
-	Symbol* type;
-	unsigned int nElements;
-};
-*/
-
+// Return 1 if symbol refers to a float variable (directly or indirectly). 
+// Otherwise return 0.
 int isFloat( Symbol* symbol )
 {
 	return ( getType( symbol ) == TYPE_FLOAT );

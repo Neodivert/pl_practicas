@@ -8,18 +8,21 @@ needed for the code generation part*/
 //to used them.
 int intRegs[8] = {0,0,0,0,0,0,1,1};
 int LRURegs[6] = {0,1,2,3,4,5};
-int nR = 3;
-int nMaxR = 3;
+int nR = 6;
+int nMaxR = 6;
 
-int floatRegs[3] = {0,0,0};
-int nRR = 3;
-int nMaxRR = 3;
+int floatRegs[4] = {0,0,0,0};
+int nRR = 4;
+int nMaxRR = 4;
+
 
 int nLabels = 0;
 unsigned int topAddress = Z;
 
-
 extern ExtraInfo* extraInfoPerRegister[8];
+extern ExtraInfo* extraInfoPerDoubleRegister[8];
+extern int nextRegisterOverflow;
+extern int nextDoubleRegisterOverflow ;
 
 const char regStr[][3] = { "R", "RR" };
 
@@ -36,7 +39,7 @@ cstr getRegStr( int isFloat )
 
 int newLabel()
 {
-    nLabels++;
+    nLabels += 1;
     return nLabels;
 }
 
@@ -142,6 +145,7 @@ int freeRegister(int i, int type)
 	else if ((type == 1) /*&& (nRR<5)*/)
 	{
     	//if ((i % 2) == 1) return -4;
+    	if( i > 3 ) return -4;
     	floatRegs[i]=0;
 		nRR++;
 		DEBUG_MSG( "Liberando registro RR%d - OK\n", i );
@@ -552,10 +556,17 @@ SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalI
 
 // Generate the code for a method "begin" (set method label and new base, and
 // allocate local space).
-void genMethodBegin( FILE* yyout, cstr methodName )
+void genMethodBegin( FILE* yyout, cstr methodName, int symType )
 {
    // Get the method's info from symbols' table.
-   Method* method = (Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+	Method* method = NULL;
+	if(symType == SYM_METHOD){
+  		method = (Method *)( searchTopLevel( symType, methodName )->info );
+  	}else{ //It is a block
+  		method = (Method *)( searchVariable( symType, methodName )->info );
+  		goInScope(method);
+  		fillMethodDataSize(method);
+  	}
    
    // Print a comment to indicate the method definitions' begin.
 	fprintf( yyout, "\n\t/* Procedure [%s] - begin */\n", methodName );
@@ -572,10 +583,15 @@ void genMethodBegin( FILE* yyout, cstr methodName )
 
 
 // Generate the code for a method "end" (free local data and return).
-void genMethodEnd( FILE* yyout, cstr methodName )
+void genMethodEnd( FILE* yyout, cstr methodName, int symType )
 {
 	// Get the method's info from symbols' table.
-   Method* method = (Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+	Method* method = NULL;
+	if(symType == SYM_METHOD){
+  		method = (Method *)( searchTopLevel( symType, methodName )->info );
+  	}else{
+  		method = (Method *)( searchVariable( symType, methodName )->info );
+  	}	
 
 	// Free local memory.
 	fprintf( yyout,"\tR7 = R6;\t// Free local variables\n", method->localsSize );
@@ -593,14 +609,65 @@ void genMethodEnd( FILE* yyout, cstr methodName )
 	fprintf( yyout, "\t/* Procedure [%s] - end */\n\n", methodName );
 }
 
+// Generate the code for a block "begin" (set method label and new base, and
+// allocate local space).
+struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName )
+{
+	//Get current scope
+	struct Method* scope = getCurrentScope();
+	
+	//Get a label for the hidden method
+	int nextCodeLabel = newLabel(); 
+	
+	//Save the scope in the ExtraInfo struct
+	struct Symbol* currentScope = createExtraInfoSymbol(nextCodeLabel, 0);
+	((struct ExtraInfo*)(currentScope->info))->variable = (struct Symbol*)scope;
+	
+	//This is a method definition so do not execute yet	
+	fprintf( yyout,"\tGT(%d); //Jump to next code block\n", nextCodeLabel); 
+	
+	char *blockName = createBlockName(varName, argumentName);
+	
+	//Generate block definition using method function
+	genMethodBegin(yyout, (cstr)blockName, SYM_BLOCK);
+	
+	free(blockName);
+	return currentScope;
+}
+
+// Generate the code for a block "end" (free local data and return).
+void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName,struct Symbol* blockInfo)
+{
+	char *blockName = createBlockName(varName, argumentName);
+	struct ExtraInfo* extraInfo = (struct ExtraInfo*)(blockInfo->info);
+	
+	//Retrieve label for the execution of code
+	int nextCodeLabel = extraInfo->nRegister;
+	
+	//Retrive previous scope 
+	struct Method* method = (struct Method*)(extraInfo->variable);
+	
+	//Create block defintion end with method definition
+	genMethodEnd(yyout, (cstr)blockName, SYM_BLOCK);
+	
+	free(blockName);	
+	goInScope(method);
+	fprintf( yyout,"L %d: //Continue code block\n", nextCodeLabel);
+}
+
 
 /*                               Method call                                 */
 
 // Generate the code for a method call "begin" (arguments memory allocation).
-void genMethodCallBegin( FILE* yyout, cstr methodName )
+void genMethodCallBegin( FILE* yyout, cstr methodName, int symType )
 {
-	// Get the called method's info from symbols' table.
-   Method* method = (Method *)( searchTopLevel( SYM_METHOD, methodName )->info );
+	// Get the method's info from symbols' table.
+	Method* method = NULL;
+	if(symType == SYM_METHOD){
+  		method = (Method *)( searchTopLevel( symType, methodName )->info );
+  	}else{
+  		method = (Method *)( searchVariable( symType, methodName )->info );
+  	}	
 
 	// Print a comment to indicate the method call's begin.
 	fprintf( yyout, "\n\t/* Call to procedure [%s] - begin */\n", methodName );
@@ -617,6 +684,8 @@ void genMethodCallBegin( FILE* yyout, cstr methodName )
 		
 	fprintf( yyout,"\tR7 = R7 - %d;\t// Allocate memory for arguments and return value\n", totalSize );
 }
+
+
 
 // Generate the code for a method call (save base and return label and call
 // method).
@@ -681,6 +750,54 @@ void genArgumentPass( FILE* yyout, Symbol* argumentSymbol, Symbol* method, int i
 	freeSymbol(argumentSymbol);
 }
 
+//Generate all the calls to the block
+void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
+{
+	char *blockName = createBlockName(varName, argumentName);
+	
+	struct Symbol* block = searchVariable( SYM_BLOCK, blockName );
+	
+	struct Symbol* variable = searchVariable( SYM_VARIABLE, varName );
+	struct Symbol* varType = ((struct Variable*)(variable->info))->type;
+	struct SymbolInfo* info = NULL;
+	
+	int reg, expReg, i;
+	int varIsFloat = isFloat( variable );
+	int size = ((struct Type*)(varType->info))->arrayInfo->nElements;
+	//reg = assignRegisters(varIsFloat);
+	for( i = 0; i < size;i++){
+		expReg = assignRegisters(0);
+
+		struct Symbol* extraInfo;// = createExtraInfoSymbol(reg);
+		//((struct ExtraInfo*)(extraInfo->info))->variable = varType;
+	
+		struct Symbol* expExtraInfo = createExtraInfoSymbol(expReg, varIsFloat);
+	
+		((struct ExtraInfo*)(extraInfo->info))->variable = searchType(TYPE_INTEGER);	
+
+		genMethodCallBegin( yyout, blockName, SYM_BLOCK );
+		
+		fprintf( yyout,"\tR%d = %d;\t// Loading literal %d\n", expReg, i, i);
+	
+		info = malloc(sizeof(struct SymbolInfo));
+		info->symbol = NULL;
+		info->info = TYPE_ARRAY; 
+		info->name = NULL;
+		info->exprSymbol = expExtraInfo;
+
+		if (varIsFloat){
+			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
+		}else{ 
+			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerRegister, &nextRegisterOverflow);
+		}	
+		
+		genArgumentPass( yyout, extraInfo, block, 0 );
+	
+		genMethodCall(yyout, (struct Method*)(block->info), -1 );
+	}
+	free(blockName);	
+
+}
 
 // Gets the Q type corresponding to the type of the variable
 char pointerType(Symbol* symbol)

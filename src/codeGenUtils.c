@@ -9,8 +9,8 @@ needed for the code generation part*/
 int intRegs[8] = {0,0,0,0,0,0,1,1};
 int nR = 6;
 
-int floatRegs[3] = {0,0,0};
-int nRR = 3;
+int floatRegs[4] = {0,0,0,0};
+int nRR = 4;
 
 int nLabels = 0;
 unsigned int topAddress = Z;
@@ -28,7 +28,7 @@ cstr getRegStr( int isFloat )
 
 int newLabel()
 {
-    nLabels++;
+    nLabels += 1;
     return nLabels;
 }
 
@@ -80,7 +80,7 @@ int freeRegisters()
     int i=0;
     nR = 6;
     nRR = 3;
-    for (i=0;i<3;i++){
+    for (i=0;i<4;i++){
         intRegs[i] = 0;
 		  floatRegs[i] = 0;
 	}
@@ -111,6 +111,7 @@ int freeRegister(int i, int type)
 	else if ((type == 1) /*&& (nRR<5)*/)
 	{
     	//if ((i % 2) == 1) return -4;
+    	if( i > 3 ) return -4;
     	floatRegs[i]=0;
 		nRR++;
 		printf( "Liberando registro RR%d - OK\n", i );
@@ -757,17 +758,14 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 		
 		fprintf( yyout,"\tR%d = %d;\t// Loading literal %d\n", expReg, i, i);
 	
-		if(!varIsFloat){
-			info = malloc(sizeof(struct SymbolInfo));
-			info->symbol = NULL;
-			info->info = TYPE_ARRAY; 
-			info->name = NULL;
-			info->exprSymbol = expExtraInfo;
+		info = malloc(sizeof(struct SymbolInfo));
+		info->symbol = NULL;
+		info->info = TYPE_ARRAY; 
+		info->name = NULL;
+		info->exprSymbol = expExtraInfo;
+	
+		extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info);
 		
-			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info);
-		}else{
-			fprintf( yyout,"\tRR%d = 1;\t// Load de mentira\n", reg );
-		}
 		genArgumentPass( yyout, extraInfo, block, 0 );
 	
 		genMethodCall(yyout, (struct Method*)(block->info), -1 );

@@ -4,12 +4,21 @@
 # Language's tested features: output, methods, floats.
 ###############################################################################
 
-def foo(i,j,k,l,m,n,o,p,q,r,s,t)
-	puts("Los argumentos valen #{i} #{j} #{k} #{l} #{m} #{n}\n")
-	puts("Los argumentos valen #{i} #{j} #{k} #{l} #{m} #{n} #{p} #{r} #{t}\n")
-end
 
-foo(2,3,4,5,6,7,8,9,10,11.5,12,'a')
+a = 1
+b = 3
+
+c = 1+a+1
+
+puts( "#{c}\n" )
+
+#c = a*5.32-12.4+b/1.5
+#def foo(i,j,k,l,m,n,o,p,q,r,s,t)
+#	puts("Los argumentos valen #{i} #{j} #{k} #{l} #{m} #{n}\n")
+#	puts("Los argumentos valen #{i} #{j} #{k} #{l} #{m} #{n} #{p} #{r} #{t}\n")
+#end
+
+#foo(2,3,4,5,6,7,8,9,10,11.5,12,'a')
 
 #def sumaF( arg1, arg2 )
 #	suma = arg1 + arg2

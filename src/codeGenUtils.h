@@ -8,7 +8,7 @@ the code generation. Also the global variables and data structures*/
 
 typedef struct RegisterInfo RegisterInfo; 
 
-
+//#define gc( fprintf( yyout, 
 
 /*Registers a new label and returns the identifier*/
 int newLabel();

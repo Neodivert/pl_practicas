@@ -747,7 +747,7 @@ factor :
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
     					GC $$ = genAccessVariable(yyout, $1, SYM_GLOBAL, $2,NULL,NULL);	EGC;}
-	| literal 
+	| literal { DEBUG_MSG( "literal!\n", $1 ) }
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
 					GC	$$ = $2; EGC }
 	| simple_method_call { NGC $$ = getReturnType($1); ENGC }

@@ -48,10 +48,6 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 
 Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow);
 
-// Generate the code for a method "begin"
-//	- Method label.
-//	- Local data allocation.
-void genMethodBegin( FILE* yyout, cstr methodName );
 
 SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalInfo,
 	SymbolInfo* arrayInfo ); 
@@ -61,16 +57,23 @@ SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalI
 
 // Generate the code for a method "begin" (set method label and new base, and
 // allocate local space).
-void genMethodBegin( FILE* yyout, cstr methodName );
+void genMethodBegin( FILE* yyout, cstr methodName, int symType);
 
 // Generate the code for a method "end" (free local data and return).
-void genMethodEnd( FILE* yyout, cstr methodName );
+void genMethodEnd( FILE* yyout, cstr methodName, int symType);
+
+// Generate the code for a block "begin" (set method label and new base, and
+// allocate local space).
+struct Symbol* genBlockBegin( FILE* yyout, cstr varName, cstr argumentName );
+
+// Generate the code for a block "end" (free local data and return).
+void genBlockEnd( FILE* yyout, cstr varName, cstr argumentName, struct Symbol* blockInfo);
 
 
 /*                               Method call                                 */
 
 // Generate the code for a method call "begin" (arguments memory allocation).
-void genMethodCallBegin( FILE* yyout, cstr methodName );
+void genMethodCallBegin( FILE* yyout, cstr methodName, int symType );
 
 // Generate the code for a method call (save base and return label and call
 // method).
@@ -81,6 +84,9 @@ void genMethodCall( FILE* yyout, Method* method, int reg );
 // - method - called method symbol.
 // - iArgument - argument index.
 void genArgumentPass( FILE* yyout, Symbol* argumentSymbol, Symbol* method, int iArgument );
+
+//Generate all the calls to the block
+void genBlockCall( FILE* yyout, cstr varName, cstr argumentName ); 
 
 /*Returns the code that correspond to the storage of the type passed*/
 /*as parameter*/

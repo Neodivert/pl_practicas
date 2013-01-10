@@ -115,9 +115,6 @@ int checkArgumentDefinition(cstr name);
 // Method* that points to the current scope's (the block) symbol.
 struct Method * checkBlockDefinition(cstr name, cstr argName);
 
-// Generate a name for block whose name is "name" and argument is "argName".
-char *createBlockName(cstr name, cstr argName);
-
 /*                                 5. Classes                                  */
 
 // Search class "className" in symbols' table. If not found, create and insert

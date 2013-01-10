@@ -57,6 +57,7 @@ int insideIfLoop = 0;
 %type <symbol> assignment
 %type <symbol> method_call
 %type <symbol> method_code
+%type <symbol> block_call
 %type <symbolInfo> atribute
 %type <symbolInfo> left_side
 %type <symbolInfo> array_content
@@ -161,7 +162,7 @@ method_definition :
 		$<methodInfo>$ = checkMethodDefinition( $2 ); } 
 	arguments_definition 
 		{ GC 
-			genMethodBegin( yyout, $2 ); 
+			genMethodBegin( yyout, $2, SYM_METHOD ); 
 		EGC } 
 	separator method_code END separator 
 		{	NGC 
@@ -175,7 +176,7 @@ method_definition :
 			ENGC
 			goInScope( $<methodInfo>3->scope );
 			GC 
-				genMethodEnd( yyout, $2 ); 
+				genMethodEnd( yyout, $2, SYM_METHOD ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
 			EGC
 
@@ -185,7 +186,7 @@ method_definition :
 		GC 
 			nextCodeLabel = newLabel(); 
 			fprintf( yyout,"\tGT(%d); //Jump to next code\n", nextCodeLabel);
-			genMethodBegin( yyout, $2 );
+			genMethodBegin( yyout, $2, SYM_METHOD );
 			
 		EGC } 
 		separator method_code END separator
@@ -199,7 +200,7 @@ method_definition :
 			setMethodReturnType(searchTopLevel( SYM_METHOD, $2), $5);	
 
 			GC 
-				genMethodEnd( yyout, $2 ); 
+				genMethodEnd( yyout, $2, SYM_METHOD ); 
 				fprintf( yyout,"L %d: //Continue code\n", nextCodeLabel);
 			EGC
 	
@@ -290,7 +291,7 @@ class_content :
 // block_call. See method_code.
 method_call : 
 	simple_method_call separator
-	| block_call {$$ = NULL;}
+	| block_call
 	;
 
 // Check if we are making a correct call (same number or arguments) to a defined 
@@ -302,7 +303,7 @@ simple_method_call:
 					}
 					$<symbol>$ = currentMethodCall;
 
-					GC genMethodCallBegin( yyout, $1 ); nArguments = 0; EGC
+					GC genMethodCallBegin( yyout, $1, SYM_METHOD ); nArguments = 0; EGC
 				}			
 		arguments ')' { NGC $$ = checkMethodCall( $1, nArguments, $4, currentMethodCall);ENGC 
 							
@@ -457,9 +458,21 @@ more_arguments :
 // checkBlockDefinition search for block in symbols' table and create it if
 // doens't exist.
 block_call : 
-	IDENTIF EACH start_block '|' IDENTIF '|' { $<method>$ = checkBlockDefinition( $1, $5 ); GC insideIfLoop++; EGC } separator
+	IDENTIF EACH start_block '|' IDENTIF '|' 
+	{ 
+	NGC $<method>$ = checkBlockDefinition( $1, $5 ); ENGC 
+	GC insideIfLoop++;  $<symbol>$ = genBlockBegin(yyout, $1, $5); EGC 
+	} 
+		separator
 		method_code
-	end_block separator { goInScope($<method>7); insideIfLoop--;}
+	end_block separator 
+	{ NGC goInScope($<method>7); ENGC 
+	GC 
+		genBlockEnd(yyout, $1, $5, $<symbol>7 );
+		genBlockCall(yyout, $1, $5);
+		insideIfLoop--;
+		$$ = $<symbol>7;		 
+	EGC}
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on %s.each definition", $1 ); yyerrok;}
 	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}
 	;			 

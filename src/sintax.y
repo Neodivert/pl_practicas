@@ -780,7 +780,7 @@ literal :
 	;
 
 
-puts : PUTS { GC genPutsCallHeader( yyout ); $<integer>$ = -1; EGC } '(' string ')' separator { GC genPutsCall( yyout, $4 ); EGC }
+puts : PUTS { GC genPutsCallHeader( yyout ); EGC $<integer>$ = -1; } '(' string ')' separator { GC genPutsCall( yyout, $4 ); EGC }
 	| PUTS error separator { yyerror("Wrong arguments in puts"), yyerrok; }
 	;
 		
@@ -829,8 +829,20 @@ substring_part :
 string_struct :
 		/*START_STRUCT expression END_STRUCT
 		|*/ START_STRUCT factor END_STRUCT 
-		{ GC cstr str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str );EGC 
-		NGC strcpy( $$, "%" ); ENGC } // FIXME: si el factor es una variable falta comprobar que exista.
+		{ 
+		GC 
+			cstr str = genVariableInterpolation( yyout, $2 ); 
+			strcpy( $$, str );
+		EGC 
+		NGC 
+			AN
+				if(!$2){
+					yyerror("Undefined variable on puts");
+				}
+			EAN
+			strcpy( $$, "%" ); 
+		ENGC 
+		} 
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%

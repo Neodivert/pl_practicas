@@ -8,8 +8,9 @@ needed for the code generation part*/
 //to used them.
 int intRegs[8] = {0,0,0,0,0,0,1,1};
 int LRURegs[6] = {0,1,2,3,4,5};
-int nR = 3;
-int nMaxR = 3;
+int LRUDoubleRegs[4] = {0,1,2,3};
+int nR = 4;
+int nMaxR = 4;
 
 int floatRegs[4] = {0,0,0,0};
 int nRR = 4;
@@ -50,6 +51,7 @@ int newLabel()
 /*0 -> entero, 1-> Flotante*/
 
 void LRU(int reg){
+	
 	int index,i,j;
 	int flag = 0;
 	if(reg != LRURegs[(nMaxR-1)]){
@@ -65,12 +67,33 @@ void LRU(int reg){
 	}
 	LRURegs[nMaxR-1] = reg;
 }
+void LRUDouble(int reg){
+	
+	int index,i,j;
+	int flag = 0;
+	if(reg != LRUDoubleRegs[(nMaxRR-1)]){
+		for(i=0;i<(nMaxRR-1);i++){
+			if(LRUDoubleRegs[i] == reg){
+				index = i;
+				flag = 1;
+			}
+			if (flag){
+				LRUDoubleRegs[i] = LRUDoubleRegs[i+1];
+			}
+		}
+	}
+	LRUDoubleRegs[nMaxRR-1] = reg;
+}
 
 int assignRegisters(int type)
 {
     int i=0, aux, index;
     int flag = 0;
     int reg = -1;
+    
+    printf("				REGISTROS INI\n\t\t\t\t");
+    for(i=0;i<nMaxR;i++)printf("-%d",intRegs[i]);
+    printf("\n");
 	/*Buscar un Registro*/
     if ((type == 0) && (nR>0))
     {
@@ -98,8 +121,8 @@ int assignRegisters(int type)
                 break;
             }
         }
+        LRUDouble(reg);
     }
-
     return reg;   
     /*Si llegamos aquí es que no hay registros libres :(*/
     /*En caso de que no haya registros libres habrá que tirar de pila (A deliberar)*/
@@ -121,7 +144,7 @@ int freeRegisters()
 	for(i; i<nMaxR; i++ ){
 		intRegs[i] = 0;
 	}
-
+	
 	return 0;
 }
 
@@ -150,7 +173,7 @@ int freeRegister(int i, int type)
 		nRR++;
 		DEBUG_MSG( "Liberando registro RR%d - OK\n", i );
     }
-	
+	extraInfoPerRegister[i] = NULL;
     return 0;
 }
 
@@ -846,32 +869,40 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 			r0 = assignRegisters(0);
 			if (r0 == -1){
 				r0 = checkOverflow(yyout, r0, extraInfoPerRegister, 0, TYPE_INTEGER);
-				printf("----Leftside Register = %d\n",r0);
 			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r0;
-			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((ExtraInfo*)(leftSide->info))->variable)*/);
+			extraInfoPerRegister[r0] = ((ExtraInfo*)(leftSide->info));
+			fprintf(yyout, "\tR%d = I(R7);\t//Recovering value from stack\n\tR7 = R7 + 4;\n", r0);
 		}
 		if(r1 == 7){
 			r1 = assignRegisters(0);
 			if (r1 == -1){
 				r1 = checkOverflow(yyout, r1, extraInfoPerRegister, 0, TYPE_INTEGER);
-				printf("----Rightside Register = %d\n",r1);
 			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r1;
-			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((ExtraInfo*)(rightSide->info))->variable)*/);
+			extraInfoPerRegister[r1] = ((ExtraInfo*)(rightSide->info));
+			fprintf(yyout, "\tR%d = I(R7);\t//Recovering value from stack\n\tR7 = R7 + 4;\n", r1);
 		}
 		fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
 		//freeRegister(r1, 0);
 	}else{
 		if(r0 == 77){
 			r0 = assignRegisters(1);
+			if (r0 == -1){
+				r0 = checkOverflow(yyout, r0, extraInfoPerRegister, 0, TYPE_FLOAT);
+			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r0;
-			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((ExtraInfo*)(leftSide->info))->variable)*/);
+			extraInfoPerDoubleRegister[r0] = ((ExtraInfo*)(leftSide->info));
+			fprintf(yyout, "\tRR%d = F(R7);\t//Recovering value from stack\n\tR7 = R7 + 4;\n", r0);
 		}
 		if(r1 == 77){
 			r1 = assignRegisters(1);
+			if (r1 == -1){
+				r1 = checkOverflow(yyout, r1, extraInfoPerRegister, 0, TYPE_FLOAT);
+			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r1;
-			fprintf(yyout, "\tRR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((ExtraInfo*)(rightSide->info))->variable)*/);
+			extraInfoPerDoubleRegister[r1] = ((ExtraInfo*)(rightSide->info));
+			fprintf(yyout, "\tRR%d = F(R7);\t//Recovering value from stack\n\tR7 = R7 + 4;\n", r1);
 		}
 		fprintf(yyout, "\tRR%d = RR%d %s RR%d;\n", r0, r0,op, r1);
 		//freeRegister(r1, 1);
@@ -1055,34 +1086,33 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 
 /*				Overflow				*/
 int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type){
+printf("INI CHECK REG = %d, nR = %d\n",reg,nR);
 
 	if (reg == -1)
 	{
+		int i = 0;
 		switch(type)
 		{
 			case TYPE_INTEGER:
 			case TYPE_CHAR:
 			case TYPE_BOOLEAN:
 				DEBUG_MSG( "CHECK_OVER_FLOW_INTEGERS_1", reg );
-				reg = extraInfoPerRegister[LRURegs[0]]->nRegister;
+				reg = extraInfoPerRegister[LRURegs[0]]->nRegister;					
 				//reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
-				fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//register overflow\n",reg);
+				fprintf(yyout,"\tR7 = R7-4;\t//Register overflow\n\tI(R7) = R%d;\t//Saving to stack\n",reg);
 				extraInfoPerRegister[LRURegs[0]]->nRegister = 7;
 				//extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 7;
-				printf("nextReg almacenaria %d\n", *nextRegisterOverflow);
-				printf("LRU almacenaria %d\n",LRURegs[0]);
 				LRU(reg);
-				
-				*nextRegisterOverflow = ((*nextRegisterOverflow)+1)%nMaxR;
 				DEBUG_MSG( "CHECK_OVER_FLOW_INTEGERS_2", reg );
 			
 			break;
 			case TYPE_FLOAT:
 				DEBUG_MSG( "CHECK_OVER_FLOW_FLOATS_1", reg );
-				reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
-				fprintf(yyout,"\tR7 = R7-4;\n\tF(R7) = R%d;\t//register overflow\n",reg);
-				extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 77;
-				*nextRegisterOverflow = ((*nextRegisterOverflow)++)%nMaxRR;
+				reg = extraInfoPerDoubleRegister[LRUDoubleRegs[0]]->nRegister;
+				//reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
+				fprintf(yyout,"\tR7 = R7-4;\t//Register overflow\n\tF(R7) = R%d;\t//Saving to stack\n",reg);
+				extraInfoPerDoubleRegister[LRUDoubleRegs[0]]->nRegister = 77;
+				//extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 77;
 				DEBUG_MSG( "CHECK_OVER_FLOW_FLOATS_2", reg );
 			
 			break;
@@ -1091,7 +1121,7 @@ int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* n
 			break;
 		}
 	}
-
+printf("END CHECK\n");
 	return reg;
 	
 }

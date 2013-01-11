@@ -79,7 +79,6 @@ Symbol* createExtraInfoSymbol ( int nRegister, int isFloat)
 	//TODO si es float se usa extraInfoPerDoubleRegister
 	if (isFloat == 0) extraInfoPerRegister[nRegister] = ((ExtraInfo*)(symbol->info));
 	else if(isFloat == 1) extraInfoPerDoubleRegister[nRegister] = ((ExtraInfo*)(symbol->info));
-
 	return symbol;
 }
 

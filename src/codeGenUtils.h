@@ -52,7 +52,7 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalInfo,
 	SymbolInfo* arrayInfo ); 
 
-
+void stringVariableInitialize(FILE* yyout);
 /*                            Method definition                              */
 
 // Generate the code for a method "begin" (set method label and new base, and

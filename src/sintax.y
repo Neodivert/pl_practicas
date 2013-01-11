@@ -831,22 +831,54 @@ string :
 		strcpy( $$, $2 );
 		GC  
 			if($<integer>-1 != -1){
-				//This is var = expr
-				printf("ta aki 0 vale %d\n", $<integer>0);
+				//This is var = "string", so initialize the memory of the var
+				//with the string content
 				Symbol* varSymbol = ($<symbolInfo>0)->varSymbol;
-				printf("ta aki 1\n");
 				int length = strlen($2);
 				int i;
 				int address = ((Variable*)(varSymbol->info))->address;
 				int	elementSize = ((Type*)(((Type*)(((Variable*)(varSymbol->info))->type->info))->arrayInfo->type->info))->size;	
 				printf("ta aki 4\n");		
-				for( i = 0; i < length; i++){
-					fprintf(yyout,"\tU(0x%x + %d) = %d; //Initializing %s string\n",
-						address, elementSize*i, $2[i], varSymbol->name);				
-				}	
+	
+			
+				switch(varSymbol->symType)
+				{
+				case SYM_GLOBAL:
+					for( i = 0; i < length; i++){
+						fprintf(yyout,"\tU(0x%x + %d) = '%c'; //Initializing %s string\n",
+							address, elementSize*i, $2[i], varSymbol->name);				
+					}		
+					fprintf(yyout,"\tU(0x%x + %d) = \'\\000\'; //Initializing %s string\n",
+						address, elementSize*i, varSymbol->name);							
+					break;
+				case SYM_VARIABLE:
+					if(((Variable*)(varSymbol->info))->symSubtype == SYM_LOCAL){
+						for( i = 0; i < length; i++){
+							fprintf(yyout,"\tU(R6 + %d) = '%c'; //Initializing %s string\n",
+								elementSize*i - address, $2[i], varSymbol->name);				
+						}
+						fprintf(yyout,"\tU(R6 + %d) = \'\\000\'; //Initializing %s string\n",
+							elementSize*i - address, varSymbol->name);						
+					}else{
+						for( i = 0; i < length; i++){
+							fprintf(yyout,"\tU(R6 - %d) = '%c'; //Initializing %s string\n",
+								elementSize*i + address, $2[i], varSymbol->name);				
+						}				
+						for( i = 0; i < length; i++){
+							fprintf(yyout,"\tU(R6 - %d) = \'\\000\'; //Initializing %s string\n",
+								elementSize*i + address, varSymbol->name);				
+						}								
+					}		
+					break;
+				case SYM_CONSTANT:
+					break;
+				default:
+					//Error
+					printf("Error in string content\n");
+					break;				
+				}		
+			
 			}
-			printf("ta aki 6\n");
-			printf("$0 devuelve %d\n",$<integer>-1);
 		EGC 
 	}
 	| BEGIN_COMPLEX_STRING error END_COMPLEX_STRING {yyerror( "Sintax error on string" ); yyerrok;}

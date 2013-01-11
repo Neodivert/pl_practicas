@@ -1111,6 +1111,7 @@ int getType( Symbol* symbol )
 
 	// Access to the type struct of the symbol.
 	switch( symbol->symType ){
+		case SYM_GLOBAL:
 		case SYM_VARIABLE:
 			type = ((Type*)((Variable*)(symbol->info))->type->info);
 		break;
@@ -1129,7 +1130,7 @@ int getType( Symbol* symbol )
 			type = ((Type*)(symbol->info));
 		break;
 		default:
-			DEBUG_MSG( "\n\ngetType returned -1!!!\n\n", type );
+			DEBUG_MSG( "\n\ngetType returned -1 (%i)!!!\n\n", symbol->symType );
 			return -1;
 		break;
 	}

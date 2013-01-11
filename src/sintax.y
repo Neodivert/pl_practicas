@@ -493,8 +493,13 @@ loop :
 	WHILE {GC $<integer>$=newLabel(); fprintf(yyout,"L %d:\n", $<integer>$); insideIfLoop++; EGC ;}
 	expression DO {GC 
 					$<integer>$=newLabel(); 
-					fprintf(yyout,"\tIF(!R%d) GT(%d);\t//begin LOOP\n",((struct ExtraInfo*)($3->info))->nRegister,$<integer>$);
-					freeRegister( ((struct ExtraInfo*)($3->info))->nRegister, 0 );
+					int regIsFloat = isFloat($3);
+					if(!regIsFloat){					
+						fprintf(yyout,"\tIF(!R%d) GT(%d);\t//begin LOOP\n",((struct ExtraInfo*)($3->info))->nRegister,$<integer>$);
+					}else{
+						fprintf(yyout,"\tIF(!RR%d) GT(%d);\t//begin LOOP\n",((struct ExtraInfo*)($3->info))->nRegister,$<integer>$);
+					}	
+					freeRegister( ((struct ExtraInfo*)($3->info))->nRegister, regIsFloat );
 					if($3->symType == SYM_EXTRA_INFO ){
 						freeSymbol($3); 
 					}					
@@ -512,8 +517,13 @@ loop :
 if_construction : 
 	IF expression after_if {GC 
 								$<integer>$ = newLabel(); 
-								fprintf(yyout,"\tIF(!R%d) GT(%d);\t//we check the condition\n",((struct ExtraInfo*)($2->info))->nRegister,$<integer>$);
-								freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, 0 );
+								int regIsFloat = isFloat($2);
+								if(!regIsFloat){
+									fprintf(yyout,"\tIF(!R%d) GT(%d);\t//we check the condition\n",((struct ExtraInfo*)($2->info))->nRegister,$<integer>$);
+								}else{
+									fprintf(yyout,"\tIF(!RR%d) GT(%d);\t//we check the condition\n",((struct ExtraInfo*)($2->info))->nRegister,$<integer>$);
+								}	
+								freeRegister( ((struct ExtraInfo*)($2->info))->nRegister, regIsFloat );
 								if($2->symType == SYM_EXTRA_INFO ){
 									freeSymbol($2); 
 								}

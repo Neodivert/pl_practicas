@@ -844,11 +844,19 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 	if( !isFloat_ ){
 		if(r0 == 7){
 			r0 = assignRegisters(0);
+			if (r0 == -1){
+				r0 = checkOverflow(yyout, r0, extraInfoPerRegister, 0, TYPE_INTEGER);
+				printf("----Leftside Register = %d\n",r0);
+			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r0;
 			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r0/*pointerType(((ExtraInfo*)(leftSide->info))->variable)*/);
 		}
 		if(r1 == 7){
 			r1 = assignRegisters(0);
+			if (r1 == -1){
+				r1 = checkOverflow(yyout, r1, extraInfoPerRegister, 0, TYPE_INTEGER);
+				printf("----Rightside Register = %d\n",r1);
+			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r1;
 			fprintf(yyout, "\tR%d = I(R7);\n\tR7 = R7 + 4;\n", r1/*pointerType(((ExtraInfo*)(rightSide->info))->variable)*/);
 		}

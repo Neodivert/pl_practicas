@@ -40,3 +40,6 @@ fv.each do |e|
 	end
 end
 
+
+cas = '0' + 'b'
+puts( "cas: #{cas}\n" )

@@ -8,8 +8,8 @@ needed for the code generation part*/
 //to used them.
 int intRegs[8] = {0,0,0,0,0,0,1,1};
 int LRURegs[6] = {0,1,2,3,4,5};
-int nR = 6;
-int nMaxR = 6;
+int nR = 3;
+int nMaxR = 3;
 
 int floatRegs[4] = {0,0,0,0};
 int nRR = 4;
@@ -1056,11 +1056,11 @@ int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* n
 			case TYPE_CHAR:
 			case TYPE_BOOLEAN:
 				DEBUG_MSG( "CHECK_OVER_FLOW_INTEGERS_1", reg );
-				//reg = extraInfoPerRegister[LRURegs[0]]->nRegister;
-				reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
+				reg = extraInfoPerRegister[LRURegs[0]]->nRegister;
+				//reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
 				fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//register overflow\n",reg);
-				//extraInfoPerRegister[LRURegs[0]]->nRegister = 7;
-				extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 7;
+				extraInfoPerRegister[LRURegs[0]]->nRegister = 7;
+				//extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 7;
 				printf("nextReg almacenaria %d\n", *nextRegisterOverflow);
 				printf("LRU almacenaria %d\n",LRURegs[0]);
 				LRU(reg);

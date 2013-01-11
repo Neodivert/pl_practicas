@@ -9,7 +9,7 @@ static const int MAX_SIZE = 30;
 
 extern int compilationState; 
 
-#define DEBUG 1
+//#define DEBUG 1
 #ifdef DEBUG
 	#define DEBUG_MSG(msg,var) printf(msg,var);
 #else

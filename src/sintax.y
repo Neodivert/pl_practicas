@@ -876,6 +876,11 @@ int main(int argc, char** argv) {
 
 	DEBUG_MSG( "hola %i", i )
 
+	if(argc == 1){
+		printf("I need a .em file, not an imaginary one\n");
+		return 0;
+	}	
+	
 	//Filling symbol table
 	if (argc>1)yyin=fopen(argv[1],"r");
 	yyparse();	

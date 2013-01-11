@@ -789,6 +789,19 @@ string :
 	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING 
 	{ 
 		strcpy( $$, $2 );
+		AN
+			if($<integer>-1 != -1){
+				//This is var = "string", check for interpolation
+				int length = strlen($2);
+				int i;
+				for( i = 0; i < length; i++ ){
+					//If the string has % character 
+					if( $2[i] == '%' ){
+						yyerror("Strings for variable can not have interpolation");
+					}
+				}
+			}			
+		EAN		
 		GC  
 			if($<integer>-1 != -1){
 				//This is var = "string", so initialize the memory of the var
@@ -817,7 +830,7 @@ string_struct :
 		/*START_STRUCT expression END_STRUCT
 		|*/ START_STRUCT factor END_STRUCT 
 		{ GC cstr str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str );EGC 
-		NGC strcpy( $$, "1" ); ENGC } // FIXME: si el factor es una variable falta comprobar que exista.
+		NGC strcpy( $$, "%" ); ENGC } // FIXME: si el factor es una variable falta comprobar que exista.
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%
@@ -891,19 +904,18 @@ int main(int argc, char** argv) {
 		
 		yyin = NULL;
 		yyin = fopen( argv[1],"r" );
-		//if(yyin == NULL); //Source file
-		//printf( "yyin: %i\n", yyin );
+
 		if( !yyin ){
 		   perror( errorString );
-			printf("ERROR AL ABRIR EL ARCHIVO %s\n",argv[1]);
+			printf("Could not open file %s\n",argv[1]);
 		}
 		
 		yyout = NULL;
 		yyout=fopen(aux,"w");	 
-		//printf( "yyout: %i\n", yyout );
+
 		if( !yyin ){
 		   perror( errorString );
-			printf("ERROR AL ABRIR EL ARCHIVO %s\n",aux);
+			printf("Could not open file %s\n",aux);
 		}
 
 		fprintf(yyout,"#include \"Q.h\"\n\n");
@@ -926,7 +938,7 @@ int main(int argc, char** argv) {
 		yyparse();
 		
 		fprintf( yyout,"\tR7 = R7 + %d;\t// Free space for local variables\n", mainScope->localsSize );	
-		fprintf(yyout,"\tGT(-2);\n");
+		fprintf(yyout,"\tGT(-2);// Go to exit\n");
 		fprintf(yyout,"END\n");
 		fclose (yyout);
 	}

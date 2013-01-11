@@ -621,7 +621,7 @@ atribute :
 right_side :
 	expression
 	| string { NGC printf( "string = [%s]\n", $1 ); 
-		$$ = checkArray( searchType( TYPE_CHAR ), strlen( $1 ) ); ENGC 
+		$$ = checkArray( searchType( TYPE_CHAR ), strlen( $1 ) + 1); ENGC 
 		GC 								
 			$$ = createExtraInfoSymbol(assignRegisters(0),-1);
 			((struct ExtraInfo *)($$->info))->assignmentType = LOAD_ADDRESS;
@@ -820,24 +820,35 @@ literal :
 // FIXME: en el fichero de prueba es.em se invoca muchas veces a geti y a puts,
 // y los registros acaban acabandose y da error. Solucionar.
 // FIXME: peta con strings largas.
-puts : PUTS { GC genPutsCallHeader( yyout ); EGC } '(' string ')' separator { GC genPutsCall( yyout, $4 ); EGC }
+puts : PUTS { GC genPutsCallHeader( yyout ); $<integer>$ = -1; EGC } '(' string ')' separator { GC genPutsCall( yyout, $4 ); EGC }
 	| PUTS error separator { yyerror("Wrong arguments in puts"), yyerrok; }
 	;
+		
 string :
 	BEGIN_COMPLEX_STRING END_COMPLEX_STRING { strcpy( $$, "" ); }
-	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING { strcpy( $$, $2 ); }
+	| BEGIN_COMPLEX_STRING substring END_COMPLEX_STRING 
+	{ 
+		strcpy( $$, $2 );
+		GC  
+			if($<integer>-1 != -1){
+				//This is var = "string", so initialize the memory of the var
+				//with the string content
+				stringVariableInitialize(yyout, $<symbolInfo>0, $2);	
+			}
+		EGC 
+	}
 	| BEGIN_COMPLEX_STRING error END_COMPLEX_STRING {yyerror( "Sintax error on string" ); yyerrok;}
 	;
 	
 substring :
-	substring_part { GC strcpy( $$, $1 ); EGC }
-	| substring substring_part { GC strcpy( $$, $2 ); strcat( $1, $$ ); strcpy( $$, $1 ); EGC }
+	substring_part { strcpy( $$, $1 ); }
+	| substring substring_part { strcpy( $$, $2 ); strcat( $1, $$ ); strcpy( $$, $1 ); }
 	;
 	
 substring_part :
-	SUBSTRING { GC strcpy( $$, $1 ); EGC }
-	| string_struct { GC strcpy( $$, $1 ); EGC }
-	| SEC_SCAPE { GC strcpy( $$, $1 ); EGC }
+	SUBSTRING { strcpy( $$, $1 ); }
+	| string_struct { strcpy( $$, $1 ); }
+	| SEC_SCAPE { strcpy( $$, $1 ); }
 	;
 	
 //TODO Lexical analizer does not allow expression on strings, so here we are only getting
@@ -846,7 +857,9 @@ substring_part :
 // this, so by now, we don't "allow" '%' in string literals.
 string_struct :
 		/*START_STRUCT expression END_STRUCT
-		|*/ START_STRUCT factor END_STRUCT { GC cstr str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str ); EGC } // FIXME: si el factor es una variable falta comprobar que exista.
+		|*/ START_STRUCT factor END_STRUCT 
+		{ GC cstr str = genVariableInterpolation( yyout, $2 ); strcpy( $$, str );EGC 
+		NGC strcpy( $$, "1" ); ENGC } // FIXME: si el factor es una variable falta comprobar que exista.
 		| START_STRUCT error END_STRUCT {yyerror( "Sintax error on string interpolation" ); yyerrok;}
 		;
 %%

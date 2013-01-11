@@ -52,6 +52,9 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalInfo,
 	SymbolInfo* arrayInfo ); 
 
+// Initializes the memory of a given variable with the string data
+void stringVariableInitialize(FILE* yyout, SymbolInfo* leftSide, cstr string);
+
 
 /*                            Method definition                              */
 

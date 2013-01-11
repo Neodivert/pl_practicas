@@ -9,8 +9,8 @@ needed for the code generation part*/
 int intRegs[8] = {0,0,0,0,0,0,1,1};
 int LRURegs[6] = {0,1,2,3,4,5};
 int LRUDoubleRegs[4] = {0,1,2,3};
-int nR = 4;
-int nMaxR = 4;
+int nR = 6;
+int nMaxR = 6;
 
 int floatRegs[4] = {0,0,0,0};
 int nRR = 4;
@@ -1133,7 +1133,7 @@ printf("INI CHECK REG = %d, nR = %d\n",reg,nR);
 			case TYPE_FLOAT:
 				reg = extraInfoPerDoubleRegister[LRUDoubleRegs[0]]->nRegister;
 				//reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
-				fprintf(yyout,"\tR7 = R7-4;\t//Register overflow\n\tF(R7) = R%d;\t//Saving to stack\n",reg);
+				fprintf(yyout,"\tR7 = R7-4;\t//Register overflow\n\tF(R7) = RR%d;\t//Saving to stack\n",reg);
 				extraInfoPerDoubleRegister[LRUDoubleRegs[0]]->nRegister = 77;
 				//extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 77;
 			break;

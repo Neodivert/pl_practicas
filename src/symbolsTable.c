@@ -977,3 +977,20 @@ Symbol* getMethodArgument( Symbol* method, int iArgument )
 	}
 	return argument;
 }
+
+// Return the variable height according to the block it was defined in
+int returnVariableHeight( int symType, cstr name)
+{
+	Symbol* s;
+	int height = 0;
+	s = lastDefinedMethod->lastSymbol;
+	while( s != NULL){
+		if( s->firstChild){
+			height++;
+		}		
+		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
+			return height;
+		}
+		s = s->prev;		
+	}				
+}

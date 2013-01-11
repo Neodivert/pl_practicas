@@ -406,13 +406,6 @@ method_call_argument :
 // Check if every argument in method call match the corresponding argument in
 // method definition.
 
-/*
-struct ExtraInfo {
-	int nRegister;
-	struct Symbol* variable; 
-};
-*/
-
 more_arguments : 
 	',' method_call_argument {  
 								NGC
@@ -657,35 +650,6 @@ right_side :
 				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
 				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( $1 );
 			EGC }
-/*
-	| GETI 
-		{ $$ = searchType( TYPE_INTEGER );
-			GC 
-				int reg = assignRegisters(0); 	
-				$$ = createExtraInfoSymbol(reg);	
-				genGetCall( yyout, 'i', reg ); 
-				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
-				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( TYPE_INTEGER );
-			EGC }
-	| GETF
-		{ $$ = searchType( TYPE_FLOAT );
-			GC 
-				int reg = assignRegisters(0); 	
-				$$ = createExtraInfoSymbol(reg);	
-				genGetCall( yyout, 'f', reg ); 
-				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
-				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( TYPE_FLOAT );
-			EGC }
-	| GETC 
-		{ $$ = searchType( TYPE_CHAR );
-			GC 
-				int reg = assignRegisters(0); 	
-				$$ = createExtraInfoSymbol(reg);	
-				genGetCall( yyout, 'c', reg ); 
-				((struct ExtraInfo*)($$->info))->variable = createVariable( SYM_VARIABLE, "var" );
-				((struct Variable*)(((struct ExtraInfo*)($$->info))->variable->info))->type = searchType( TYPE_CHAR );
-			EGC }
-*/
 	;
 
 get :
@@ -759,10 +723,8 @@ factor :
 								//varSymbol gets the struct Symbol of the variable
 								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 							}
-							DEBUG_MSG( "Factor -> Llamando a isFloat\n", $1 );
 							int isFloat_ = isFloat($2->varSymbol);
 							//int isFloat = (pointerType($2->varSymbol) == 'F');
-							DEBUG_MSG("\n isFloat = %d\n",isFloat_);
 							if (isFloat_) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
 							else $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerRegister, &nextRegisterOverflow);
 						EGC
@@ -770,7 +732,7 @@ factor :
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
     					GC $$ = genAccessVariable(yyout, $1, SYM_GLOBAL, $2,NULL,NULL);	EGC;}
-	| literal { DEBUG_MSG( "literal!\n", $1 ) }
+	| literal
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
 					GC	$$ = $2; EGC }
 	| simple_method_call { NGC $$ = getReturnType($1); ENGC }
@@ -816,10 +778,8 @@ literal :
 						fprintf(yyout, "\tR%d = %d; // Loading bool %d\n", reg, arraySize, arraySize);
 					EGC }	
 	;
-	
-// FIXME: en el fichero de prueba es.em se invoca muchas veces a geti y a puts,
-// y los registros acaban acabandose y da error. Solucionar.
-// FIXME: peta con strings largas.
+
+
 puts : PUTS { GC genPutsCallHeader( yyout ); $<integer>$ = -1; EGC } '(' string ')' separator { GC genPutsCall( yyout, $4 ); EGC }
 	| PUTS error separator { yyerror("Wrong arguments in puts"), yyerrok; }
 	;
@@ -853,8 +813,6 @@ substring_part :
 	
 //TODO Lexical analizer does not allow expression on strings, so here we are only getting
 //simple variables
-// FIXME: Interpolations are marked as "%I", "%F", "%U", and we use "%" to check
-// this, so by now, we don't "allow" '%' in string literals.
 string_struct :
 		/*START_STRUCT expression END_STRUCT
 		|*/ START_STRUCT factor END_STRUCT 
@@ -873,8 +831,6 @@ int main(int argc, char** argv) {
 	compilationState = 0;
 	initializeSymTable();
 	struct Method *mainScope = getCurrentScope();
-
-	DEBUG_MSG( "hola %i", i )
 
 	if(argc == 1){
 		printf("I need a .em file, not an imaginary one\n");

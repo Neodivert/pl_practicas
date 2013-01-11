@@ -61,9 +61,7 @@ Symbol* createSymbol ( int symType, cstr  name )
 Symbol* createExtraInfoSymbol ( int nRegister, int isFloat)
 {
 	// Allocate memory for new symbol.
-	DEBUG_MSG( "CEIS - 1\n", isFloat );
 	Symbol *symbol = (Symbol *)malloc( sizeof( Symbol ) );
-	DEBUG_MSG( "CEIS - 2\n", isFloat );
 	// Set symbol's type and name.
 	symbol->symType = SYM_EXTRA_INFO;
 	symbol->name = NULL;
@@ -73,9 +71,7 @@ Symbol* createExtraInfoSymbol ( int nRegister, int isFloat)
 	symbol->prev = NULL;
 	symbol->next = NULL;
 	
-	DEBUG_MSG( "CEIS - 3\n", isFloat );
 	symbol->info = (ExtraInfo *)malloc( sizeof(ExtraInfo) );
-	DEBUG_MSG( "CEIS - 4\n", isFloat );
 	((ExtraInfo*)(symbol->info))->nRegister = nRegister;
 	((ExtraInfo*)(symbol->info))->variable = NULL;
 	((ExtraInfo*)(symbol->info))->assignmentType = TYPE_INTEGER;
@@ -663,7 +659,6 @@ void showSymTable()
 // Free the memory allocated for a symbol.
 void freeSymbol(Symbol* symbol)
 {
-	DEBUG_MSG( "Eliminando simbolo 1 (%i)\n", symbol->symType );
 	if(symbol->symType == SYM_TYPE)
 	{
 		Type *type = ((Type*)(symbol->info));
@@ -680,12 +675,9 @@ void freeSymbol(Symbol* symbol)
 			}
 		}	
 	}
-	DEBUG_MSG( "Eliminando simbolo 2\n", symbol );
 	free(symbol->name);
-	DEBUG_MSG( "Eliminando simbolo 3\n", symbol );
 	if( symbol->info )
 		free(symbol->info);
-	DEBUG_MSG( "Eliminando simbolo 4\n", symbol );
 	free(symbol);
 }
 

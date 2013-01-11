@@ -286,7 +286,6 @@ void loadRegisters(FILE* yyout, int reg, int freg)
 
 /*                            Assignement                              */
 
-// FIXME: Terminar integracion con floats.
 Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int insideIfLoop)
 {
 	ExtraInfo* rightInfo = (ExtraInfo*)(rightSide->info);
@@ -311,7 +310,7 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 			//Right side is Array.new
 			if( rightInfo->assignmentType == TYPE_ARRAY ){
 				for( i = 0; i < arraySize; i++ ){
-					fprintf(yyout,"\t%c(0x%x + %d) = %s%d; //Initializing %s array (A1)\n",pointerType(leftSide->varSymbol),
+					fprintf(yyout,"\t%c(0x%x + %d) = %s%d; //Initializing %s array",pointerType(leftSide->varSymbol),
 						leftInfo->address, elementSize*i, regStr, rightInfo->nRegister, leftSide->varSymbol->name);				
 				}
 			}else{		
@@ -320,13 +319,13 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 					int reg = ((ExtraInfo*)(leftSide->exprSymbol->info))->nRegister;
 					fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",reg, reg,
 						elementSize, leftSide->varSymbol->name);
-					fprintf(yyout,"\t%c(0x%x + R%d) = %s%d; //%s[expr] = expr (1)\n",pointerType(leftSide->varSymbol),
+					fprintf(yyout,"\t%c(0x%x + R%d) = %s%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
 						leftInfo->address, reg, regStr, rightInfo->nRegister, leftSide->varSymbol->name );
 					freeRegister( reg, 0 );	
 					freeSymbol(leftSide->exprSymbol);
 				//Assignement $var = expression
 				}else{
-					fprintf(yyout,"\t%c(0x%x) = %s%d; //%s = expr (1.1) - isFloat_: %i\n",pointerType(leftSide->varSymbol),
+					fprintf(yyout,"\t%c(0x%x) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
 						leftInfo->address, regStr, rightInfo->nRegister, leftSide->varSymbol->name, isFloat_);			
 				}		
 			}
@@ -342,7 +341,7 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 				//Right side is Array.new or [e,e,..,e]
 				if( rightInfo->assignmentType == TYPE_ARRAY ){
 					for( i = 0; i < arraySize; i++ ){	
-						fprintf(yyout,"\t%c(R6 - %d) = %s%d; //Initializing %s array (A2)\n",pointerType(leftSide->varSymbol),
+						fprintf(yyout,"\t%c(R6 - %d) = %s%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
 							leftInfo->address - elementSize*i, regStr, rightInfo->nRegister, leftSide->varSymbol->name);				
 					}	
 				}else{	
@@ -359,7 +358,7 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 						freeSymbol(leftSide->exprSymbol);
 					//Assignement var = expression
 					}else{	
-						fprintf(yyout,"\t%c(R6 - %d) = %s%d; //%s = expr (2.1) \n",pointerType(leftSide->varSymbol),
+						fprintf(yyout,"\t%c(R6 - %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
 							leftInfo->address, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
 					}		
 				}	
@@ -369,7 +368,7 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 				//Right side is Array.new or [e,e,..,e]
 				if( rightInfo->assignmentType == TYPE_ARRAY ){
 					for( i = 0; i < arraySize; i++ ){	
-						fprintf(yyout,"\t%c(R6 + %d) = %s%d; //Initializing %s array (A3)\n",pointerType(leftSide->varSymbol),
+						fprintf(yyout,"\t%c(R6 + %d) = %s%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
 							leftInfo->address + elementSize*i, regStr, rightInfo->nRegister, leftSide->varSymbol->name);				
 					}	
 				}else{				
@@ -380,13 +379,13 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 							elementSize, leftSide->varSymbol->name);
 						fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
 							leftInfo->address, leftSide->varSymbol->name);						
-						fprintf(yyout,"\t%c(R6 - R%d) = %s%d; //%s[expr] = expr (3)\n",pointerType(leftSide->varSymbol),
+						fprintf(yyout,"\t%c(R6 - R%d) = %s%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
 							reg, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
 						freeRegister( reg, 0 );	
 						freeSymbol(leftSide->exprSymbol);
 					//Assignement var = expression
 					}else{			
-						fprintf(yyout,"\t%c(R6 + %d) = %s%d; //%s = expr (3.1)\n",pointerType(leftSide->varSymbol),
+						fprintf(yyout,"\t%c(R6 + %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
 							leftInfo->address, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
 					}			
 				}
@@ -419,7 +418,6 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 }
 
 
-// FIXME: Terminar integracion con floats.
 Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow)
 {	
 	Symbol* variable = searchVariable(symType, name);
@@ -452,16 +450,12 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 					elementSize, aux->variable->name);
 				fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",expReg, expReg,
 					returnAddress(symType,aux->variable->name), aux->variable->name);						
-				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr (4)\n",regStr, reg, 
+				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr\n",regStr, reg, 
 					pointerType(aux->variable), expReg, aux->variable->name);	
 				freeRegister( expReg, 0 );	
-				DEBUG_MSG( "FS A1\n", reg );
-				DEBUG_MSG( "atribute: %p\n", atribute );
-				DEBUG_MSG( "atribute->exprSymbol->name: %s\n", atribute->exprSymbol->name );
-				freeSymbol(atribute->exprSymbol);
-				DEBUG_MSG( "FS A2\n", reg );		
+				freeSymbol(atribute->exprSymbol);	
 			}else{
-					fprintf(yyout,"\t%s%d = %c(R6 - %d); //Loading value of var (V1) %s\n",regStr, reg, 
+					fprintf(yyout,"\t%s%d = %c(R6 - %d); //Loading value of var %s\n",regStr, reg, 
 						pointerType(aux->variable), returnAddress(symType,aux->variable->name),
 						aux->variable->name);
 			}	
@@ -472,14 +466,12 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 					elementSize, aux->variable->name);
 				fprintf(yyout, "\tR%d = R%d + %d; //Calculate local %s position\n",expReg, expReg,
 					returnAddress(symType,aux->variable->name), aux->variable->name);						
-				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr (5)\n",regStr, reg, 
+				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr\n",regStr, reg, 
 					pointerType(aux->variable), expReg, aux->variable->name);
 				freeRegister( expReg, 0 );	
-				DEBUG_MSG( "FS B1\n", reg );
 				freeSymbol(atribute->exprSymbol);
-				DEBUG_MSG( "FS B2\n", reg );
 			}else{
-				fprintf(yyout,"\t%s%d = %c(R6 + %d); //Loading value of var (V2) %s\n",regStr,reg, 
+				fprintf(yyout,"\t%s%d = %c(R6 + %d); //Loading value of var %s\n",regStr,reg, 
 					pointerType(aux->variable), returnAddress(symType,aux->variable->name),
 					aux->variable->name);
 			}			
@@ -491,23 +483,19 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 				int expReg = ((ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
 				fprintf(yyout, "\tR%d = R%d * %d; //Calculate array %s position\n",expReg, expReg,
 					elementSize, aux->variable->name);
-				fprintf(yyout,"\t%s%d = %c(0x%x + R%d); //Loading value of var (V3) %s[expr]\n",regStr, reg, pointerType(aux->variable),
+				fprintf(yyout,"\t%s%d = %c(0x%x + R%d); //Loading value of var %s[expr]\n",regStr, reg, pointerType(aux->variable),
 					returnAddress(symType,aux->variable->name), expReg, aux->variable->name);
 				freeRegister( expReg, 0 );
-				DEBUG_MSG( "FS C1\n", reg );	
 				freeSymbol(atribute->exprSymbol);
-				DEBUG_MSG( "FS C2\n", reg );
 			}else{			
-			fprintf(yyout,"\t%s%d = %c(0x%x); //Loading value of var (V4) %s\n", regStr, reg, pointerType(aux->variable), 
+			fprintf(yyout,"\t%s%d = %c(0x%x); //Loading value of var %s\n", regStr, reg, pointerType(aux->variable), 
 				returnAddress(symType,aux->variable->name), aux->variable->name);	
 			}
 		//FIXME Las constantes van aqui			
 		}else{
 		}
 	}	
-	DEBUG_MSG( "FSI D1\n", reg );
 	freeSymbolInfo(atribute);
-	DEBUG_MSG( "FSI D2\n", reg );
 	return returnSymbol;
 }
 
@@ -527,15 +515,15 @@ SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalI
 	switch(varSymbol->symType)
 	{
 	case SYM_GLOBAL:
-		fprintf(yyout,"\t%c(0x%x + %d) = %s%d; //Initializing %s array (A4)\n",pointerType(varSymbol),
+		fprintf(yyout,"\t%c(0x%x + %d) = %s%d; //Initializing %s array\n",pointerType(varSymbol),
 			address, elementSize*position, regStr, nRegister, varSymbol->name);				
 		break;
 	case SYM_VARIABLE:
 		if(((Variable*)(varSymbol->info))->symSubtype == SYM_LOCAL){
-			fprintf(yyout,"\t%c(R6 + %d) = %s%d; //Initializing %s array (A5)\n",pointerType(varSymbol),
+			fprintf(yyout,"\t%c(R6 + %d) = %s%d; //Initializing %s array\n",pointerType(varSymbol),
 				elementSize*position - address, regStr, nRegister, varSymbol->name);	
 		}else{
-			fprintf(yyout,"\t%c(R6 - %d) = %s%d; //Initializing %s array (A6)\n",pointerType(varSymbol),
+			fprintf(yyout,"\t%c(R6 - %d) = %s%d; //Initializing %s array\n",pointerType(varSymbol),
 				elementSize*position + address, regStr, nRegister, varSymbol->name);		
 		}		
 		break;
@@ -814,41 +802,30 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 	int varIsFloat = isFloat( variable );
 	int size = ((struct Type*)(varType->info))->arrayInfo->nElements;
 	//reg = assignRegisters(varIsFloat);
-	DEBUG_MSG( "genBlockCall - 1\n", yyout );
 	for( i = 0; i < size;i++){
 		expReg = assignRegisters(0);
-		DEBUG_MSG( "genBlockCall - 2\n", yyout );
 		struct Symbol* extraInfo;// = createExtraInfoSymbol(reg);
 		//((struct ExtraInfo*)(extraInfo->info))->variable = varType;
 	
 		struct Symbol* expExtraInfo = createExtraInfoSymbol(expReg, varIsFloat);
-		DEBUG_MSG( "genBlockCall - 3\n", yyout );
 		((struct ExtraInfo*)(extraInfo->info))->variable = searchType(TYPE_INTEGER);	
-		DEBUG_MSG( "genBlockCall - 4\n", yyout );
 		genMethodCallBegin( yyout, blockName, SYM_BLOCK );
-		DEBUG_MSG( "genBlockCall - 5\n", yyout );
 		fprintf( yyout,"\tR%d = %d;\t// Loading literal %d\n", expReg, i, i);
-		DEBUG_MSG( "genBlockCall - 6\n", yyout );
 		info = malloc(sizeof(struct SymbolInfo));
 		info->symbol = NULL;
 		info->info = TYPE_ARRAY; 
 		info->name = NULL;
 		info->exprSymbol = expExtraInfo;
-		DEBUG_MSG( "genBlockCall - 7\n", yyout );
 		if (varIsFloat){
 			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
 		}else{ 
 			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerRegister, &nextRegisterOverflow);
 		}	
-		DEBUG_MSG( "genBlockCall - 6\n", yyout );
 		genArgumentPass( yyout, extraInfo, block, 0 );
 	
 		genMethodCall(yyout, (struct Method*)(block->info), -1 );
-		DEBUG_MSG( "genBlockCall - 7\n", yyout );
 	}
-	DEBUG_MSG( "genBlockCall - 5\n", yyout );
 	free(blockName);	
-
 }
 
 // Gets the Q type corresponding to the type of the variable
@@ -1085,8 +1062,6 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 	if( inputType != 'F' ){
 		fprintf( yyout, "\tR%d = %c(R7+5);\t// Save returned value\n", reg, inputType );
 	}else{
-		// FIXME: Aun falla con los flotantes.
-		//reg = 0;
 		fprintf( yyout, "\tRR%d = %c(R7+5);\t// Save returned value\n", reg, inputType );
 	}
 
@@ -1107,7 +1082,6 @@ int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* n
 			case TYPE_INTEGER:
 			case TYPE_CHAR:
 			case TYPE_BOOLEAN:
-				DEBUG_MSG( "CHECK_OVER_FLOW_INTEGERS_1", reg );
 				//reg = extraInfoPerRegister[LRURegs[0]]->nRegister;
 				reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
 				fprintf(yyout,"\tR7 = R7-4;\n\tI(R7) = R%d;\t//register overflow\n",reg);
@@ -1118,16 +1092,13 @@ int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* n
 				LRU(reg);
 				
 				*nextRegisterOverflow = ((*nextRegisterOverflow)+1)%nMaxR;
-				DEBUG_MSG( "CHECK_OVER_FLOW_INTEGERS_2", reg );
 			
 			break;
 			case TYPE_FLOAT:
-				DEBUG_MSG( "CHECK_OVER_FLOW_FLOATS_1", reg );
 				reg = extraInfoPerRegister[*nextRegisterOverflow]->nRegister;
 				fprintf(yyout,"\tR7 = R7-4;\n\tF(R7) = R%d;\t//register overflow\n",reg);
 				extraInfoPerRegister[*nextRegisterOverflow]->nRegister = 77;
 				*nextRegisterOverflow = ((*nextRegisterOverflow)++)%nMaxRR;
-				DEBUG_MSG( "CHECK_OVER_FLOW_FLOATS_2", reg );
 			
 			break;
 			default:
@@ -1144,7 +1115,6 @@ int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* n
 
 // If symbol refers to a variable/value (directly or indirectly), return its 
 // type.
-// FIXME: Terminar integracion con floats.
 // FIXME: Y con las clases???
 // FIXME: Hasta ahora no se comprueba desde fuera que getType devuelva -1
 // o no.
@@ -1158,8 +1128,6 @@ int getType( Symbol* symbol )
 		DEBUG_MSG( "getType( NULL ) - Returning\n", type );
 		return -1;
 	}
-
-	DEBUG_MSG( "getType( %i ) - BEGIN\n", symbol->symType );
 
 	// Access to the type struct of the symbol.
 	switch( symbol->symType ){
@@ -1189,8 +1157,6 @@ int getType( Symbol* symbol )
 	if( type->id == TYPE_ARRAY ){
 		type = ((Type*)(type->arrayInfo->type->info));
 	}	
-
-	DEBUG_MSG( "getType() - END\n", type );
 
 	if( type->id < 1 || type->id > 2 ){
 		DEBUG_MSG( "\n\ngetType something different to 1 (INTEGER) and 2 (FLOAT) (%i)!!!\n\n", type->id );

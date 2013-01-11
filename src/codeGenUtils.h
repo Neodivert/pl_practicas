@@ -46,7 +46,7 @@ void loadRegisters(FILE* yyout, int reg); */
 
 Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int insideIfLoop);
 
-Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow);
+Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute);
 
 
 SymbolInfo* genArrayContent( FILE* yyout, SymbolInfo* leftSide, Symbol* literalInfo,
@@ -118,7 +118,7 @@ void genGetCall( FILE* yyout, char inputType, int reg );
 
 
 /*				Overflow				*/
-int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type);
+int checkOverflow(FILE* yyout, int reg, int type);
 
 /*                              Auxiliar functions                           */
 

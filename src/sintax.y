@@ -15,8 +15,6 @@ FILE *yyout; /*fichero compilado*/
 
 extern struct ExtraInfo* extraInfoPerRegister[8];
 extern struct ExtraInfo* extraInfoPerDoubleRegister[8];
-int nextRegisterOverflow = 0;
-int nextDoubleRegisterOverflow = 0;
 
 extern int compilationState; 
 int errors = 0;
@@ -725,13 +723,13 @@ factor :
 							}
 							int isFloat_ = isFloat($2->varSymbol);
 							//int isFloat = (pointerType($2->varSymbol) == 'F');
-							if (isFloat_) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
-							else $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2, extraInfoPerRegister, &nextRegisterOverflow);
+							if (isFloat_) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2);
+							else $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2);
 						EGC
 			}
     	| ID_CONSTANT atribute {$$ = getVariableType( SYM_CONSTANT, $1, $2 );}
     	| ID_GLOBAL_VARIABLE atribute {	NGC $$ = getVariableType( SYM_GLOBAL, $1, $2 );	ENGC
-    					GC $$ = genAccessVariable(yyout, $1, SYM_GLOBAL, $2,NULL,NULL);	EGC;}
+    					GC $$ = genAccessVariable(yyout, $1, SYM_GLOBAL, $2);	EGC;}
 	| literal
 	| NOT factor { NGC $$ = checkNotExpression($2); ENGC
 					GC	$$ = $2; EGC }
@@ -745,7 +743,7 @@ literal :
 					GC 
 						int reg = assignRegisters(0); 
 
-						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, TYPE_INTEGER);
+						reg = checkOverflow(yyout, reg, TYPE_INTEGER);
 						$$ = createExtraInfoSymbol(reg, 0);  
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_INTEGER );
 						fprintf(yyout, "\tR%d = %d; // Loading integer %d\n", reg, arraySize, arraySize);
@@ -754,7 +752,7 @@ literal :
 					GC 
 						int reg = assignRegisters(1); 
 
-						reg = checkOverflow(yyout, reg, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow, TYPE_FLOAT);
+						reg = checkOverflow(yyout, reg, TYPE_FLOAT);
 						$$ = createExtraInfoSymbol(reg, 1);
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_FLOAT );
 						fprintf(yyout, "\tRR%d = %f; // Loading float %f\n", reg, floatVal, floatVal);
@@ -762,7 +760,7 @@ literal :
 	| CHAR		{ $$ = searchType( TYPE_CHAR ); 
 					GC 
 						int reg = assignRegisters(0); 
-						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, TYPE_CHAR);
+						reg = checkOverflow(yyout, reg, TYPE_CHAR);
 						$$ = createExtraInfoSymbol(reg, 0);  
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_CHAR );
 						fprintf(yyout, "\tR%d = %d; // Loading char %d\n", reg, arraySize, arraySize);
@@ -771,7 +769,7 @@ literal :
 					GC 
 
 						int reg = assignRegisters(0);
-						reg = checkOverflow(yyout, reg, extraInfoPerRegister, &nextRegisterOverflow, TYPE_BOOLEAN); 
+						reg = checkOverflow(yyout, reg, TYPE_BOOLEAN); 
 						$$ = createExtraInfoSymbol(reg, 0); 
 						((struct ExtraInfo*)($$->info))->variable = searchType( TYPE_BOOLEAN );
 

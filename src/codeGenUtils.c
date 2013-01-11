@@ -22,8 +22,6 @@ unsigned int topAddress = Z;
 
 extern ExtraInfo* extraInfoPerRegister[8];
 extern ExtraInfo* extraInfoPerDoubleRegister[8];
-extern int nextRegisterOverflow;
-extern int nextDoubleRegisterOverflow ;
 
 const char regStr[][3] = { "R", "RR" };
 
@@ -441,7 +439,7 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 }
 
 
-Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow)
+Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribute)
 {	
 	Symbol* variable = searchVariable(symType, name);
 	int isFloat_ = isFloat( variable );
@@ -449,7 +447,8 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 	cstr regStr = getRegStr( isFloat_ );
 
 	int elementSize = 0;	
-	if (isFloat_ == 0) reg = checkOverflow(yyout, reg, extraInfoPerRegister, nextRegisterOverflow, TYPE_INTEGER);
+	if (isFloat_ == 0) reg = checkOverflow(yyout, reg, TYPE_INTEGER);
+	else reg = checkOverflow(yyout, reg, TYPE_FLOAT);
 	
 	Symbol* returnSymbol = createExtraInfoSymbol(reg, isFloat_);	
 	ExtraInfo* aux = (ExtraInfo*)(returnSymbol->info); 	
@@ -840,9 +839,9 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 		info->name = NULL;
 		info->exprSymbol = expExtraInfo;
 		if (varIsFloat){
-			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
+			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info);
 		}else{ 
-			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerRegister, &nextRegisterOverflow);
+			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info);
 		}	
 		genArgumentPass( yyout, extraInfo, block, 0 );
 	
@@ -897,7 +896,7 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 		if(r0 == 7){
 			r0 = assignRegisters(0);
 			if (r0 == -1){
-				r0 = checkOverflow(yyout, r0, extraInfoPerRegister, 0, TYPE_INTEGER);
+				r0 = checkOverflow(yyout, r0, TYPE_INTEGER);
 			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r0;
 			extraInfoPerRegister[r0] = ((ExtraInfo*)(leftSide->info));
@@ -906,7 +905,7 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 		if(r1 == 7){
 			r1 = assignRegisters(0);
 			if (r1 == -1){
-				r1 = checkOverflow(yyout, r1, extraInfoPerRegister, 0, TYPE_INTEGER);
+				r1 = checkOverflow(yyout, r1, TYPE_INTEGER);
 			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r1;
 			extraInfoPerRegister[r1] = ((ExtraInfo*)(rightSide->info));
@@ -918,7 +917,7 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 		if(r0 == 77){
 			r0 = assignRegisters(1);
 			if (r0 == -1){
-				r0 = checkOverflow(yyout, r0, extraInfoPerRegister, 0, TYPE_FLOAT);
+				r0 = checkOverflow(yyout, r0, TYPE_FLOAT);
 			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r0;
 			extraInfoPerDoubleRegister[r0] = ((ExtraInfo*)(leftSide->info));
@@ -927,7 +926,7 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 		if(r1 == 77){
 			r1 = assignRegisters(1);
 			if (r1 == -1){
-				r1 = checkOverflow(yyout, r1, extraInfoPerRegister, 0, TYPE_FLOAT);
+				r1 = checkOverflow(yyout, r1, TYPE_FLOAT);
 			}
 			((ExtraInfo*)(leftSide->info))->nRegister = r1;
 			extraInfoPerDoubleRegister[r1] = ((ExtraInfo*)(rightSide->info));
@@ -1112,7 +1111,7 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 }
 
 /*				Overflow				*/
-int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type){
+int checkOverflow(FILE* yyout, int reg, int type){
 printf("INI CHECK REG = %d, nR = %d\n",reg,nR);
 
 	if (reg == -1)

@@ -284,6 +284,9 @@ void fillMethodDataSizes();
 // local data sizes.
 void fillMainMethodDataSize();
 
+// Return the variable height according to the block it was defined in
+int returnVariableHeight( int symType, cstr name);
+
 //void setMain();
 
 #endif

@@ -91,9 +91,6 @@ int assignRegisters(int type)
     int flag = 0;
     int reg = -1;
     
-    printf("				REGISTROS INI\n\t\t\t\t");
-    for(i=0;i<nMaxR;i++)printf("-%d",intRegs[i]);
-    printf("\n");
 	/*Buscar un Registro*/
     if ((type == 0) && (nR>0))
     {
@@ -322,7 +319,10 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 
 	int isFloat_ = isFloat(leftSide->varSymbol);
 	cstr regStr = getRegStr( isFloat_ );
-	
+
+	//FIXME Terminar de meter el acceso a las variables
+	int height = returnVariableHeight( leftSide->varSymbol->symType, leftSide->varSymbol->name );
+			
 	//Left side is a global variable
 	if (leftSide->varSymbol->symType == SYM_GLOBAL){					
 		//Aquí no afecta el derramado porque la asignacion se hace directamente a memoria.	
@@ -456,6 +456,9 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 	aux->nRegister = reg;
 	aux->variable = variable;
 
+	//FIXME Terminar de meter el acceso a las variables
+	int height = returnVariableHeight( symType, name );
+		
 	if(atribute->info == SYM_CLASS_VARIABLE){
 		//varSymbol gets the Symbol of the variable
 		aux->variable = getClassVar(aux->variable,atribute->name);
@@ -1113,7 +1116,6 @@ void genGetCall( FILE* yyout, char inputType, int reg )
 
 /*				Overflow				*/
 int checkOverflow(FILE* yyout, int reg, ExtraInfo** extraInfoPerRegister, int* nextRegisterOverflow, int type){
-printf("INI CHECK REG = %d, nR = %d\n",reg,nR);
 
 	if (reg == -1)
 	{

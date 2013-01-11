@@ -454,6 +454,7 @@ block_call :
 	IDENTIF EACH start_block '|' IDENTIF '|' 
 	{ 
 	NGC $<method>$ = checkBlockDefinition( $1, $5 ); ENGC 
+	AN if(!searchVariable(SYM_VARIABLE, $1)) yyerror("Variable %s is not defined", $1); EAN
 	GC insideIfLoop++;  $<symbol>$ = genBlockBegin(yyout, $1, $5); EGC 
 	} 
 		separator

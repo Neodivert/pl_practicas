@@ -754,9 +754,9 @@ void genArgumentPass( FILE* yyout, Symbol* argumentSymbol, Symbol* method, int i
 void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 {
 	char *blockName = createBlockName(varName, argumentName);
-	
+
 	struct Symbol* block = searchVariable( SYM_BLOCK, blockName );
-	
+
 	struct Symbol* variable = searchVariable( SYM_VARIABLE, varName );
 	struct Symbol* varType = ((struct Variable*)(variable->info))->type;
 	struct SymbolInfo* info = NULL;
@@ -765,36 +765,39 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 	int varIsFloat = isFloat( variable );
 	int size = ((struct Type*)(varType->info))->arrayInfo->nElements;
 	//reg = assignRegisters(varIsFloat);
+	DEBUG_MSG( "genBlockCall - 1\n", yyout );
 	for( i = 0; i < size;i++){
 		expReg = assignRegisters(0);
-
+		DEBUG_MSG( "genBlockCall - 2\n", yyout );
 		struct Symbol* extraInfo;// = createExtraInfoSymbol(reg);
 		//((struct ExtraInfo*)(extraInfo->info))->variable = varType;
 	
 		struct Symbol* expExtraInfo = createExtraInfoSymbol(expReg, varIsFloat);
-	
+		DEBUG_MSG( "genBlockCall - 3\n", yyout );
 		((struct ExtraInfo*)(extraInfo->info))->variable = searchType(TYPE_INTEGER);	
-
+		DEBUG_MSG( "genBlockCall - 4\n", yyout );
 		genMethodCallBegin( yyout, blockName, SYM_BLOCK );
-		
+		DEBUG_MSG( "genBlockCall - 5\n", yyout );
 		fprintf( yyout,"\tR%d = %d;\t// Loading literal %d\n", expReg, i, i);
-	
+		DEBUG_MSG( "genBlockCall - 6\n", yyout );
 		info = malloc(sizeof(struct SymbolInfo));
 		info->symbol = NULL;
 		info->info = TYPE_ARRAY; 
 		info->name = NULL;
 		info->exprSymbol = expExtraInfo;
-
+		DEBUG_MSG( "genBlockCall - 7\n", yyout );
 		if (varIsFloat){
 			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerDoubleRegister, &nextDoubleRegisterOverflow);
 		}else{ 
 			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info, extraInfoPerRegister, &nextRegisterOverflow);
 		}	
-		
+		DEBUG_MSG( "genBlockCall - 6\n", yyout );
 		genArgumentPass( yyout, extraInfo, block, 0 );
 	
 		genMethodCall(yyout, (struct Method*)(block->info), -1 );
+		DEBUG_MSG( "genBlockCall - 7\n", yyout );
 	}
+	DEBUG_MSG( "genBlockCall - 5\n", yyout );
 	free(blockName);	
 
 }
@@ -1111,6 +1114,7 @@ int getType( Symbol* symbol )
 
 	// Access to the type struct of the symbol.
 	switch( symbol->symType ){
+		case SYM_GLOBAL:
 		case SYM_VARIABLE:
 			type = ((Type*)((Variable*)(symbol->info))->type->info);
 		break;
@@ -1129,7 +1133,7 @@ int getType( Symbol* symbol )
 			type = ((Type*)(symbol->info));
 		break;
 		default:
-			DEBUG_MSG( "\n\ngetType returned -1!!!\n\n", type );
+			DEBUG_MSG( "\n\ngetType returned -1 (%i)!!!\n\n", symbol->symType );
 			return -1;
 		break;
 	}

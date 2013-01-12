@@ -873,11 +873,7 @@ void genBlockCall( FILE* yyout, int symType, cstr varName, cstr argumentName )
 		info->info = TYPE_ARRAY; 
 		info->name = NULL;
 		info->exprSymbol = expExtraInfo;
-		if (varIsFloat){
-			extraInfo = genAccessVariable(yyout, varName, symType, info);
-		}else{ 
-			extraInfo = genAccessVariable(yyout, varName, symType, info);
-		}	
+		extraInfo = genAccessVariable(yyout, varName, symType, info);
 		genArgumentPass( yyout, extraInfo, block, 0 );
 	
 		genMethodCall(yyout, (struct Method*)(block->info), -1 );

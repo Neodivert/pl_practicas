@@ -4,9 +4,9 @@
 # Language's tested features: block calling, arrays.
 ###############################################################################
 
-A = ['a', 'b', 'c', 'd']
+v = ['a', 'b', 'c', 'd']
 
-a.each do |i|
-	puts i
+v.each do |i|
+	puts( "#{i}\n" )
 end
 

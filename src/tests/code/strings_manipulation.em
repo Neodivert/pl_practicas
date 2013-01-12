@@ -9,11 +9,12 @@ string = "abcdefg"
 
 # String manipulation loop.
 i = 0
-while( i < string.length ) do
+while( i < 3 ) do
 	var = string[i]
-	puts "I remove\t #{var}\n"
-	string[i] = 48 + i
+	puts( "I remove '#{var}' " )
+	string[i] = 'a'
 	var = string[i]
-	puts "and put\t #{var}\n"
+	puts( "and put '#{var}'\n" )
 	i = i + 1
 end
+

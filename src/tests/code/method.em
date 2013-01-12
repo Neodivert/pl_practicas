@@ -4,6 +4,9 @@
 # Language's tested features: output, methods.
 ###############################################################################
 
+# FIXME: al usar este metodo y probar el programa se obtiene
+# Q.h: Acceso a memoria fuera de l�mites (error 2)
+# 18�		R0 = I(R0 + 8); //Loading value of var arg1
 def f1( arg1, arg2, arg3 )
 	puts( "vector (MET_ARG): #{arg1} + #{arg2} = #{arg3}\n" )
 end
@@ -23,7 +26,7 @@ a1 = 25
 a2 = 50
 a3 = a1 + a2
 
-puts( "suma (MAIN): #{a1} + #{a2} = #{a3}\n" )
+puts( "sum (MAIN): #{a1} + #{a2} = #{a3}\n" )
 
 b1 = 1
 b2 = 'a'

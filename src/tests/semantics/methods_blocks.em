@@ -21,5 +21,3 @@ end
 # Array creation and passing to a method.
 c = Array.new( 2, 1.1 )
 method( c, 1.1 )
-
-

@@ -31,20 +31,20 @@ def numero()
   end
   
  # resultado = 10 * resultado + c- '0'
-  c = getc()
+  c = getc
   while (c >= '0' and c<= '9') do 
    # resultado = 10 * resultado + c - '0'
-    c = getc()
+    c = getc
   end 
   resultado = resultado
 end
 
 def factor()
   if (c=='(') 
-    c = getchar()
+    c = getc
     resultado = expresion()
     if (c==')') 
-      c = getchar()
+      c = getc
     else 
       error()
     end
@@ -58,7 +58,7 @@ def termino()
   resultado = factor()
   while (c=='*' or c=='/') do
     op = c
-    c = getc()
+    c = getc
     aux = factor()
     if op == '*' 
       resultado = resultado*aux
@@ -88,7 +88,7 @@ def expresion()
     if op == '+' 
       resultado = resultado+aux
     else
-        if '-'
+        if op == '-'
           resultado = resultado-aux
         end
     end
@@ -106,3 +106,24 @@ while (c!='\n') do
     error()
   end   
 end
+
+---------Error on line 45: Type Error: Could not stablish variable resultado type
+---------Error on line 51: Type Error: Could not stablish variable resultado type
+---------Error on line 58: Type Error: Could not stablish variable resultado type
+---------Error on line 62: Type Error: Could not stablish variable aux type
+---------Error on line 64: Type Error: Could not stablish variable resultado type
+---------Error on line 67: Type Error: Could not stablish variable resultado type
+---------Error on line 68: Type error: condition expression must return a boolean value
+---------Error on line 71: Type Error: Could not stablish variable resultado type
+---------Error on line 78: Sintax error on local variable c assignment
+---------Error on line 80: Type Error: Could not stablish variable resultado type
+---------Error on line 82: Sintax error on local variable resultado assignment
+---------Error on line 86: Sintax error on local variable c assignment
+---------Error on line 87: Type Error: Could not stablish variable aux type
+---------Error on line 89: Type Error: Could not stablish variable resultado type
+---------Error on line 92: Type Error: Could not stablish variable resultado type
+---------Error on line 96: Type Error: Could not stablish variable resultado type
+---------Error on line 99: Sintax error on local variable c assignment
+---------Error on line 101: Type Error: Could not stablish variable resultado type
+---------Error on line 103: Wrong arguments in puts
+---------Error on line 104: Sintax error on local variable c assignment

@@ -22,18 +22,10 @@ while( character != 'x' ) do
 	puts( "Input character: #{character}\n" )
 end
 
-a = 3.5
-b = 3.5
-c = a + b
-
-puts( "#{a} + #{b} = #{c}\n" );
-
-# FIXME: Finish and float I/O.
-
 # Ask the user for floats until a 0 is wrote.
 float = 1.0
 while( float != 0.0 ) do
- 	puts( "Input an float: " )
+ 	puts( "Input an float (0.0 to exit): " )
 	float = getf
 	puts( "Input float: #{float}\n" )
 end

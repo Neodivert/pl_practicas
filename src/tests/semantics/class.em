@@ -22,4 +22,4 @@ def sum(var1, var2)
  a = var1 + var2
 end 
 
-foo( p.x, p.y )
+sum( p.x, p.y )

@@ -12,10 +12,11 @@ puts( "hola (#{a})\n" )
 puts( "\tque tal\n" )
 puts( "\t\tque\ntal\n" )
 puts( "\"adios\"\n" )
-puts( "y estos es una barra! \\\n" )
+puts( "y esto es una barra! \\\n" )
 
+# FIXME: el metodo con los bucles no se ejecuta.
 # Method with a triple nested loop that prints the iteration variables.
-def foo
+def foo()
 	i = 0
 	while( i < 3 ) do
 		j = 0

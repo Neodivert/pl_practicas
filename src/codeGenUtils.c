@@ -361,13 +361,15 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 		if( rightInfo->assignmentType == LOAD_ADDRESS ){
 			//FIXME Aqui deberiamos cargar la direccion de la variable, para arrays y clases
 		}else{	
+			int accessRegister = genFrameAccess( yyout, height );
 			//Left side is a local variable
 			if(((Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
 				//Right side is Array.new or [e,e,..,e]
 				if( rightInfo->assignmentType == TYPE_ARRAY ){
 					for( i = 0; i < arraySize; i++ ){	
-						fprintf(yyout,"\t%c(R6 - %d) = %s%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
-							leftInfo->address - elementSize*i, regStr, rightInfo->nRegister, leftSide->varSymbol->name);				
+						fprintf(yyout,"\t%c(R%d - %d) = %s%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
+							accessRegister,leftInfo->address - elementSize*i, 
+							regStr, rightInfo->nRegister, leftSide->varSymbol->name);				
 					}	
 				}else{	
 					//Assignement var[expression] = expression
@@ -377,14 +379,14 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 							elementSize, leftSide->varSymbol->name);
 						fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
 							leftInfo->address, leftSide->varSymbol->name);				
-						fprintf(yyout,"\t%c(R6 + R%d) = %s%d; //%s[expr] = expr (2)\n",pointerType(leftSide->varSymbol),
-							reg, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
+						fprintf(yyout,"\t%c(R%d + R%d) = %s%d; //%s[expr] = expr (2)\n",pointerType(leftSide->varSymbol),
+							accessRegister, reg, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
 							freeRegister( reg, 0 );		
 						freeSymbol(leftSide->exprSymbol);
 					//Assignement var = expression
 					}else{	
-						fprintf(yyout,"\t%c(R6 - %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-							leftInfo->address, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
+						fprintf(yyout,"\t%c(R%d - %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+							accessRegister, leftInfo->address, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
 					}		
 				}	
 			}
@@ -393,8 +395,9 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 				//Right side is Array.new or [e,e,..,e]
 				if( rightInfo->assignmentType == TYPE_ARRAY ){
 					for( i = 0; i < arraySize; i++ ){	
-						fprintf(yyout,"\t%c(R6 + %d) = %s%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
-							leftInfo->address + elementSize*i, regStr, rightInfo->nRegister, leftSide->varSymbol->name);				
+						fprintf(yyout,"\t%c(R%d + %d) = %s%d; //Initializing %s array\n",pointerType(leftSide->varSymbol),
+							accessRegister, leftInfo->address + elementSize*i, 
+							regStr, rightInfo->nRegister, leftSide->varSymbol->name);				
 					}	
 				}else{				
 					//Assignement var[expression] = expression
@@ -404,17 +407,20 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 							elementSize, leftSide->varSymbol->name);
 						fprintf(yyout, "\tR%d = R%d - %d; //Calculate local %s position\n",reg, reg,
 							leftInfo->address, leftSide->varSymbol->name);						
-						fprintf(yyout,"\t%c(R6 - R%d) = %s%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
-							reg, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
+						fprintf(yyout,"\t%c(R%d - R%d) = %s%d; //%s[expr] = expr\n",pointerType(leftSide->varSymbol),
+							accessRegister, reg, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
 						freeRegister( reg, 0 );	
 						freeSymbol(leftSide->exprSymbol);
 					//Assignement var = expression
 					}else{			
-						fprintf(yyout,"\t%c(R6 + %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
-							leftInfo->address, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
+						fprintf(yyout,"\t%c(R%d + %d) = %s%d; //%s = expr\n",pointerType(leftSide->varSymbol),
+							accessRegister, leftInfo->address, regStr, rightInfo->nRegister, leftSide->varSymbol->name);
 					}			
 				}
 			}
+			if( accessRegister != 6 ){
+				freeRegister( accessRegister, 0 );
+			}	
 		}
 	}
 
@@ -1053,18 +1059,18 @@ cstr genVariableInterpolation( FILE* yyout, Symbol* symbol )
 	int mark = 0;
 	switch( type ){
 			case TYPE_INTEGER:
-				fprintf( yyout, "\tR7 = R7-4;\n" );
-				fprintf( yyout, "\tI(R7) = R%d;\n", reg );
+				fprintf( yyout, "\tR7 = R7-4;\t// Memory for puts argument\n" );
+				fprintf( yyout, "\tI(R7) = R%d;\t// Storing value of var integer for puts\n", reg );
 				mark = 0;
 			break;
 			case TYPE_FLOAT:
-				fprintf( yyout, "\tR7 = R7-4;\n" );
-				fprintf( yyout, "\tF(R7) = RR%d;\n", reg );
+				fprintf( yyout, "\tR7 = R7-4;\t// Memory for puts argument\n" );
+				fprintf( yyout, "\tF(R7) = RR%d;\t// Storing value of var integer for puts\n", reg );
 				mark = 1;
 			break;
 			case TYPE_CHAR:
-				fprintf( yyout, "\tR7 = R7-1;\n" );
-				fprintf( yyout, "\tU(R7) = R%d;\n", reg );
+				fprintf( yyout, "\tR7 = R7-1;\t// Memory for puts argument\n" );
+				fprintf( yyout, "\tU(R7) = R%d;\t// Storing value of var integer for puts\n", reg );
 				mark = 2;
 			break;
 			default:
@@ -1218,10 +1224,10 @@ int genFrameAccess( FILE* yyout, int height )
 		return 6;
 	}
 	int reg = assignRegisters(0);
-	fprintf( yyout, "\tR%d = P(R6+4);\t // Retrive base to access outside variable\n", reg );
+	fprintf( yyout, "\tR%d = P(R6 + 4);\t // Retrive base to access outside variable\n", reg );
 	int i = 1;
 	for( i = 1; i < height; i++){
-		fprintf( yyout, "\tR%d = P(R%d+4);\t // Retrive base to access outside variable\n", reg, reg );
+		fprintf( yyout, "\tR%d = P(R%d + 4);\t // Retrive base to access outside variable\n", reg, reg );
 	}
 	return reg;
 }

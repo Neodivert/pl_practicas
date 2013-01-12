@@ -93,8 +93,6 @@ int assignRegisters(int type)
     int flag = 0;
     int reg = -1;
     
-    printf("INT %d,%d,%d,%d,%d,%d\n",intRegs[0],intRegs[1],intRegs[2],intRegs[3],intRegs[4],intRegs[5] );
-    printf("FLOAT %d,%d,%d,%d\n\n",intRegs[0],intRegs[1],intRegs[2],intRegs[3] );
 	/*Buscar un Registro*/
     if ((type == 0) && (nR>0))
     {
@@ -124,6 +122,7 @@ int assignRegisters(int type)
         }
         LRUDouble(reg);
     }
+    
     return reg;   
     /*Si llegamos aquí es que no hay registros libres :(*/
     /*En caso de que no haya registros libres habrá que tirar de pila (A deliberar)*/
@@ -444,7 +443,6 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 		}
 	}
 
-	printf("Liberando %s, %d, %d\n",leftSide->varSymbol->name, rightInfo->nRegister, isFloat_ );
 	freeRegister( rightInfo->nRegister, isFloat_ );
 	freeSymbolInfo(leftSide);
 
@@ -1229,6 +1227,7 @@ int genFrameAccess( FILE* yyout, int height, int reg, int useRegister )
 	if( useRegister ){
 		reg = assignRegisters(0);
 	}	
+	
 	fprintf( yyout, "\tR%d = P(R6 + 4);\t // Retrive base to access outside variable\n", reg );
 	int i = 1;
 	for( i = 1; i < height; i++){

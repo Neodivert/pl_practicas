@@ -650,7 +650,8 @@ right_side :
 	| ID_CONSTANT NEW {	$$ = searchTopLevel( SYM_TYPE, $1);	}
 	| '[' array_content ']' { NGC $$ = checkArray($2->symbol, $2->info ); ENGC
 							GC
-								$$ = createExtraInfoSymbol(assignRegisters(0),-1);
+								// Assignemet expects an extraInfo so create without information
+								$$ = createExtraInfoSymbol(-1, -1);
 								((struct ExtraInfo *)($$->info))->assignmentType = LOAD_ADDRESS;
 							EGC
 							freeSymbolInfo($2);

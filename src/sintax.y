@@ -108,6 +108,7 @@ int insideIfLoop = 0;
 %token GETI
 %token GETF
 %token GETC
+%token EXIT
 
 // Operators precedence
 %left '+'
@@ -144,6 +145,7 @@ code :
 						freeSymbol($1); 
 					}	
 				EGC}
+	| EXIT'('')' {GC fprintf(yyout,"\tGT(-2);\t//Call to exit()\n"); EGC}			
 	;
 
 // Method definition - Semantic actions:
@@ -247,6 +249,8 @@ method_code :
 	| puts {$$ = NULL;}
 	| puts method_code {$$ = $2;}
 	| if_construction method_code {$$ = $2;} 
+	| EXIT '(' ')' { $$ = NULL; GC fprintf(yyout,"\tGT(-2);\t//Call to exit()\n"); EGC}	
+	| EXIT '(' ')' { GC fprintf(yyout,"\tGT(-2);\t//Call to exit()\n"); EGC} method_code {$$ = $5;}	
 	;
 
 // checkArgumentDefinition insert argument's symbol with name $2 in symbols

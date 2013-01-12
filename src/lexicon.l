@@ -38,6 +38,7 @@ true                    	{arraySize = 1; return BOOL;}
 "geti"						{return GETI;}
 "getf"						{return GETF;}
 "getc"						{return GETC;}
+"exit"						{return EXIT;}
 Array						{return ARRAY;}
 
 

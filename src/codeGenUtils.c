@@ -323,7 +323,6 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 	int isFloat_ = isFloat(leftSide->varSymbol);
 	cstr regStr = getRegStr( isFloat_ );
 
-	//FIXME Terminar de meter el acceso a las variables
 	int height = returnVariableHeight( leftSide->varSymbol->symType, leftSide->varSymbol->name );
 			
 	//Left side is a global variable
@@ -454,7 +453,17 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 {	
 	Symbol* variable = searchVariable(symType, name);
 	int isFloat_ = isFloat( variable );
-	int reg = assignRegisters( isFloat_ );
+	int reg;
+	int height = returnVariableHeight( symType, name );
+	
+	//When trying to access an array variable outside a block
+	//we can use expression register so we do not have to assign a new one
+	if( atribute->info == TYPE_ARRAY && !isFloat_ && height == 0 ){
+		reg = ((ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
+	}else{
+		reg = assignRegisters( isFloat_ );
+	}
+	
 	cstr regStr = getRegStr( isFloat_ );
 
 	int elementSize = 0;	
@@ -466,8 +475,7 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 	aux->nRegister = reg;
 	aux->variable = variable;
 
-	//FIXME Terminar de meter el acceso a las variables
-	int height = returnVariableHeight( symType, name );
+	
 		
 	if(atribute->info == SYM_CLASS_VARIABLE){
 		//varSymbol gets the Symbol of the variable
@@ -489,7 +497,10 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 					returnAddress(symType,aux->variable->name), aux->variable->name);						
 				fprintf(yyout,"\t%s%d = %c(R%d + R%d); //%s[expr] = expr\n",regStr, reg, 
 					pointerType(aux->variable), accessRegister, expReg, aux->variable->name);	
-				freeRegister( expReg, 0 );	
+					
+				if( !(atribute->info == TYPE_ARRAY && !isFloat_ && height == 0) ){	
+					freeRegister( expReg, 0 );	
+				}	
 				freeSymbol(atribute->exprSymbol);	
 			}else{
 					fprintf(yyout,"\t%s%d = %c(R%d - %d); //Loading value of var %s\n",regStr, reg, 
@@ -505,7 +516,9 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 					returnAddress(symType,aux->variable->name), aux->variable->name);						
 				fprintf(yyout,"\t%s%d = %c(R%d + R%d); //%s[expr] = expr\n",regStr, reg, 
 					pointerType(aux->variable), accessRegister, expReg, aux->variable->name);
-				freeRegister( expReg, 0 );	
+				if( !(atribute->info == TYPE_ARRAY && !isFloat_ && height == 0) ){	
+					freeRegister( expReg, 0 );	
+				}		
 				freeSymbol(atribute->exprSymbol);
 			}else{
 				fprintf(yyout,"\t%s%d = %c(R%d + %d); //Loading value of var %s\n",regStr,reg, 
@@ -527,7 +540,9 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 					elementSize, aux->variable->name);
 				fprintf(yyout,"\t%s%d = %c(0x%x + R%d); //Loading value of var %s[expr]\n",regStr, reg, pointerType(aux->variable),
 					returnAddress(symType,aux->variable->name), expReg, aux->variable->name);
-				freeRegister( expReg, 0 );
+				if( !(atribute->info == TYPE_ARRAY && !isFloat_ && height == 0) ){	
+					freeRegister( expReg, 0 );	
+				}	
 				freeSymbol(atribute->exprSymbol);
 			}else{			
 			fprintf(yyout,"\t%s%d = %c(0x%x); //Loading value of var %s\n", regStr, reg, pointerType(aux->variable), 

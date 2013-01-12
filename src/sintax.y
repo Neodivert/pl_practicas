@@ -455,7 +455,7 @@ more_arguments :
 block_call : 
 	IDENTIF EACH start_block '|' IDENTIF '|' 
 	{ 
-	NGC $<method>$ = checkBlockDefinition( $1, $5 ); ENGC 
+	NGC $<method>$ = checkBlockDefinition(SYM_VARIABLE, $1, $5 ); ENGC 
 	AN if(!searchVariable(SYM_VARIABLE, $1)) yyerror("Variable %s is not defined", $1); EAN
 	GC insideIfLoop++;  $<symbol>$ = genBlockBegin(yyout, $1, $5); EGC 
 	} 
@@ -465,12 +465,30 @@ block_call :
 	{ NGC goInScope($<method>7); ENGC 
 	GC 
 		genBlockEnd(yyout, $1, $5, $<symbol>7 );
-		genBlockCall(yyout, $1, $5);
+		genBlockCall(yyout, SYM_VARIABLE, $1, $5);
+		insideIfLoop--;
+		$$ = $<symbol>7;		 
+	EGC}
+	| ID_GLOBAL_VARIABLE EACH start_block '|' IDENTIF '|' 
+	{ 
+	NGC $<method>$ = checkBlockDefinition(SYM_GLOBAL, $1, $5 ); ENGC 
+	AN if(!searchVariable(SYM_GLOBAL, $1)) yyerror("Variable %s is not defined", $1); EAN
+	GC insideIfLoop++;  $<symbol>$ = genBlockBegin(yyout, $1, $5); EGC 
+	} 
+		separator
+		method_code
+	end_block separator 
+	{ NGC goInScope($<method>7); ENGC 
+	GC 
+		genBlockEnd(yyout, $1, $5, $<symbol>7 );
+		genBlockCall(yyout, SYM_GLOBAL, $1, $5);
 		insideIfLoop--;
 		$$ = $<symbol>7;		 
 	EGC}
 	| IDENTIF EACH error END separator {yyerror( "Sintax error on %s.each definition", $1 ); yyerrok;}
-	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}
+	| IDENTIF EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}	
+	| ID_GLOBAL_VARIABLE EACH error END separator {yyerror( "Sintax error on %s.each definition", $1 ); yyerrok;}
+	| ID_GLOBAL_VARIABLE EACH start_block '|' IDENTIF '|' error END separator {goInScope(getParentScope()); yyerror( "Sintax error on %s.each definition",$1 ); yyerrok;}	
 	;			 
 
 start_block:

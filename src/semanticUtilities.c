@@ -382,7 +382,7 @@ int checkArgumentDefinition(const char* const name)
 // Search in symbols' table for block "name" with argument "argName". If it is
 // not in the symbols' table, create it and insert it. This functions returns
 // and Method* that points to the current scope's (the block) symbol.
-struct Method *checkBlockDefinition(const char* const name, const char* const argName )
+struct Method *checkBlockDefinition(int symType, const char* const name, const char* const argName )
 {
 	struct Method* scope = getCurrentScope();
 	char *blockName = createBlockName(name, argName);
@@ -395,7 +395,7 @@ struct Method *checkBlockDefinition(const char* const name, const char* const ar
 	{
 		goInScope(((struct Method *)(block->info)));
 	}
-	struct Symbol* variable = searchVariable( SYM_VARIABLE, name);	
+	struct Symbol* variable = searchVariable( symType, name);	
 	if(variable != NULL)
 	{	//Variabe.each is defined in symbol table
 		struct Symbol* type = ((struct Variable*)(variable->info))->type;

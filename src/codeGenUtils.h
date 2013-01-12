@@ -89,7 +89,7 @@ void genMethodCall( FILE* yyout, Method* method, int reg );
 void genArgumentPass( FILE* yyout, Symbol* argumentSymbol, Symbol* method, int iArgument );
 
 //Generate all the calls to the block
-void genBlockCall( FILE* yyout, cstr varName, cstr argumentName ); 
+void genBlockCall( FILE* yyout, int symType, cstr varName, cstr argumentName );
 
 /*Returns the code that correspond to the storage of the type passed*/
 /*as parameter*/

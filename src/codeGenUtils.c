@@ -813,13 +813,13 @@ void genArgumentPass( FILE* yyout, Symbol* argumentSymbol, Symbol* method, int i
 }
 
 //Generate all the calls to the block
-void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
+void genBlockCall( FILE* yyout, int symType, cstr varName, cstr argumentName )
 {
 	char *blockName = createBlockName(varName, argumentName);
 
 	struct Symbol* block = searchVariable( SYM_BLOCK, blockName );
 
-	struct Symbol* variable = searchVariable( SYM_VARIABLE, varName );
+	struct Symbol* variable = searchVariable( symType, varName );
 	struct Symbol* varType = ((struct Variable*)(variable->info))->type;
 	struct SymbolInfo* info = NULL;
 	
@@ -842,9 +842,9 @@ void genBlockCall( FILE* yyout, cstr varName, cstr argumentName )
 		info->name = NULL;
 		info->exprSymbol = expExtraInfo;
 		if (varIsFloat){
-			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info);
+			extraInfo = genAccessVariable(yyout, varName, symType, info);
 		}else{ 
-			extraInfo = genAccessVariable(yyout, varName, SYM_VARIABLE, info);
+			extraInfo = genAccessVariable(yyout, varName, symType, info);
 		}	
 		genArgumentPass( yyout, extraInfo, block, 0 );
 	

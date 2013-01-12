@@ -113,7 +113,7 @@ int checkArgumentDefinition(cstr name);
 // Search in symbols' table for block "name" with argument "argName". If it is
 // not in the symbols' table, create and insert it. This functions returns and
 // Method* that points to the current scope's (the block) symbol.
-struct Method * checkBlockDefinition(cstr name, cstr argName);
+struct Method * checkBlockDefinition(int symType, cstr name, cstr argName);
 
 /*                                 5. Classes                                  */
 

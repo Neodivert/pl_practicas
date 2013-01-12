@@ -27,7 +27,7 @@ const char regStr[][3] = { "R", "RR" };
 
 // Generate code to access a variable in a block wich 
 // was declared outside the block
-int genFrameAccess( FILE* yyout, int height );
+int genFrameAccess( FILE* yyout, int height, int reg, int isFloat );
 
 cstr getRegStr( int isFloat )
 {
@@ -93,6 +93,8 @@ int assignRegisters(int type)
     int flag = 0;
     int reg = -1;
     
+    printf("INT %d,%d,%d,%d,%d,%d\n",intRegs[0],intRegs[1],intRegs[2],intRegs[3],intRegs[4],intRegs[5] );
+    printf("FLOAT %d,%d,%d,%d\n\n",intRegs[0],intRegs[1],intRegs[2],intRegs[3] );
 	/*Buscar un Registro*/
     if ((type == 0) && (nR>0))
     {
@@ -361,7 +363,7 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 		if( rightInfo->assignmentType == LOAD_ADDRESS ){
 			//FIXME Aqui deberiamos cargar la direccion de la variable, para arrays y clases
 		}else{	
-			int accessRegister = genFrameAccess( yyout, height );
+			int accessRegister = genFrameAccess( yyout, height, -1, 1 );
 			//Left side is a local variable
 			if(((Variable*)(leftSide->varSymbol->info))->symSubtype == SYM_LOCAL){
 				//Right side is Array.new or [e,e,..,e]
@@ -442,6 +444,7 @@ Symbol* genAssignement(FILE* yyout, SymbolInfo* leftSide, Symbol* rightSide, int
 		}
 	}
 
+	printf("Liberando %s, %d, %d\n",leftSide->varSymbol->name, rightInfo->nRegister, isFloat_ );
 	freeRegister( rightInfo->nRegister, isFloat_ );
 	freeSymbolInfo(leftSide);
 
@@ -478,7 +481,7 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 	}	
 	if( symType == SYM_VARIABLE )
 	{
-		int accessRegister = genFrameAccess( yyout, height );
+		int accessRegister = genFrameAccess( yyout, height, reg, isFloat_ );
 		if(((Variable*)(aux->variable->info))->symSubtype == SYM_LOCAL){
 			if( atribute->info == TYPE_ARRAY ){
 				int expReg = ((ExtraInfo*)(atribute->exprSymbol->info))->nRegister;
@@ -502,19 +505,19 @@ Symbol* genAccessVariable(FILE* yyout,cstr name, int symType, SymbolInfo* atribu
 					elementSize, aux->variable->name);
 				fprintf(yyout, "\tR%d = R%d + %d; //Calculate local %s position\n",expReg, expReg,
 					returnAddress(symType,aux->variable->name), aux->variable->name);						
-				fprintf(yyout,"\t%s%d = %c(R6 + R%d); //%s[expr] = expr\n",regStr, reg, 
-					pointerType(aux->variable), expReg, aux->variable->name);
+				fprintf(yyout,"\t%s%d = %c(R%d + R%d); //%s[expr] = expr\n",regStr, reg, 
+					pointerType(aux->variable), accessRegister, expReg, aux->variable->name);
 				freeRegister( expReg, 0 );	
 				freeSymbol(atribute->exprSymbol);
 			}else{
-				fprintf(yyout,"\t%s%d = %c(R6 + %d); //Loading value of var %s\n",regStr,reg, 
-					pointerType(aux->variable), returnAddress(symType,aux->variable->name),
-					aux->variable->name);
+				fprintf(yyout,"\t%s%d = %c(R%d + %d); //Loading value of var %s\n",regStr,reg, 
+					pointerType(aux->variable), accessRegister, 
+					returnAddress(symType,aux->variable->name),	aux->variable->name);
 			}			
 		}
 		
 		if( accessRegister != 6 ){
-			freeRegister( reg, 0 );
+			freeRegister( accessRegister, 0 );
 		}	
 		
 	}else{
@@ -1218,12 +1221,14 @@ int getType( Symbol* symbol )
 
 // Generate code to access a variable in a block wich 
 // was declared outside the block
-int genFrameAccess( FILE* yyout, int height )
+int genFrameAccess( FILE* yyout, int height, int reg, int useRegister )
 {
 	if( height == 0 ){
 		return 6;
 	}
-	int reg = assignRegisters(0);
+	if( useRegister ){
+		reg = assignRegisters(0);
+	}	
 	fprintf( yyout, "\tR%d = P(R6 + 4);\t // Retrive base to access outside variable\n", reg );
 	int i = 1;
 	for( i = 1; i < height; i++){

@@ -14,11 +14,10 @@ puts( "\t\tque\ntal\n" )
 puts( "\"adios\"\n" )
 puts( "y esto es una barra! \\\n" )
 
-# FIXME: el metodo con los bucles no se ejecuta.
 # Method with a triple nested loop that prints the iteration variables.
 def foo()
 	i = 0
-	while( i < 3 ) do
+	while( i < 3 ) dor
 		j = 0
 		while( j < 3 ) do
 			k = 0

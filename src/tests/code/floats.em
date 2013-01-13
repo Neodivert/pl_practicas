@@ -32,7 +32,6 @@ while( i < 10 ) do
 	i = i + 1
 end
 
-# FIXME: se muestra siempre 1.25
 fv.each do |e|
 	if( e > 5.9 ) then
 		puts( "A: #{e}\n" )

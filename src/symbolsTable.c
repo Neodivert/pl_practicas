@@ -989,7 +989,11 @@ int returnVariableHeight( int symType, cstr name)
 			height++;
 		}		
 		if( s->symType == symType && (strcmp(s->name, name) == 0)  ){
-			return height;
+			if(s->firstChild){
+				return --height;
+			}else{
+				return height;
+			}
 		}
 		s = s->prev;		
 	}				

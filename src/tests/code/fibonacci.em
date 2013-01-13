@@ -5,13 +5,8 @@
 ###############################################################################
 
 def fibonacci( n )
-	#puts("Arg1 vale #{n}\n")
-	if ( n < 2 )
-		n = n
-		#puts("Simple N vale #{n}\n")
-	else
+	if ( n >= 2 )
 		n = fibonacci( n - 1 ) + fibonacci( n - 2 )
-		#puts("Complejo N vale #{n}\n")
 	end
 	n = n
 end

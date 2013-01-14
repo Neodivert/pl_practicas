@@ -6,13 +6,13 @@
 
 # Print an expression's result.
 a = 1 + 5
-puts( "hola (#{a})\n" )
+puts( "hi (#{a})\n" )
 
 # Print some messages with escape sequences.
-puts( "\tque tal\n" )
-puts( "\t\tque\ntal\n" )
-puts( "\"adios\"\n" )
-puts( "y esto es una barra! \\\n" )
+puts( "\thow are you?\n" )
+puts( "\t\thow\nare you?\n" )
+puts( "\"bye\"\n" )
+puts( "this is a slash \\\n" )
 
 # Method with a triple nested loop that prints the iteration variables.
 def foo()
@@ -22,7 +22,7 @@ def foo()
 		while( j < 3 ) do
 			k = 0
 			while( k < 3 ) do
-				puts ( "iterando #{i}, #{j}, #{k}\n" )
+				puts ( "iterating #{i}, #{j}, #{k}\n" )
 				k = k + 1
 			end
 			j = j + 1

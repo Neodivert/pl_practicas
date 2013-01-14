@@ -50,7 +50,7 @@ int newLabel()
 /**************************************************************************/
 /*Returns an available register						  */
 /**************************************************************************/
-/*0 -> entero, 1-> Flotante*/
+/*0 -> integer, 1-> float*/
 
 void LRU(int reg){
 	
@@ -93,7 +93,7 @@ int assignRegisters(int type)
     int flag = 0;
     int reg = -1;
     
-	/*Buscar un Registro*/
+	/* Search a register */
     if ((type == 0) && (nR>0))
     {
         for (i=0;i<nMaxR;i++)
@@ -109,7 +109,6 @@ int assignRegisters(int type)
         LRU(reg);
     }
     else if ((type == 1) && (nRR>0)){
-    //{ers>1))
         for (i=0;i<nMaxRR;i++)
         {
             if (floatRegs[i]==0)
@@ -124,8 +123,6 @@ int assignRegisters(int type)
     }
     
     return reg;   
-    /*Si llegamos aquí es que no hay registros libres :(*/
-    /*En caso de que no haya registros libres habrá que tirar de pila (A deliberar)*/
 }
 
 
@@ -160,18 +157,15 @@ int freeRegister(int i, int type)
     if (i > 7) return -2;
     if ((type != 0) && (type != 1)) return -3;
 
-    if ((type == 0) /*&& (nR<6)*/){
+    if ((type == 0)){
         intRegs[i]=0;
 			nR++;
-			DEBUG_MSG( "Liberando registro R%d - OK\n", i );
     }
-	else if ((type == 1) /*&& (nRR<5)*/)
+	else if ((type == 1))
 	{
-    	//if ((i % 2) == 1) return -4;
     	if( i > 3 ) return -4;
     	floatRegs[i]=0;
 		nRR++;
-		DEBUG_MSG( "Liberando registro RR%d - OK\n", i );
     }
 	extraInfoPerRegister[i] = NULL;
     return 0;
@@ -212,30 +206,7 @@ int getAllGlobals(FILE* yyout)
 		//TODO PENDIENTE DE OBTENER EL TAMAÑO Y MULTIPLICAR		
 		}		
 		fprintf(yyout,"\tMEM(0x%x,%d); //Memory for var %s \n",topAddress,size, currentGlobal->name);
-		/*switch (type){
-		case(TYPE_INTEGER):
-			fprint("\tI(%d)\n",);
-			break;
-		case(TYPE_FLOAT):
-			
-			break;
-		case(TYPE_STRING):
-			
-			break;
-		case(TYPE_CHAR):
-			
-			break;
-		case(TYPE_BOOLEAN):
-			
-			break;
-		case(TYPE_CLASS):
-			
-			break;
-		case(TYPE_ARRAY):
-			
-			break;
-		}*/	
-				
+					
 		currentGlobal = nextGlobalVariablePointer();			
 	}
 	return 0;
@@ -943,7 +914,6 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 			fprintf(yyout, "\tR%d = I(R7);\t//Recovering value from stack\n\tR7 = R7 + 4;\n", r1);
 		}
 		fprintf(yyout, "\tR%d = R%d %s R%d;\n", r0, r0,op, r1);
-		//freeRegister(r1, 0);
 	}else{
 		if(r0 == 77){
 			r0 = assignRegisters(1);
@@ -964,7 +934,6 @@ void genOperation(FILE* yyout, Symbol* leftSide, Symbol* rightSide, char* op )
 			fprintf(yyout, "\tRR%d = F(R7);\t//Recovering value from stack\n\tR7 = R7 + 4;\n", r1);
 		}
 		fprintf(yyout, "\tRR%d = RR%d %s RR%d;\n", r0, r0,op, r1);
-		//freeRegister(r1, 1);
 	}
 	
 	freeRegister( r1, isFloat_ );
@@ -1179,9 +1148,8 @@ int checkOverflow(FILE* yyout, int reg, int type){
 
 // If symbol refers to a variable/value (directly or indirectly), return its 
 // type.
-// FIXME: Y con las clases???
-// FIXME: Hasta ahora no se comprueba desde fuera que getType devuelva -1
-// o no.
+// FIXME: Check classes.
+// FIXME: Outside it's not checked if this returns -1.
 int getType( Symbol* symbol )
 {
 	Symbol* symVariable = NULL;
@@ -1202,13 +1170,6 @@ int getType( Symbol* symbol )
 		case SYM_EXTRA_INFO:
 			symVariable = ((ExtraInfo*)(symbol->info))->variable;
 			return getType( symVariable );
-			/*
-			if( symVariable->symType == SYM_VARIABLE ){
-				type = ((Type*)((Variable*)(symVariable->info))->type->info);
-			}else{
-				type = ((Type*)(symVariable->info));
-			}
-			*/
 		break;
 		case SYM_TYPE:
 			type = ((Type*)(symbol->info));
@@ -1253,6 +1214,4 @@ int isFloat( Symbol* symbol )
 {
 	return ( getType( symbol ) == TYPE_FLOAT );
 }
-
-
 

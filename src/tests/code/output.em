@@ -17,7 +17,7 @@ puts( "y esto es una barra! \\\n" )
 # Method with a triple nested loop that prints the iteration variables.
 def foo()
 	i = 0
-	while( i < 3 ) dor
+	while( i < 3 ) do
 		j = 0
 		while( j < 3 ) do
 			k = 0

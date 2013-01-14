@@ -9,9 +9,9 @@
 def method ( array, arg2 )
 	d = [1, 2, 3]
 	array.each do |i|
-		d = 5
+		d = 5		# ERROR: d is an array.
 		d.each { |j|
-			d = 5.4
+			d = 5.4 # ERROR: d is an array.
 			h = d
 		}	
 	end

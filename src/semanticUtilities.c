@@ -221,7 +221,6 @@ struct SymbolInfo* checkIsInteger(Symbol* s)
 }	
 
 
-
 // Search in the symbols' table for an type array of size "n" and whose elements
 // are of type "type".
 // If n < 0 (invalid size), return NULL.

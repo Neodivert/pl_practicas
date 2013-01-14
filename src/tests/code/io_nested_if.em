@@ -5,7 +5,7 @@
 ###############################################################################
 
 # Ask the user to input its grade.
-puts( "Input your grade (0-10): " )
+puts( "Input your grade (an integer between 0 and 10): " )
 grade = geti
 
 # Print a message or another depending on user input.

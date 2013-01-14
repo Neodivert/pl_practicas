@@ -7,11 +7,10 @@
 #include "codeGenUtils.h"
 #include <errno.h>
 
-extern FILE *yyin; /* declarado en lexico */
-extern int numlin; /* lexico le da valores */
-//extern int yylex();
-int yydebug=1; /* modo debug si -t */
-FILE *yyout; /*fichero compilado*/
+extern FILE *yyin;
+extern int numlin;
+int yydebug=1; /* debug mode if -t */
+FILE *yyout; 	/* compiled program */
 
 extern struct ExtraInfo* extraInfoPerRegister[8];
 extern struct ExtraInfo* extraInfoPerDoubleRegister[8];
@@ -213,7 +212,6 @@ method_definition :
 // An Emerald's method return a value if its last sentence is an assignment or
 // a method call. If method's last sentence is like that, we return its type
 // symbol in $$, otherwise we return NULL.
-
 method_code : 
 	separator { $$ = NULL; } 
 	| assignment { GC  					
@@ -524,8 +522,6 @@ loop :
 	| 	WHILE error END separator {yyerror( "Sintax error on while loop" ); yyerrok;}
 	;
 
-// FIXME: Cuando me equivoque y escribi el nombre de una variable que no existia
-// en la condicion, me dio un fallo de segmentacion (moi).
 // If construction.
 // Semantic verifications: expression must return a boolean.
 if_construction : 
@@ -739,14 +735,12 @@ term :
 factor :
 	IDENTIF atribute { NGC $$ = getVariableType( SYM_VARIABLE, $1, $2 ); ENGC
 						GC
-							//$2->varSymbol = searchVariable(SYM_GLOBAL,(cstr)$1);
 							$2->varSymbol = searchVariable(SYM_VARIABLE,(cstr)$1);
 							if($2->info == SYM_CLASS_VARIABLE){
 								//varSymbol gets the struct Symbol of the variable
 								$2->varSymbol = getClassVar($2->varSymbol,$2->name);
 							}
 							int isFloat_ = isFloat($2->varSymbol);
-							//int isFloat = (pointerType($2->varSymbol) == 'F');
 							if (isFloat_) $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2);
 							else $$ = genAccessVariable(yyout, $1, SYM_VARIABLE, $2);
 						EGC

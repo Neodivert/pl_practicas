@@ -5,7 +5,7 @@
 # Language's tested features: methods, ifs, I/O, arrays
 ###############################################################################
 
-# FIXME: still doesnt work in code generation.
+# FIXME: still doesnt work.
 
 #  Pequeño deféprete deferactivo de expresiones aritméticas enteras.
 

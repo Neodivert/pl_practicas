@@ -7,6 +7,12 @@
 # String definition.
 string = "abcdefg"
 
+# Print the original string.
+string.each do |c1|
+	puts( "#{c1}" )
+end
+puts( "\n" )
+
 # String manipulation loop.
 i = 0
 while( i < 3 ) do
@@ -18,3 +24,7 @@ while( i < 3 ) do
 	i = i + 1
 end
 
+# Print the final string.
+string.each do |c2|
+	puts( "#{c2}" )
+end

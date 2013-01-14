@@ -3,8 +3,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-//#define DEBUG 1
-
 /* 
 If nextSymIsFirstChild is 1, next time insertSymbol is invoked, the new symbol 
 is inserted as the child of top symbol.
@@ -76,7 +74,6 @@ Symbol* createExtraInfoSymbol ( int nRegister, int isFloat)
 	((ExtraInfo*)(symbol->info))->variable = NULL;
 	((ExtraInfo*)(symbol->info))->assignmentType = TYPE_INTEGER;
 	//Copy the pointer into Register List Array
-	//TODO si es float se usa extraInfoPerDoubleRegister
 	if (isFloat == 0) extraInfoPerRegister[nRegister] = ((ExtraInfo*)(symbol->info));
 	else if(isFloat == 1) extraInfoPerDoubleRegister[nRegister] = ((ExtraInfo*)(symbol->info));
 	return symbol;
@@ -280,7 +277,6 @@ void insertMethodBlockDefinition_( Symbol* symbol )
 	// When the final argument is declared, we'll use this pointer to access
 	// this method and fill its nArgument field.
 	lastDefinedMethod = ((Method *)(symbol->info));
-	//lastDefinedMethod->lastSymbol = symbol;	
 
 	//((Method *)(symbol->info))->lastSymbol = symbol;
 	// If we don't go out of scope, next symbol will be a "child".
@@ -939,7 +935,6 @@ void fillMethodDataSizes()
 	Symbol* symbol = mainMethodNext;
 	Method* method = NULL;
 
-	// FIXME: falta que descienda en el arbol y que contemple los bloques.
 	// Searh for methods and call to "genMethodDataSize" on them.
 	while( symbol ){
 		if( ( symbol->symType == SYM_METHOD ) ){

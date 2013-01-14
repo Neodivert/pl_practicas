@@ -4,11 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-static const int MAX_SIZE = 30;
-
 extern int compilationState; 
 
+// Un-comment this line to allow debug messages.
 //#define DEBUG 1
 #ifdef DEBUG
 	#define DEBUG_MSG(msg,var) printf(msg,var);
@@ -16,6 +14,11 @@ extern int compilationState;
 	#define DEBUG_MSG(msg,var)
 #endif
 
+// Macros for find out in which compilation state we are.
+// FST (0) -> creating and Filling Symbol Table
+// AN (1) -> doing code ANalisis
+// GC (2) -> Generating Code
+// NGC -> Not Generating Code
 #define FST if( compilationState == 0 ){
 #define EFST }
 
@@ -28,9 +31,6 @@ extern int compilationState;
 #define NGC if( compilationState != 2 ){
 #define ENGC }
 
-//0 -> Creating and filling Symbol Table
-//1 -> Doing code analisis
-//2 -> Generating code
 
 /*                                   Constants                                */
 /******************************************************************************/
@@ -64,6 +64,7 @@ extern int compilationState;
 /*                                Data structs                                */
 /******************************************************************************/
 
+// Generic Symbol
 struct Symbol
 {
    	int symType; // symType = TYPE, VARIABLE, etc.
@@ -79,6 +80,8 @@ struct Symbol
 };	
 typedef struct Symbol Symbol; 
 
+
+// Extra info if symbol refers to a type.
 struct Type {
 	int id;
 	unsigned int size;
@@ -90,18 +93,22 @@ struct Type {
 };
 typedef struct Type Type;
 
+
+// Extra info if type symbol refers to a array type.
 struct ArrayType {
 	Symbol* type;
 	unsigned int nElements;
 };
 typedef struct ArrayType ArrayType;
 
+// Extra info if type symbol refers to a class type.
 struct ClassType{
 	unsigned int nElements;
 	Symbol **elements;
 };
 typedef struct ClassType ClassType;
 
+// Extra info if symbol refers to a variable.
 struct Variable {
    	Symbol* type;
    	int symSubtype; // SUBTYPE_LOCAL, SUBTYPE_ARG
@@ -109,6 +116,7 @@ struct Variable {
 };
 typedef struct Variable Variable;
 
+// Extra info if symbol refers to a method.
 struct Method {
 	int nArguments;
 	Symbol *lastSymbol;
@@ -121,6 +129,7 @@ struct Method {
 };
 typedef struct Method Method;
 
+// Info related to a expression.
 struct ExtraInfo {
 	int assignmentType;
 	int nRegister;
@@ -130,6 +139,7 @@ typedef struct ExtraInfo ExtraInfo;
 
 typedef const char* const cstr;
 
+// Auxiliar struct.
 struct SymbolInfo
 {
 	Symbol *symbol;

@@ -831,13 +831,15 @@ void genBlockCall( FILE* yyout, int symType, cstr varName, cstr argumentName )
 	int size = ((struct Type*)(varType->info))->arrayInfo->nElements;
 	//reg = assignRegisters(varIsFloat);
 	for( i = 0; i < size;i++){
+		genMethodCallBegin( yyout, blockName, SYM_BLOCK );
 		expReg = assignRegisters(0);
-		struct Symbol* extraInfo;// = createExtraInfoSymbol(reg);
-		//((struct ExtraInfo*)(extraInfo->info))->variable = varType;
+		//reg = assignRegisters(varIsFloat);
+		struct Symbol* extraInfo = createExtraInfoSymbol(expReg, varIsFloat);
+		((struct ExtraInfo*)(extraInfo->info))->variable = variable;
 	
 		struct Symbol* expExtraInfo = createExtraInfoSymbol(expReg, varIsFloat);
-		((struct ExtraInfo*)(extraInfo->info))->variable = searchType(TYPE_INTEGER);	
-		genMethodCallBegin( yyout, blockName, SYM_BLOCK );
+		((struct ExtraInfo*)(expExtraInfo->info))->variable = searchType(TYPE_INTEGER);	
+		
 		fprintf( yyout,"\tR%d = %d;\t// Loading literal %d\n", expReg, i, i);
 		info = malloc(sizeof(struct SymbolInfo));
 		info->symbol = NULL;

@@ -602,6 +602,10 @@ struct Symbol* checkAssignement(struct SymbolInfo* left_, struct Symbol *right)
 					// type
 					yyerror("Type error: variable %s is missused", left_->symbol->name);
 				}	
+			}else{
+				AN
+					yyerror("Type error: unkown leftside type in variable %s assignement\n", left->name);
+				EAN
 			}
 		}									
 		break;
